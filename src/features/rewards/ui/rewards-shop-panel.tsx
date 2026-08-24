@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useBlinkStats } from "@/features/statistics/model/use-blink-stats";
 import { useI18n } from "@/i18n";
+import { cn } from "@/lib/utils";
 import type { BlinkRewardId } from "../../../../shared/blink-rewards";
 import type { RewardOffer } from "../../../../shared/blink-stats";
 
@@ -47,6 +49,13 @@ export function RewardsShopPanel() {
 	const { t } = useI18n();
 	const { snapshot, purchaseReward } = useBlinkStats();
 	const { totals, rewards } = snapshot;
+	const [flashId, setFlashId] = useState<BlinkRewardId | null>(null);
+
+	useEffect(() => {
+		if (!flashId) return;
+		const timer = window.setTimeout(() => setFlashId(null), 400);
+		return () => window.clearTimeout(timer);
+	}, [flashId]);
 
 	return (
 		<>
@@ -107,7 +116,11 @@ export function RewardsShopPanel() {
 							return (
 								<div
 									key={reward.id}
-									className="flex flex-col gap-2 rounded-md border border-border bg-background px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+									className={cn(
+										"flex flex-col gap-2 rounded-md border border-border bg-background px-3 py-2 sm:flex-row sm:items-center sm:justify-between",
+										flashId === reward.id &&
+											"motion-flash ring-2 ring-primary/50",
+									)}
 								>
 									<div>
 										<div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -140,7 +153,10 @@ export function RewardsShopPanel() {
 											variant="secondary"
 											size="sm"
 											disabled={!reward.canBuy}
-											onClick={() => purchaseReward(reward.id)}
+											onClick={() => {
+												purchaseReward(reward.id);
+												setFlashId(reward.id);
+											}}
 										>
 											{t("rewards.buy", { cost: reward.cost })}
 										</Button>

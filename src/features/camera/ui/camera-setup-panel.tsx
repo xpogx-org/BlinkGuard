@@ -121,7 +121,13 @@ export function CameraSetupPanel({
 								>
 									{t("camera.detection")}
 								</span>
-								<Badge role="status" className={chipClassName}>
+								<Badge
+									role="status"
+									className={cn(
+										"transition-colors duration-200",
+										chipClassName,
+									)}
+								>
 									{t(chipKey)}
 								</Badge>
 							</>

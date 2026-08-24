@@ -9,6 +9,7 @@ import {
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { t as translate } from "../../../../shared/i18n";
+import { theme } from "../../../../shared/theme";
 
 export type ProfileShareToggles = {
 	title: boolean;
@@ -261,7 +262,10 @@ export function ProfileShareDialog({
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+			className={cn(
+				"fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
+				theme.recipe.overlay,
+			)}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={titleId}
@@ -269,7 +273,12 @@ export function ProfileShareDialog({
 				if (event.target === event.currentTarget && !saveBusy) onClose();
 			}}
 		>
-			<SettingPanel className="flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col gap-4 overflow-y-auto [scrollbar-gutter:stable] shadow-lg">
+			<SettingPanel
+				className={cn(
+					"flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col gap-4 overflow-y-auto [scrollbar-gutter:stable] shadow-lg",
+					theme.recipe.dialog,
+				)}
+			>
 				<div className="space-y-1">
 					<h2 id={titleId} className="text-xl font-semibold tracking-tight">
 						{t("profile.share.dialogTitle")}

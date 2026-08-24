@@ -29,7 +29,7 @@ export function StatsBarChart({ buckets, ariaLabel }: StatsBarChartProps) {
 							<div
 								title={`${bucket.label}: ${bucket.value}`}
 								className={cn(
-									"w-full max-w-5 rounded-t-sm bg-primary/80 transition-[height]",
+									"w-full max-w-5 rounded-t-sm bg-primary/80 transition-[height] duration-300 ease-out",
 									bucket.value === 0 && "bg-muted",
 								)}
 								style={{ height: `${heightPct}%` }}

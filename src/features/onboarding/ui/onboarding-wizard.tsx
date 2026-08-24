@@ -21,6 +21,7 @@ import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import type { Locale } from "../../../../shared/i18n";
+import { theme } from "../../../../shared/theme";
 
 interface OnboardingWizardProps {
 	preferences: SettingsPreferences;
@@ -35,6 +36,7 @@ export function OnboardingWizard({
 }: OnboardingWizardProps) {
 	const t = useT();
 	const [stepIndex, setStepIndex] = useState(0);
+	const [stepDirection, setStepDirection] = useState<1 | -1>(1);
 	const [fullscreenDetectionSupported, setFullscreenDetectionSupported] =
 		useState<boolean | null>(null);
 
@@ -90,12 +92,20 @@ export function OnboardingWizard({
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+			className={cn(
+				"fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
+				theme.recipe.overlay,
+			)}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="onboarding-title"
 		>
-			<SettingPanel className="flex w-full max-w-lg flex-col gap-5 shadow-lg">
+			<SettingPanel
+				className={cn(
+					"flex w-full max-w-lg flex-col gap-5 shadow-lg",
+					theme.recipe.dialog,
+				)}
+			>
 				<div className="space-y-1">
 					<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
 						{t("onboarding.welcome")}
@@ -124,7 +134,13 @@ export function OnboardingWizard({
 					))}
 				</div>
 
-				<div className="min-h-40">
+				<div
+					key={step.id}
+					className={cn(
+						"min-h-40",
+						stepDirection >= 0 ? "motion-step-forward" : "motion-step-back",
+					)}
+				>
 					{step.id === "language" ? (
 						<div className="space-y-3">
 							<p className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -387,7 +403,10 @@ export function OnboardingWizard({
 							<Button
 								type="button"
 								variant="secondary"
-								onClick={() => setStepIndex((current) => current - 1)}
+								onClick={() => {
+									setStepDirection(-1);
+									setStepIndex((current) => current - 1);
+								}}
 							>
 								{t("common.back")}
 							</Button>
@@ -399,7 +418,10 @@ export function OnboardingWizard({
 						) : (
 							<Button
 								type="button"
-								onClick={() => setStepIndex((current) => current + 1)}
+								onClick={() => {
+									setStepDirection(1);
+									setStepIndex((current) => current + 1);
+								}}
 							>
 								{t("common.next")}
 							</Button>

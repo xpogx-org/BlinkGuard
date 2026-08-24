@@ -133,14 +133,15 @@ describe("settings shell", () => {
 		expect(screen.getByText("First blink")).toBeDefined();
 		expect(screen.getByText("Calibrated")).toBeDefined();
 
-		fireEvent.click(
-			screen.getByRole("button", { name: "Start, 0 of 3 unlocked" }),
-		);
-		expect(screen.queryByText("First blink")).toBeNull();
+		const startGroup = screen.getByRole("button", {
+			name: "Start, 0 of 3 unlocked",
+		});
+		expect(startGroup.getAttribute("aria-expanded")).toBe("true");
+		fireEvent.click(startGroup);
+		expect(startGroup.getAttribute("aria-expanded")).toBe("false");
 		expect(screen.getByText("Calibrated")).toBeDefined();
-		fireEvent.click(
-			screen.getByRole("button", { name: "Start, 0 of 3 unlocked" }),
-		);
+		fireEvent.click(startGroup);
+		expect(startGroup.getAttribute("aria-expanded")).toBe("true");
 		expect(screen.getByText("First blink")).toBeDefined();
 
 		fireEvent.click(screen.getByRole("button", { name: "About" }));

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { type SectionTabItem, SectionTabs } from "@/components/section-tabs";
 import { cn } from "@/lib/utils";
+import { theme } from "../../shared/theme";
 
 export const MAIN_SCROLL_CLASS =
 	"min-h-0 flex-1 overflow-y-auto overscroll-y-contain [overflow-anchor:none] [scrollbar-gutter:stable] px-4 py-4 sm:px-6 sm:py-5";
@@ -32,7 +33,7 @@ export function TabbedSection<T extends string>({
 					/>
 				</div>
 			</div>
-			<div key={value} className={MAIN_SCROLL_CLASS}>
+			<div key={value} className={cn(MAIN_SCROLL_CLASS, theme.recipe.enter)}>
 				<div className={cn("mx-auto flex flex-col gap-4", maxWidthClass)}>
 					{children}
 				</div>

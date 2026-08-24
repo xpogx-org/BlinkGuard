@@ -26,6 +26,7 @@ export function StatusBanner({
 		<aside
 			role={role}
 			className={cn(
+				theme.recipe.enter,
 				"rounded-lg border p-4",
 				variantClasses[variant],
 				className,

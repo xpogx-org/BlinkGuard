@@ -3,6 +3,8 @@ import { Button } from "@/components/button";
 import { SettingPanel } from "@/components/setting-panel";
 import type { useAutoUpdate } from "@/features/about/model/use-auto-update";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { theme } from "../../../../shared/theme";
 
 type AutoUpdateApi = ReturnType<typeof useAutoUpdate>;
 
@@ -74,12 +76,20 @@ export function UpdateDialog({ status, install, dismiss }: AutoUpdateApi) {
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+			className={cn(
+				"fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
+				theme.recipe.overlay,
+			)}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={titleId}
 		>
-			<SettingPanel className="flex w-full max-w-md flex-col gap-4 shadow-lg">
+			<SettingPanel
+				className={cn(
+					"flex w-full max-w-md flex-col gap-4 shadow-lg",
+					theme.recipe.dialog,
+				)}
+			>
 				<div className="space-y-1">
 					<h2 id={titleId} className="text-xl font-semibold tracking-tight">
 						{title}

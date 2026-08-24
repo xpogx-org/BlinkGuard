@@ -20,7 +20,7 @@ import {
 	Trophy,
 	Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { SettingGrid } from "@/components/setting-grid";
 import { SettingPanel } from "@/components/setting-panel";
@@ -83,11 +83,13 @@ function AchievementCard({
 	unlocked,
 	progress,
 	t,
+	celebrate,
 }: {
 	id: AchievementId;
 	unlocked: boolean;
 	progress: AchievementProgress | undefined;
 	t: Translate;
+	celebrate?: boolean;
 }) {
 	const Icon = ICONS[ACHIEVEMENTS[id].icon];
 	const ratio =
@@ -102,6 +104,7 @@ function AchievementCard({
 				unlocked
 					? "border-primary/40 bg-primary/10"
 					: "border-border bg-background",
+				celebrate && "motion-unlock",
 			)}
 		>
 			<div className="flex items-start gap-3">
@@ -130,7 +133,7 @@ function AchievementCard({
 							</div>
 							<div className="h-1.5 overflow-hidden rounded-full bg-muted">
 								<div
-									className="h-full rounded-full bg-primary"
+									className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
 									style={{ width: `${ratio * 100}%` }}
 								/>
 							</div>
@@ -154,6 +157,24 @@ export function AchievementsPanel() {
 	const [collapsed, setCollapsed] = useState<ReadonlySet<AchievementCategory>>(
 		() => new Set(),
 	);
+	const seenUnlocked = useRef<Set<string> | null>(null);
+	const [justUnlocked, setJustUnlocked] = useState<ReadonlySet<string>>(
+		() => new Set(),
+	);
+
+	useEffect(() => {
+		const current = new Set(snapshot.unlockedAchievementIds);
+		if (seenUnlocked.current === null) {
+			seenUnlocked.current = current;
+			return;
+		}
+		const newly = [...current].filter((id) => !seenUnlocked.current?.has(id));
+		seenUnlocked.current = current;
+		if (newly.length === 0) return;
+		setJustUnlocked(new Set(newly));
+		const timer = window.setTimeout(() => setJustUnlocked(new Set()), 800);
+		return () => window.clearTimeout(timer);
+	}, [snapshot.unlockedAchievementIds]);
 
 	const toggleGroup = (category: AchievementCategory) => {
 		setCollapsed((current) => {
@@ -194,7 +215,7 @@ export function AchievementsPanel() {
 							type="button"
 							className="flex w-full items-center gap-2 rounded-md text-left outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
 							aria-expanded={isOpen}
-							aria-controls={isOpen ? panelId : undefined}
+							aria-controls={panelId}
 							aria-label={t("achievements.group.aria", {
 								category: categoryLabel,
 								unlocked: unlockedCount,
@@ -219,21 +240,31 @@ export function AchievementsPanel() {
 								aria-hidden
 							/>
 						</button>
-						{isOpen ? (
-							<div id={panelId} className="mt-4">
-								<SettingGrid>
-									{ids.map((id) => (
-										<AchievementCard
-											key={id}
-											id={id}
-											unlocked={unlocked.has(id)}
-											progress={snapshot.achievementProgress[id]}
-											t={t}
-										/>
-									))}
-								</SettingGrid>
+						<div
+							id={panelId}
+							aria-hidden={!isOpen}
+							className={cn(
+								"grid transition-[grid-template-rows] duration-200 ease-out",
+								isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+							)}
+						>
+							<div className="overflow-hidden">
+								<div className="mt-4">
+									<SettingGrid>
+										{ids.map((id) => (
+											<AchievementCard
+												key={id}
+												id={id}
+												unlocked={unlocked.has(id)}
+												progress={snapshot.achievementProgress[id]}
+												t={t}
+												celebrate={justUnlocked.has(id)}
+											/>
+										))}
+									</SettingGrid>
+								</div>
 							</div>
-						) : null}
+						</div>
 					</SettingPanel>
 				);
 			})}

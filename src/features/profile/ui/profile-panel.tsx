@@ -144,7 +144,7 @@ export function ProfilePanel() {
 							) : null}
 							<div className="h-2 overflow-hidden rounded-full bg-muted">
 								<div
-									className="h-full rounded-full bg-primary transition-[width]"
+									className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
 									style={{ width: `${Math.min(100, progress.ratio * 100)}%` }}
 								/>
 							</div>

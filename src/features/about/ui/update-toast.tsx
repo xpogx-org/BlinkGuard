@@ -1,6 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { useAutoUpdate } from "@/features/about/model/use-auto-update";
+import { usePresence } from "@/features/about/model/use-presence";
 import { useT } from "@/i18n";
+import { cn } from "@/lib/utils";
+import { theme } from "../../../../shared/theme";
 
 type AutoUpdateApi = ReturnType<typeof useAutoUpdate>;
 
@@ -32,7 +35,13 @@ export function UpdateToast({ status, dismiss }: AutoUpdateApi) {
 		return () => window.clearTimeout(timer);
 	}, [status, visible, dismiss]);
 
-	if (!visible) return null;
+	const { mounted, exiting } = usePresence(visible);
+	const cached = useRef({
+		title: "",
+		message: "",
+		showProgress: false,
+		progressWidth: 0,
+	});
 
 	const titleId = "auto-update-toast-title";
 	let title = "";
@@ -69,12 +78,19 @@ export function UpdateToast({ status, dismiss }: AutoUpdateApi) {
 			message = t("updates.readyOnQuit.message", { version: status.version });
 			break;
 		default:
-			return null;
+			break;
 	}
 
 	const showProgress =
 		status.state === "downloading" || status.state === "available";
 	const progressWidth = status.state === "downloading" ? (percent ?? 0) : 0;
+	if (visible) {
+		cached.current = { title, message, showProgress, progressWidth };
+	}
+	if (!mounted) return null;
+	const shown = visible
+		? { title, message, showProgress, progressWidth }
+		: cached.current;
 
 	return (
 		<div
@@ -83,22 +99,29 @@ export function UpdateToast({ status, dismiss }: AutoUpdateApi) {
 			aria-live="polite"
 			aria-labelledby={titleId}
 		>
-			<div className="pointer-events-auto flex w-full max-w-lg flex-col gap-2 rounded-lg border border-border bg-background/95 p-3 shadow-lg backdrop-blur-sm">
+			<div
+				className={cn(
+					"pointer-events-auto flex w-full max-w-lg flex-col gap-2 rounded-lg border border-border bg-background/95 p-3 shadow-lg backdrop-blur-sm",
+					exiting ? "motion-exit" : theme.recipe.dialog,
+				)}
+			>
 				<div className="min-w-0 space-y-0.5">
 					<p
 						id={titleId}
 						className="text-sm font-semibold tracking-tight text-foreground"
 					>
-						{title}
+						{shown.title}
 					</p>
-					<p className="select-text text-xs text-muted-foreground">{message}</p>
+					<p className="select-text text-xs text-muted-foreground">
+						{shown.message}
+					</p>
 				</div>
 
-				{showProgress ? (
+				{shown.showProgress ? (
 					<div className="h-1 overflow-hidden rounded-full bg-muted">
 						<div
 							className="h-full bg-primary transition-[width] duration-200"
-							style={{ width: `${progressWidth}%` }}
+							style={{ width: `${shown.progressWidth}%` }}
 						/>
 					</div>
 				) : null}
