@@ -62,6 +62,8 @@ import {
 type ReminderKind = "starting" | "blink" | "stopped";
 type ForceShowOptions = { force?: boolean; message?: string };
 const DISPLAY_RECOVER_DEBOUNCE_MS = 150;
+/** Short debug previews (ambient glow, no-face) auto-hide after this. */
+const DEBUG_PREVIEW_SHORT_DISMISS_MS = 3_000;
 
 export type PopupPlacementPersist = {
 	map: Record<string, Point>;
@@ -87,6 +89,8 @@ export class WindowManager {
 	private calibrationNudgeDismissTimer: ReturnType<typeof setTimeout> | null =
 		null;
 	private cheerToastDismissTimer: ReturnType<typeof setTimeout> | null = null;
+	private ambientPreviewDismissTimer: ReturnType<typeof setTimeout> | null =
+		null;
 	private onMainLoaded: (() => void) | null = null;
 	private displayRecoverTimer: ReturnType<typeof setTimeout> | null = null;
 	private readonly onDisplayLayoutChanged = (): void => {
@@ -310,6 +314,7 @@ export class WindowManager {
 	}
 
 	hideAmbient(): void {
+		this.clearAmbientPreviewDismissTimer();
 		this.closeAmbientChromeOverlays();
 		this.closeWindow("ambient");
 	}
@@ -569,12 +574,14 @@ export class WindowManager {
 				// starting/stopped auto-close inside showReminder; blink stays up.
 				return;
 			}
-			case "ambient":
+			case "ambient": {
 				this.showAmbient({ force: true });
+				this.scheduleAmbientPreviewDismiss();
 				return;
+			}
 			case "noFace": {
 				this.showNoFace({ force: true });
-				setTimeout(() => this.hideNoFace(), 3_000);
+				setTimeout(() => this.hideNoFace(), DEBUG_PREVIEW_SHORT_DISMISS_MS);
 				return;
 			}
 			case "exercise": {
@@ -982,6 +989,7 @@ export class WindowManager {
 	}
 
 	destroyAll(): void {
+		this.clearAmbientPreviewDismissTimer();
 		this.disposeDisplayListeners();
 		for (const window of BrowserWindow.getAllWindows()) {
 			if (!window.isDestroyed()) window.destroy();
@@ -1044,6 +1052,22 @@ export class WindowManager {
 			this.raiseReminderAboveAmbient();
 		});
 		return popup;
+	}
+
+	private scheduleAmbientPreviewDismiss(): void {
+		this.clearAmbientPreviewDismissTimer();
+		const popup = this.ambient;
+		this.ambientPreviewDismissTimer = setTimeout(() => {
+			this.ambientPreviewDismissTimer = null;
+			if (this.ambient === popup) this.hideAmbient();
+		}, DEBUG_PREVIEW_SHORT_DISMISS_MS);
+	}
+
+	private clearAmbientPreviewDismissTimer(): void {
+		if (this.ambientPreviewDismissTimer) {
+			clearTimeout(this.ambientPreviewDismissTimer);
+			this.ambientPreviewDismissTimer = null;
+		}
 	}
 
 	private closeAmbientChromeOverlays(): void {
