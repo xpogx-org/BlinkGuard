@@ -279,12 +279,12 @@ export function SettingsShell({
 				<nav
 					ref={navRef}
 					aria-label={t("app.navAria")}
-					className="relative flex gap-1 overflow-x-auto px-3 pb-3 min-[820px]:flex-1 min-[820px]:flex-col min-[820px]:overflow-visible min-[820px]:px-3 min-[820px]:pb-0"
+					className="relative flex gap-1 overflow-x-auto px-3 pb-3 min-[820px]:flex-1 min-[820px]:flex-col min-[820px]:items-stretch min-[820px]:overflow-visible min-[820px]:px-3 min-[820px]:pb-0"
 				>
 					{navPill ? (
 						<span
 							aria-hidden
-							className="pointer-events-none absolute rounded-md bg-sidebar-active transition-[transform,width,height] duration-200 ease-out motion-reduce:transition-none"
+							className="pointer-events-none absolute top-0 left-0 rounded-md bg-sidebar-active transition-[transform,width,height] duration-200 ease-out motion-reduce:transition-none"
 							style={{
 								width: navPill.width,
 								height: navPill.height,
@@ -306,7 +306,7 @@ export function SettingsShell({
 								aria-current={selected ? "page" : undefined}
 								onClick={() => setSection(item.id)}
 								className={cn(
-									"relative z-10 inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+									"relative z-10 inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors min-[820px]:w-full",
 									selected
 										? "text-primary"
 										: "text-sidebar-foreground hover:bg-muted",

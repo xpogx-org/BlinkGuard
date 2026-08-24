@@ -61,7 +61,7 @@ export function SectionTabs<T extends string>({
 			{pill ? (
 				<span
 					aria-hidden
-					className="pointer-events-none absolute top-0 rounded-md border border-border bg-sidebar-active shadow-xs transition-[transform,width,height] duration-200 ease-out motion-reduce:transition-none"
+					className="pointer-events-none absolute top-0 left-0 rounded-md border border-border bg-sidebar-active shadow-xs transition-[transform,width,height] duration-200 ease-out motion-reduce:transition-none"
 					style={{
 						width: pill.width,
 						height: pill.height,
