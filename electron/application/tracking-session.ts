@@ -57,3 +57,15 @@ export function startTrackingSession(
 		deps.lookAway.start();
 	}
 }
+
+/** Start or stop from the current armed `isTracking` flag (tray / shortcut). */
+export function toggleTrackingSession(
+	deps: TrackingSessionDeps,
+	isTracking: boolean,
+): void {
+	if (isTracking) {
+		stopTrackingSession(deps, true);
+	} else {
+		startTrackingSession(deps);
+	}
+}

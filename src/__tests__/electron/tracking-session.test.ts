@@ -3,6 +3,7 @@ import {
 	startTrackingSession,
 	stopTrackingSession,
 	type TrackingSessionDeps,
+	toggleTrackingSession,
 } from "../../../electron/application/tracking-session";
 
 function createDeps(
@@ -108,5 +109,37 @@ describe("tracking-session", () => {
 		expect(deps.reminders.start).toHaveBeenCalledWith(3000);
 		expect(deps.exercises.start).not.toHaveBeenCalled();
 		expect(deps.lookAway.start).not.toHaveBeenCalled();
+	});
+
+	it("toggleTrackingSession starts only blink when independent", () => {
+		const deps = createDeps({ eyeCareIndependentOfTracking: true });
+		toggleTrackingSession(deps, false);
+		expect(deps.reminders.start).toHaveBeenCalledWith(5000);
+		expect(deps.exercises.start).not.toHaveBeenCalled();
+		expect(deps.lookAway.start).not.toHaveBeenCalled();
+	});
+
+	it("toggleTrackingSession stops only blink when independent", () => {
+		const deps = createDeps({ eyeCareIndependentOfTracking: true });
+		toggleTrackingSession(deps, true);
+		expect(deps.reminders.stop).toHaveBeenCalledWith(true);
+		expect(deps.exercises.stop).not.toHaveBeenCalled();
+		expect(deps.lookAway.stop).not.toHaveBeenCalled();
+	});
+
+	it("toggleTrackingSession starts blink and eye-care when coupled", () => {
+		const deps = createDeps({ eyeCareIndependentOfTracking: false });
+		toggleTrackingSession(deps, false);
+		expect(deps.reminders.start).toHaveBeenCalledWith(5000);
+		expect(deps.exercises.start).toHaveBeenCalledOnce();
+		expect(deps.lookAway.start).toHaveBeenCalledOnce();
+	});
+
+	it("toggleTrackingSession stops blink and eye-care when coupled", () => {
+		const deps = createDeps({ eyeCareIndependentOfTracking: false });
+		toggleTrackingSession(deps, true);
+		expect(deps.reminders.stop).toHaveBeenCalledWith(true);
+		expect(deps.exercises.stop).toHaveBeenCalledOnce();
+		expect(deps.lookAway.stop).toHaveBeenCalledOnce();
 	});
 });

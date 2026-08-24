@@ -21,6 +21,7 @@ import { SessionPauseService } from "./application/session-pause-service";
 import {
 	startTrackingSession,
 	stopTrackingSession,
+	toggleTrackingSession,
 } from "./application/tracking-session";
 import { createFocusEnvironment } from "./infrastructure/focus/create-focus-environment";
 import { FocusEnvironmentMonitor } from "./infrastructure/focus/focus-environment-monitor";
@@ -252,9 +253,6 @@ function bootstrap(): void {
 		calibrationNudge,
 		osNotifications,
 	);
-	reminders.setOnTrackingChange((isTracking) => {
-		captureStatus.notifyTracking(isTracking);
-	});
 	const focusEnvironment = createFocusEnvironment();
 	const focusPause = new FocusPauseService(
 		preferences,
@@ -374,7 +372,26 @@ function bootstrap(): void {
 		() => reminders.snooze(),
 		() => exercises.snooze(),
 		() => lookAway.snooze(),
+		() => preferences.isTracking,
+		() => {
+			if (state.isAutoResuming) {
+				state.isAutoResuming = false;
+				stopTrackingSession(
+					{ reminders, exercises, lookAway, preferences },
+					false,
+				);
+			}
+			toggleTrackingSession(
+				{ reminders, exercises, lookAway, preferences },
+				preferences.isTracking,
+			);
+			windows.sendPreferences();
+		},
 	);
+	reminders.setOnTrackingChange((isTracking) => {
+		captureStatus.notifyTracking(isTracking);
+		tray.setTrackingState(isTracking);
+	});
 	lifecycle.attachTray(tray);
 
 	const preferenceActions = new PreferenceActions(
