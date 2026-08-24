@@ -2,6 +2,7 @@ import { Clock, Eye, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/button";
 import { RangeSlider } from "@/components/range-slider";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -69,7 +70,7 @@ export function LookAwaySettings({
 					/>
 				}
 			>
-				{preferences.lookAwayEnabled ? (
+				<Reveal open={preferences.lookAwayEnabled}>
 					<div className="space-y-3 border-t border-border pt-3">
 						<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
 							<Clock className="h-3 w-3" aria-hidden />
@@ -148,7 +149,7 @@ export function LookAwaySettings({
 							</Button>
 						</div>
 
-						{promptOpen ? (
+						<Reveal open={promptOpen}>
 							<div className="space-y-2">
 								<div className="flex justify-end">
 									<button
@@ -195,13 +196,13 @@ export function LookAwaySettings({
 									/>
 								</label>
 							</div>
-						) : null}
+						</Reveal>
 
 						<div className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
 							{t("lookAway.hint")}
 						</div>
 					</div>
-				) : null}
+				</Reveal>
 			</SettingRow>
 		</SettingPanel>
 	);

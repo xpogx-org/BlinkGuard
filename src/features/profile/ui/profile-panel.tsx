@@ -2,6 +2,7 @@ import { Share } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { SummaryStat } from "@/components/summary-stat";
@@ -149,11 +150,13 @@ export function ProfilePanel() {
 								/>
 							</div>
 						</div>
-						{shareStatus ? (
-							<p className="select-text break-all text-sm text-muted-foreground">
-								{shareStatus}
-							</p>
-						) : null}
+						<Reveal variant="fade" open={Boolean(shareStatus)}>
+							{shareStatus ? (
+								<p className="select-text break-all text-sm text-muted-foreground">
+									{shareStatus}
+								</p>
+							) : null}
+						</Reveal>
 					</div>
 				</SettingRow>
 			</SettingPanel>

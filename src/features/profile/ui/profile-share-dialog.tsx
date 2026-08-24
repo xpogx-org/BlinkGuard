@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { SettingPanel } from "@/components/setting-panel";
 import { ToggleSwitch } from "@/components/toggle-switch";
+import { usePresence } from "@/features/about/model/use-presence";
 import {
 	type ProfileShareCardInput,
 	renderProfileShareCard,
@@ -172,15 +173,18 @@ export function ProfileShareDialog({
 		null,
 	);
 
+	const { mounted, exiting } = usePresence(open);
+
 	useEffect(() => {
-		if (!open) {
-			setFrozenData(null);
-			return;
-		}
+		if (!open) return;
 		setToggles(
 			defaultShareToggles(document.documentElement.classList.contains("dark")),
 		);
 	}, [open]);
+
+	useEffect(() => {
+		if (!mounted) setFrozenData(null);
+	}, [mounted]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -225,7 +229,7 @@ export function ProfileShareDialog({
 		};
 	}, [open, toggles, locale, frozenData]);
 
-	if (!open || !frozenData) return null;
+	if (!mounted || !frozenData) return null;
 
 	const titleId = "profile-share-title";
 
@@ -264,7 +268,7 @@ export function ProfileShareDialog({
 		<div
 			className={cn(
 				"fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
-				theme.recipe.overlay,
+				exiting ? theme.recipe.exit : theme.recipe.overlay,
 			)}
 			role="dialog"
 			aria-modal="true"
@@ -276,7 +280,7 @@ export function ProfileShareDialog({
 			<SettingPanel
 				className={cn(
 					"flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col gap-4 overflow-y-auto [scrollbar-gutter:stable] shadow-lg",
-					theme.recipe.dialog,
+					exiting ? theme.recipe.exit : theme.recipe.dialog,
 				)}
 			>
 				<div className="space-y-1">

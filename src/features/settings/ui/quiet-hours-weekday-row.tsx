@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/reveal";
 import { ToggleSwitch } from "@/components/toggle-switch";
 import { useT } from "@/i18n";
 import type {
@@ -53,7 +54,7 @@ export function QuietHoursWeekdayRow({
 							}}
 						/>
 					</div>
-					{isOverride ? (
+					<Reveal open={isOverride}>
 						<div className="flex items-center gap-2 text-xs text-muted-foreground">
 							<span>{t("quietHours.dayOff")}</span>
 							<ToggleSwitch
@@ -72,14 +73,15 @@ export function QuietHoursWeekdayRow({
 								}}
 							/>
 						</div>
-					) : (
+					</Reveal>
+					<Reveal open={!isOverride}>
 						<span className="text-xs text-muted-foreground">
 							{t("quietHours.dayInherit")}
 						</span>
-					)}
+					</Reveal>
 				</div>
 			</div>
-			{isOverride && !isOff ? (
+			<Reveal open={isOverride && !isOff}>
 				<div className="flex flex-wrap items-center gap-3">
 					<label className="flex items-center gap-2 text-sm text-muted-foreground">
 						<span>{t("common.from")}</span>
@@ -112,7 +114,7 @@ export function QuietHoursWeekdayRow({
 						/>
 					</label>
 				</div>
-			) : null}
+			</Reveal>
 		</div>
 	);
 }

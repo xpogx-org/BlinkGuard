@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { StatusBanner } from "@/components/status-banner";
@@ -143,21 +144,23 @@ export function CameraDevicePicker({
 					) : null}
 				</SettingRow>
 			</SettingPanel>
-			{noticeText ? (
-				<StatusBanner variant="warning" className="px-4 py-3" role="status">
-					<div className="flex items-center justify-between gap-3">
-						<p className="min-w-0 text-sm">{noticeText}</p>
-						<button
-							type="button"
-							aria-label={t("camera.dismissDeviceNotice")}
-							onClick={() => setNotice(null)}
-							className="shrink-0 text-lg leading-none opacity-70 hover:opacity-100"
-						>
-							×
-						</button>
-					</div>
-				</StatusBanner>
-			) : null}
+			<Reveal variant="fade" open={Boolean(noticeText)}>
+				{noticeText ? (
+					<StatusBanner variant="warning" className="px-4 py-3" role="status">
+						<div className="flex items-center justify-between gap-3">
+							<p className="min-w-0 text-sm">{noticeText}</p>
+							<button
+								type="button"
+								aria-label={t("camera.dismissDeviceNotice")}
+								onClick={() => setNotice(null)}
+								className="shrink-0 text-lg leading-none opacity-70 hover:opacity-100"
+							>
+								×
+							</button>
+						</div>
+					</StatusBanner>
+				) : null}
+			</Reveal>
 		</>
 	);
 }

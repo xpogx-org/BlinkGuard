@@ -1,6 +1,7 @@
 import { Palette, Settings } from "lucide-react";
 import { useId, useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -76,7 +77,7 @@ export function PopupSettings({
 					{t("popup.changePosition")}
 				</Button>
 
-				{preferences.showPopupColors ? (
+				<Reveal open={preferences.showPopupColors}>
 					<div className="mt-4 space-y-4 border-t border-border pt-4">
 						<div className="flex items-center gap-2 text-sm font-medium text-foreground">
 							<Palette className="h-4 w-4 text-muted-foreground" aria-hidden />
@@ -90,7 +91,7 @@ export function PopupSettings({
 							>
 								{t("popup.message")}
 							</label>
-							{isEditingMessage ? (
+							<Reveal open={isEditingMessage}>
 								<div className="space-y-2">
 									<input
 										id="popup-message"
@@ -122,7 +123,8 @@ export function PopupSettings({
 										</Button>
 									</div>
 								</div>
-							) : (
+							</Reveal>
+							<Reveal open={!isEditingMessage}>
 								<div className="flex min-w-0 items-center gap-2">
 									<p className="min-w-0 flex-1 truncate text-sm text-foreground">
 										"{preferences.popupMessage}"
@@ -138,7 +140,7 @@ export function PopupSettings({
 										{t("common.edit")}
 									</button>
 								</div>
-							)}
+							</Reveal>
 						</div>
 
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -190,7 +192,7 @@ export function PopupSettings({
 							</p>
 						</div>
 					</div>
-				) : null}
+				</Reveal>
 			</SettingRow>
 
 			<SettingRow

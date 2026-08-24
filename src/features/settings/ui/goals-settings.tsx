@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -111,9 +112,9 @@ export function GoalsSettings({
 					</div>
 				}
 			>
-				{settingsOpen ? (
-					<>
-						{preferences.goalsEnabled ? (
+				<Reveal open={settingsOpen}>
+					<div>
+						<Reveal open={preferences.goalsEnabled}>
 							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 								<GoalNumberInput
 									id="daily-blink-goal"
@@ -160,7 +161,7 @@ export function GoalsSettings({
 									}
 								/>
 							</div>
-						) : null}
+						</Reveal>
 						<div className={preferences.goalsEnabled ? "mt-3" : undefined}>
 							<Button
 								type="button"
@@ -172,8 +173,8 @@ export function GoalsSettings({
 								{t("common.reset")}
 							</Button>
 						</div>
-					</>
-				) : null}
+					</div>
+				</Reveal>
 			</SettingRow>
 		</SettingPanel>
 	);

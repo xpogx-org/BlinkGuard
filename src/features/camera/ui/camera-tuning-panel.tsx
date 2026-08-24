@@ -1,5 +1,6 @@
 import { Activity, Crosshair, Gauge, RefreshCw } from "lucide-react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingGrid } from "@/components/setting-grid";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
@@ -84,7 +85,7 @@ export function CameraTuningPanel({
 									{t("camera.calibrate")}
 								</Button>
 							)}
-							{hasSavedCalibration && !calibrating ? (
+							<Reveal open={hasSavedCalibration && !calibrating}>
 								<Button
 									type="button"
 									size="sm"
@@ -93,7 +94,7 @@ export function CameraTuningPanel({
 								>
 									{t("common.reset")}
 								</Button>
-							) : null}
+							</Reveal>
 						</div>
 						{earBadge || lastCalibratedLabel ? (
 							<p className="mt-2 select-text text-xs">
@@ -107,8 +108,8 @@ export function CameraTuningPanel({
 								) : null}
 							</p>
 						) : null}
-						{calibrating ? (
-							<>
+						<Reveal open={calibrating}>
+							<div>
 								<div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
 									<div
 										className="h-full bg-primary transition-[width] duration-200"
@@ -134,13 +135,15 @@ export function CameraTuningPanel({
 										? t("camera.calibrationFaceOk")
 										: t("camera.calibrationFaceMissing")}
 								</p>
-							</>
-						) : null}
-						{calibrationMessage ? (
-							<p className="mt-2 select-text text-xs text-muted-foreground">
-								{calibrationMessage}
-							</p>
-						) : null}
+							</div>
+						</Reveal>
+						<Reveal variant="fade" open={Boolean(calibrationMessage)}>
+							{calibrationMessage ? (
+								<p className="mt-2 select-text text-xs text-muted-foreground">
+									{calibrationMessage}
+								</p>
+							) : null}
+						</Reveal>
 					</SettingRow>
 				</SettingPanel>
 
@@ -217,11 +220,11 @@ export function CameraTuningPanel({
 								{t("camera.mgdActive")}
 							</span>
 						</div>
-						{preferences.showMgdInfo ? (
+						<Reveal open={preferences.showMgdInfo}>
 							<div className="mt-2 rounded-md bg-accent/60 p-3 text-xs text-muted-foreground sm:text-sm">
 								{t("camera.mgdInfo")}
 							</div>
-						) : null}
+						</Reveal>
 					</SettingRow>
 				</SettingPanel>
 

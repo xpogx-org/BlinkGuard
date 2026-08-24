@@ -2,6 +2,7 @@ import { Clock, Dumbbell, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/button";
 import { RangeSlider } from "@/components/range-slider";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -82,7 +83,7 @@ export function ExerciseSettings({
 					/>
 				}
 			>
-				{preferences.eyeExercisesEnabled ? (
+				<Reveal open={preferences.eyeExercisesEnabled}>
 					<div className="space-y-3 border-t border-border pt-3">
 						<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
 							<Clock className="h-3 w-3" aria-hidden />
@@ -140,7 +141,7 @@ export function ExerciseSettings({
 							</Button>
 						</div>
 
-						{promptsOpen ? (
+						<Reveal open={promptsOpen}>
 							<div className="space-y-2">
 								<div className="flex justify-end">
 									<button
@@ -190,18 +191,18 @@ export function ExerciseSettings({
 									{t("exercises.addPrompt")}
 								</button>
 							</div>
-						) : null}
+						</Reveal>
 
 						<div className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
 							{t("exercises.hint")}
 						</div>
-						{preferences.lookAwayEnabled ? (
+						<Reveal open={preferences.lookAwayEnabled}>
 							<p className="text-xs text-muted-foreground">
 								{t("exercises.overlapHint")}
 							</p>
-						) : null}
+						</Reveal>
 					</div>
-				) : null}
+				</Reveal>
 			</SettingRow>
 		</SettingPanel>
 	);

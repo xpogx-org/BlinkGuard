@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/reveal";
 import { StatusBanner } from "@/components/status-banner";
 import { useT } from "@/i18n";
 
@@ -11,14 +12,18 @@ export function EyePromptsDisabledNotice({
 	lookAwayEnabled,
 }: EyePromptsDisabledNoticeProps) {
 	const t = useT();
-	if (eyeExercisesEnabled || lookAwayEnabled) return null;
+	const visible = !eyeExercisesEnabled && !lookAwayEnabled;
 
 	return (
-		<StatusBanner variant="warning">
-			<h3 className="mb-1 text-sm font-semibold">
-				{t("exercises.disabledNotice.title")}
-			</h3>
-			<p className="text-sm opacity-90">{t("exercises.disabledNotice.body")}</p>
-		</StatusBanner>
+		<Reveal variant="fade" open={visible}>
+			<StatusBanner variant="warning">
+				<h3 className="mb-1 text-sm font-semibold">
+					{t("exercises.disabledNotice.title")}
+				</h3>
+				<p className="text-sm opacity-90">
+					{t("exercises.disabledNotice.body")}
+				</p>
+			</StatusBanner>
+		</Reveal>
 	);
 }

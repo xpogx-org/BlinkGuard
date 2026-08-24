@@ -2,6 +2,7 @@ import { Play, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/button";
 import { RangeSlider } from "@/components/range-slider";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -68,7 +69,7 @@ export function SoundSettings({
 					/>
 				}
 			>
-				{preferences.soundEnabled ? (
+				<Reveal open={preferences.soundEnabled}>
 					<div className="flex items-center gap-3">
 						<label
 							htmlFor="sound-volume"
@@ -106,7 +107,7 @@ export function SoundSettings({
 							{t("sound.test")}
 						</Button>
 					</div>
-				) : null}
+				</Reveal>
 			</SettingRow>
 		</SettingPanel>
 	);

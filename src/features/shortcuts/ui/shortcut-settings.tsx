@@ -1,5 +1,6 @@
 import { Zap } from "lucide-react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useT } from "@/i18n";
@@ -132,19 +133,23 @@ export function ShortcutSettings({
 										</div>
 									)}
 								</div>
-								{error ? (
-									<p className="select-text text-sm text-destructive">
-										{error}
-									</p>
-								) : null}
+								<Reveal variant="fade" open={Boolean(error)}>
+									{error ? (
+										<p className="select-text text-sm text-destructive">
+											{error}
+										</p>
+									) : null}
+								</Reveal>
 							</div>
 						);
 					})}
-					{footerNote ? (
-						<p className="rounded-md bg-accent/60 px-3 py-2 text-xs text-muted-foreground sm:text-sm">
-							{footerNote}
-						</p>
-					) : null}
+					<Reveal variant="fade" open={Boolean(footerNote)}>
+						{footerNote ? (
+							<p className="rounded-md bg-accent/60 px-3 py-2 text-xs text-muted-foreground sm:text-sm">
+								{footerNote}
+							</p>
+						) : null}
+					</Reveal>
 				</div>
 			</SettingRow>
 		</SettingPanel>

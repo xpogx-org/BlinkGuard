@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -193,7 +194,7 @@ export function QuietHoursFocusSettings({
 						/>
 					}
 				>
-					{preferences.quietHoursEnabled ? (
+					<Reveal open={preferences.quietHoursEnabled}>
 						<div className="space-y-3">
 							<div className="flex flex-wrap items-center gap-3">
 								<label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -257,7 +258,7 @@ export function QuietHoursFocusSettings({
 									</span>
 								</Button>
 							</div>
-							{weekdaysOpen ? (
+							<Reveal open={weekdaysOpen}>
 								<div className="space-y-2">
 									{QUIET_HOURS_WEEKDAY_KEYS.map((weekday) => (
 										<QuietHoursWeekdayRow
@@ -270,9 +271,9 @@ export function QuietHoursFocusSettings({
 										/>
 									))}
 								</div>
-							) : null}
+							</Reveal>
 						</div>
-					) : null}
+					</Reveal>
 				</SettingRow>
 			</SettingPanel>
 
@@ -309,7 +310,10 @@ export function QuietHoursFocusSettings({
 				<SettingRow
 					title={
 						<>
-							<AppWindow className="h-4 w-4 text-muted-foreground" aria-hidden />
+							<AppWindow
+								className="h-4 w-4 text-muted-foreground"
+								aria-hidden
+							/>
 							{t("appRules.title")}
 						</>
 					}
@@ -353,7 +357,9 @@ export function QuietHoursFocusSettings({
 											value=""
 											disabled={!canAddRule || picker.running.length === 0}
 											onFocus={() => {
-												void rendererIpc.listPauseAppCandidates().then(setPicker);
+												void rendererIpc
+													.listPauseAppCandidates()
+													.then(setPicker);
 											}}
 											onChange={(event) => {
 												const picked = picker.running.find(

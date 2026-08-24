@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/button";
 import { SettingPanel } from "@/components/setting-panel";
 import type { useAutoUpdate } from "@/features/about/model/use-auto-update";
+import { usePresence } from "@/features/about/model/use-presence";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { theme } from "../../../../shared/theme";
@@ -28,7 +29,11 @@ export function UpdateDialog({ status, install, dismiss }: AutoUpdateApi) {
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [status, dismiss]);
 
-	if (status.state === "idle" || status.surface !== "dialog") return null;
+	const open = status.state !== "idle" && status.surface === "dialog";
+	const { mounted, exiting } = usePresence(open);
+	const cached = useRef({ title: "", message: "" });
+
+	if (!mounted) return null;
 
 	const titleId = "auto-update-title";
 	let title = "";
@@ -73,12 +78,16 @@ export function UpdateDialog({ status, install, dismiss }: AutoUpdateApi) {
 	const showProgress =
 		status.state === "downloading" || status.state === "available";
 	const progressWidth = status.state === "downloading" ? (percent ?? 0) : 0;
+	if (open) {
+		cached.current = { title, message };
+	}
+	const shown = open ? { title, message } : cached.current;
 
 	return (
 		<div
 			className={cn(
 				"fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
-				theme.recipe.overlay,
+				exiting ? theme.recipe.exit : theme.recipe.overlay,
 			)}
 			role="dialog"
 			aria-modal="true"
@@ -87,14 +96,16 @@ export function UpdateDialog({ status, install, dismiss }: AutoUpdateApi) {
 			<SettingPanel
 				className={cn(
 					"flex w-full max-w-md flex-col gap-4 shadow-lg",
-					theme.recipe.dialog,
+					exiting ? theme.recipe.exit : theme.recipe.dialog,
 				)}
 			>
 				<div className="space-y-1">
 					<h2 id={titleId} className="text-xl font-semibold tracking-tight">
-						{title}
+						{shown.title}
 					</h2>
-					<p className="select-text text-sm text-muted-foreground">{message}</p>
+					<p className="select-text text-sm text-muted-foreground">
+						{shown.message}
+					</p>
 				</div>
 
 				{showProgress ? (

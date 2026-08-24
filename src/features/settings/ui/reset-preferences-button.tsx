@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useT } from "@/i18n";
@@ -24,7 +25,7 @@ export function ResetPreferencesButton() {
 				}
 				description={t("reset.description")}
 			>
-				{confirming ? (
+				<Reveal open={confirming}>
 					<div className="space-y-3">
 						<p className="text-sm text-foreground">{t("reset.confirm")}</p>
 						<label className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -56,7 +57,8 @@ export function ResetPreferencesButton() {
 							</Button>
 						</div>
 					</div>
-				) : (
+				</Reveal>
+				<Reveal open={!confirming}>
 					<Button
 						type="button"
 						variant="destructive"
@@ -64,7 +66,7 @@ export function ResetPreferencesButton() {
 					>
 						{t("reset.title")}
 					</Button>
-				)}
+				</Reveal>
 			</SettingRow>
 		</SettingPanel>
 	);

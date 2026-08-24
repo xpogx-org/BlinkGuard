@@ -1,6 +1,7 @@
 import { ExternalLink, Upload } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { TabbedSection } from "@/components/tabbed-section";
@@ -122,11 +123,13 @@ export function AboutPanel({ autoUpdate }: AboutPanelProps) {
 								</Button>
 							}
 						>
-							{exportStatus ? (
-								<p className="select-text text-sm text-muted-foreground break-all">
-									{exportStatus}
-								</p>
-							) : null}
+							<Reveal variant="fade" open={Boolean(exportStatus)}>
+								{exportStatus ? (
+									<p className="select-text text-sm text-muted-foreground break-all">
+										{exportStatus}
+									</p>
+								) : null}
+							</Reveal>
 						</SettingRow>
 					</SettingPanel>
 

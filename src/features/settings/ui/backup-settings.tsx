@@ -1,6 +1,7 @@
 import { Download, Upload } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useT } from "@/i18n";
@@ -76,31 +77,35 @@ export function BackupSettings() {
 
 	if (confirmingImport) {
 		return (
-			<SettingPanel className="space-y-3">
-				<p className="text-sm text-foreground">{t("backup.import.confirm")}</p>
-				<div className="flex flex-wrap gap-2">
-					<Button
-						type="button"
-						variant="secondary"
-						disabled={busy !== null}
-						onClick={() => setConfirmingImport(false)}
-					>
-						{t("common.cancel")}
-					</Button>
-					<Button
-						type="button"
-						variant="destructive"
-						disabled={busy !== null}
-						onClick={() => {
-							void handleImport();
-						}}
-					>
-						{busy === "import"
-							? t("backup.import.busy")
-							: t("backup.import.button")}
-					</Button>
-				</div>
-			</SettingPanel>
+			<Reveal variant="fade" open>
+				<SettingPanel className="space-y-3">
+					<p className="text-sm text-foreground">
+						{t("backup.import.confirm")}
+					</p>
+					<div className="flex flex-wrap gap-2">
+						<Button
+							type="button"
+							variant="secondary"
+							disabled={busy !== null}
+							onClick={() => setConfirmingImport(false)}
+						>
+							{t("common.cancel")}
+						</Button>
+						<Button
+							type="button"
+							variant="destructive"
+							disabled={busy !== null}
+							onClick={() => {
+								void handleImport();
+							}}
+						>
+							{busy === "import"
+								? t("backup.import.busy")
+								: t("backup.import.button")}
+						</Button>
+					</div>
+				</SettingPanel>
+			</Reveal>
 		);
 	}
 
@@ -180,11 +185,13 @@ export function BackupSettings() {
 						{t("backup.import.button")}
 					</Button>
 				</div>
-				{status ? (
-					<p className="mt-3 select-text text-sm text-muted-foreground break-all">
-						{status}
-					</p>
-				) : null}
+				<Reveal variant="fade" open={Boolean(status)}>
+					{status ? (
+						<p className="mt-3 select-text text-sm text-muted-foreground break-all">
+							{status}
+						</p>
+					) : null}
+				</Reveal>
 			</SettingRow>
 		</SettingPanel>
 	);

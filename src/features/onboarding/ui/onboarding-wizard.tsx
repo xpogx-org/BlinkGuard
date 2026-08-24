@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { ToggleSwitch } from "@/components/toggle-switch";
 import { applyLocale } from "@/features/settings/model/apply-locale";
@@ -288,7 +289,7 @@ export function OnboardingWizard({
 								<p className="text-xs text-muted-foreground sm:text-sm">
 									{t("onboarding.quietDesc")}
 								</p>
-								{preferences.quietHoursEnabled ? (
+								<Reveal open={preferences.quietHoursEnabled}>
 									<div className="flex flex-wrap items-center gap-3">
 										<label className="flex items-center gap-2 text-sm text-muted-foreground">
 											<span>{t("common.from")}</span>
@@ -319,7 +320,7 @@ export function OnboardingWizard({
 											/>
 										</label>
 									</div>
-								) : null}
+								</Reveal>
 							</div>
 
 							<div className="space-y-3 border-t border-border pt-4">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingGrid } from "@/components/setting-grid";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
@@ -162,17 +163,19 @@ export function SettingsProfilesPanel({ active }: { active: boolean }) {
 				description={t("settingsProfiles.body")}
 			>
 				<div className="space-y-3">
-					{profiles.dirty ? (
+					<Reveal variant="fade" open={profiles.dirty}>
 						<StatusBanner>{t("settingsProfiles.dirty.body")}</StatusBanner>
-					) : null}
-					{banner ? (
-						<StatusBanner variant="destructive" role="alert">
-							{banner}
-						</StatusBanner>
-					) : null}
-					{atCap ? (
+					</Reveal>
+					<Reveal variant="fade" open={Boolean(banner)}>
+						{banner ? (
+							<StatusBanner variant="destructive" role="alert">
+								{banner}
+							</StatusBanner>
+						) : null}
+					</Reveal>
+					<Reveal variant="fade" open={atCap}>
 						<StatusBanner>{t("settingsProfiles.cap.reached")}</StatusBanner>
-					) : null}
+					</Reveal>
 
 					<div className="flex flex-wrap items-end gap-2">
 						<label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-sm">
@@ -224,7 +227,7 @@ export function SettingsProfilesPanel({ active }: { active: boolean }) {
 										: undefined
 								}
 							>
-								{renaming ? (
+								<Reveal open={renaming}>
 									<div className="flex flex-wrap gap-2">
 										<input
 											type="text"
@@ -262,7 +265,8 @@ export function SettingsProfilesPanel({ active }: { active: boolean }) {
 											{t("common.cancel")}
 										</Button>
 									</div>
-								) : (
+								</Reveal>
+								<Reveal open={!renaming}>
 									<div className="flex flex-wrap gap-2">
 										<Button
 											type="button"
@@ -311,7 +315,7 @@ export function SettingsProfilesPanel({ active }: { active: boolean }) {
 											{t("settingsProfiles.delete.button")}
 										</Button>
 									</div>
-								)}
+								</Reveal>
 							</SettingRow>
 						);
 					})}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/button";
+import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -277,11 +278,13 @@ export function DebugToolsPanel({ setPreferences }: DebugToolsPanelProps) {
 								{t("debug.trace.stop")}
 							</Button>
 						</div>
-						{traceStatus ? (
-							<p className="text-xs text-muted-foreground break-all">
-								{traceStatus}
-							</p>
-						) : null}
+						<Reveal variant="fade" open={Boolean(traceStatus)}>
+							{traceStatus ? (
+								<p className="text-xs text-muted-foreground break-all">
+									{traceStatus}
+								</p>
+							) : null}
+						</Reveal>
 					</div>
 				</SettingRow>
 			</SettingPanel>
