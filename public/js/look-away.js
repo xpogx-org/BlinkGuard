@@ -50,17 +50,32 @@ function initLookAwayPopup() {
 	});
 
 	const countdownEl = document.getElementById("countdown");
-	let remaining = readDurationSeconds();
+	const ringEl = document.getElementById("countdown-ring");
+	const total = readDurationSeconds();
+	let remaining = total;
+	const ringLength = 2 * Math.PI * 38;
 
-	if (countdownEl) {
-		countdownEl.textContent = String(remaining);
+	function renderCountdown(tickNumber) {
+		if (countdownEl) {
+			countdownEl.textContent = String(Math.max(0, remaining));
+			if (tickNumber) {
+				countdownEl.classList.remove("is-ticking");
+				void countdownEl.offsetWidth;
+				countdownEl.classList.add("is-ticking");
+			}
+		}
+		if (ringEl) {
+			const progress = total <= 0 ? 0 : Math.max(0, remaining) / total;
+			ringEl.style.strokeDasharray = String(ringLength);
+			ringEl.style.strokeDashoffset = String(ringLength * (1 - progress));
+		}
 	}
+
+	renderCountdown(false);
 
 	const tick = window.setInterval(() => {
 		remaining -= 1;
-		if (countdownEl) {
-			countdownEl.textContent = String(Math.max(0, remaining));
-		}
+		renderCountdown(true);
 		if (remaining <= 0) {
 			window.clearInterval(tick);
 		}

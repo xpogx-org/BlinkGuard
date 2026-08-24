@@ -7,11 +7,17 @@
     <link rel="stylesheet" href="css/look-away.css">
 </head>
 <body>
-    <div class="look-away-container popup-glass" id="container">
+    <div class="look-away-container popup-glass popup-enter" id="container">
         <h2 class="look-away-title" id="look-away-title">Look away</h2>
         <div class="look-away-hint" id="look-away-hint">Focus on something ~20 feet / 6 m away</div>
         <div class="look-away-timer" role="status" aria-live="polite" aria-atomic="true">
-            <div class="look-away-countdown" id="countdown">20</div>
+            <div class="look-away-ring-wrap">
+                <svg class="look-away-ring" viewBox="0 0 88 88" aria-hidden="true">
+                    <circle class="look-away-ring-track" cx="44" cy="44" r="38"></circle>
+                    <circle class="look-away-ring-progress" id="countdown-ring" cx="44" cy="44" r="38"></circle>
+                </svg>
+                <div class="look-away-countdown" id="countdown">20</div>
+            </div>
             <div class="look-away-unit" data-i18n="popup.lookAway.unit">seconds</div>
         </div>
         <div class="look-away-buttons" hidden>

@@ -81,18 +81,14 @@ function setFaceMissingOverlay(visible, faceStatus) {
 	const hint = document.getElementById("face-missing-hint");
 	if (!overlay) return;
 
-	if (visible) {
-		overlay.hidden = false;
-		if (hint) {
-			const hintKey =
-				faceStatus === "too_far"
-					? "popup.camera.hintTooFar"
-					: "popup.camera.hintNone";
-			hint.textContent = tr(hintKey);
-			hint.setAttribute("data-i18n", hintKey);
-		}
-	} else {
-		overlay.hidden = true;
+	overlay.classList.toggle("is-visible", Boolean(visible));
+	if (visible && hint) {
+		const hintKey =
+			faceStatus === "too_far"
+				? "popup.camera.hintTooFar"
+				: "popup.camera.hintNone";
+		hint.textContent = tr(hintKey);
+		hint.setAttribute("data-i18n", hintKey);
 	}
 }
 

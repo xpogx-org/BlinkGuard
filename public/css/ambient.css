@@ -58,3 +58,10 @@ body.ambient-body {
 		opacity: 0.9;
 	}
 }
+
+@media (prefers-reduced-motion: reduce) {
+	#ambient-frame {
+		animation: none;
+		opacity: 0.75;
+	}
+}

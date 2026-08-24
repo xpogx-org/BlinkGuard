@@ -123,8 +123,38 @@ button:disabled,
 @keyframes fadeIn {
 	0% {
 		opacity: 0;
+		transform: translateY(4px) scale(0.98);
 	}
 	100% {
 		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes popupEnter {
+	from {
+		opacity: 0;
+		transform: translateY(6px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.popup-enter {
+	animation: popupEnter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.popup-enter,
+	.reminder-card,
+	.reminder-card.camera-mode,
+	#no-face,
+	#calibration-nudge,
+	#ambient-frame {
+		animation: none !important;
+		opacity: 1;
+		transform: none;
 	}
 }

@@ -21,6 +21,4 @@ body.blink-rate-coach-body {
 	border-radius: var(--popup-radius-sm);
 	padding: 8px 14px;
 	white-space: nowrap;
-	opacity: 0;
-	animation: fadeIn 0.35s forwards;
 }
