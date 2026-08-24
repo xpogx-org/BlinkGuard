@@ -30,7 +30,7 @@ infrastructure (store, windows, process, sidecar adapters)
 | `electron/application/` | Runtime state; preferences, reminder, exercise, look-away, tracking session, blink stats, settings profiles, calibration nudge, camera capture status, snooze-all, focus-pause, session-pause, preference actions, deferred tracking restore; plus ports. |
 | `electron/infrastructure/` | Electron/Node adapters for IPC, windows, lifecycle/power, sidecar, shortcuts, tray, sound, OS toasts, store, process cleanup, paths/logging, backup, profile export, focus, session activity (Win+Mac lid / display-sleep; stub elsewhere), auto-update. |
 | `shared/` | Electron-free contracts: IPC channel names and send/on/invoke whitelists, preference types/defaults, named setups, backup envelope, and related types. |
-| `src/app.tsx` | React settings shell / layout. |
+| `src/app.tsx` | React settings entry (`BlinkGuardHomepage`). Nav shell: `src/features/settings/ui/settings-shell.tsx` (`SettingsShell`). |
 | `src/features/*` | Feature UI + hooks (`reminders`, `camera`, `exercises`, `look-away`, `popup-appearance`, `statistics`, `profile`, `achievements`, `rewards`, `settings`, `onboarding`, `about`, `shortcuts`, `debug`). |
 | `src/shared/ipc/` | Renderer adapter over the preload bridge. |
 | `public/*.html` | Popup / camera / editor / sound / look-away / ambient and related shells. |
