@@ -43,7 +43,7 @@
 - **Blink reminders** — camera miss-gap (1–10s) or a timer micro-break (15–120s), with Standard / Gentle / Strong prompt profiles (ambient glow → overlay → escalate)
 - **20-20-20 look-away** and **eye exercises** — independent timers; Skip / Snooze; exercises auto-close after 30 seconds
 - **Quiet hours, fullscreen, and per-app pause** — hide prompts during quiet time (optional per-weekday hours), fullscreen, or listed foreground apps
-- **Progress** — stats, goals, levels, achievements, rewards, and a shareable card
+- **Progress** — stats (blinks plus look-away/exercise), goals, levels, achievements, rewards, and a shareable card
 - **Your overlay** — drag, resize, colors, transparency; layout remembered per display (kept if a monitor sleeps or unplugs); optional sounds and native OS toasts
 - **Local by design** — preferences via `electron-store`; named Setups; backup/import JSON; English and Ukrainian; dark / light. Camera frames never leave the machine ([PRIVACY.md](PRIVACY.md))
 
@@ -53,6 +53,7 @@
 - **MGD mode** — timed popups even while blinking; the popup still closes on a detected blink
 - **Setup vs Tuning** — live preview (up to Ultra 30 FPS), capture-status chip, nudge when EAR calibration is stale
 - **Sleep / lock / lid** — pauses with a distinct reason in Settings and the tray; resumes when the session is active again
+- **Tray** — Start/Stop tracking, snooze by kind, switch Setups, pause and capture status; idle vs tracking icon
 - **In-app updates** — GitHub Releases (Windows and macOS); About opens Release Notes
 - **Diagnostics export** — local logs for support
 

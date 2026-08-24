@@ -1,7 +1,7 @@
 {
 	"name": "blinkguard",
 	"private": true,
-	"version": "2.15.1",
+	"version": "2.16.0",
 	"type": "module",
 	"description": "Windows and macOS app that helps prevent dry eyes and eye strain: blink reminders, optional on-device camera detection, and 20-20-20 breaks. No account, no cloud.",
 	"license": "MIT",

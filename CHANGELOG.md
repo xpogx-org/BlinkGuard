@@ -4,6 +4,26 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-08-24
+
+### Added
+
+- Tray: Start/Stop tracking, grouped menu with pause row, Snooze submenu, and idle vs tracking icon
+- Tray: switch named Setups (confirms unsaved changes like Settings)
+- Progress: look-away and exercise completed/skipped/snoozed on day history and the statistics panel
+- Settings: motion on panels, banners, and dialogs; themed Select instead of native dropdowns
+- Popups: enter motion, camera overlay fade, and look-away countdown ring
+- Debug: Clean leftover overlays and sounds
+
+### Changed
+
+- Progress: compact statistics tab (goals and streak on the Goals card)
+
+### Fixed
+
+- Settings: selected nav pill fills the full row
+- Debug: Ambient glow preview auto-dismisses after 3s
+
 ## [2.15.1] - 2026-08-22
 
 ### Fixed
