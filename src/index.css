@@ -13,6 +13,9 @@
 	--radius-sm: calc(var(--radius) - 4px);
 
 	--animate-tracking-pulse: tracking-pulse 2.2s ease-out infinite;
+	--duration-press: 150ms;
+	--duration-enter: 200ms;
+	--duration-celebrate: 280ms;
 
 	@keyframes tracking-pulse {
 		0% {
@@ -247,5 +250,139 @@
 
 	::-webkit-scrollbar-corner {
 		background: transparent;
+	}
+}
+
+@keyframes motion-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes motion-overlay {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes motion-dialog {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes motion-exit {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+}
+
+@keyframes motion-step-forward {
+	from {
+		opacity: 0;
+		transform: translateX(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes motion-step-back {
+	from {
+		opacity: 0;
+		transform: translateX(-12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes motion-unlock {
+	0% {
+		box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+	}
+	100% {
+		box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+	}
+}
+
+@keyframes motion-flash {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	40% {
+		transform: scale(1.02);
+	}
+}
+
+@layer utilities {
+	.motion-enter {
+		animation: motion-enter var(--duration-enter) ease-out both;
+	}
+
+	.motion-overlay {
+		animation: motion-overlay var(--duration-enter) ease-out both;
+	}
+
+	.motion-dialog {
+		animation: motion-dialog var(--duration-enter) ease-out both;
+	}
+
+	.motion-exit {
+		animation: motion-exit var(--duration-enter) ease-in both;
+	}
+
+	.motion-step-forward {
+		animation: motion-step-forward var(--duration-enter) ease-out both;
+	}
+
+	.motion-step-back {
+		animation: motion-step-back var(--duration-enter) ease-out both;
+	}
+
+	.motion-unlock {
+		animation: motion-unlock 700ms ease-out 1;
+	}
+
+	.motion-flash {
+		animation: motion-flash var(--duration-celebrate) ease-out 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.motion-enter,
+	.motion-overlay,
+	.motion-dialog,
+	.motion-exit,
+	.motion-step-forward,
+	.motion-step-back,
+	.motion-unlock,
+	.motion-flash,
+	.animate-tracking-pulse {
+		animation: none !important;
+		opacity: 1;
+		transform: none;
+		box-shadow: none;
 	}
 }

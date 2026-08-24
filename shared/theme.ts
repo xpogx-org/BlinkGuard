@@ -132,6 +132,9 @@ export const theme = {
 			"border-warning/30 bg-warning/10 text-warning-foreground",
 		destructiveSurface:
 			"border-destructive/40 bg-destructive/10 text-destructive",
+		enter: "motion-enter",
+		overlay: "motion-overlay",
+		dialog: "motion-dialog",
 	},
 } as const;
 
