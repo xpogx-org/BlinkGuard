@@ -36,7 +36,7 @@ export function StatisticsPanel() {
 	const { t, locale } = useI18n();
 	const { snapshot, clearStatistics } = useBlinkStats();
 	const [range, setRange] = useState<ChartRange>("today");
-	const { today, totals, goals, streak, hasStatsFlair } = snapshot;
+	const { today, totals, goals, streak, hasStatsFlair, weekEyeCare } = snapshot;
 	const buckets = chartBuckets(range, snapshot);
 	const chartCopy: Record<
 		ChartRange,
@@ -193,6 +193,47 @@ export function StatisticsPanel() {
 							label={t("stats.sessions")}
 							value={String(today.sessions)}
 						/>
+					</div>
+				</SettingRow>
+			</SettingPanel>
+
+			<SettingPanel>
+				<SettingRow
+					title={t("stats.eyeCare")}
+					description={t("stats.eyeCareDesc")}
+				>
+					<div className="space-y-3">
+						<div className="grid grid-cols-3 gap-3">
+							<SummaryStat
+								label={t("stats.lookAwayCompleted")}
+								value={String(today.lookAwayCompleted)}
+							/>
+							<SummaryStat
+								label={t("stats.lookAwaySkipped")}
+								value={String(today.lookAwaySkipped)}
+							/>
+							<SummaryStat
+								label={t("stats.lookAwaySnoozed")}
+								value={String(today.lookAwaySnoozed)}
+							/>
+						</div>
+						<div className="grid grid-cols-3 gap-3">
+							<SummaryStat
+								label={t("stats.exerciseCompleted")}
+								value={String(today.exerciseCompleted)}
+							/>
+							<SummaryStat
+								label={t("stats.exerciseSkipped")}
+								value={String(today.exerciseSkipped)}
+							/>
+							<SummaryStat
+								label={t("stats.exerciseSnoozed")}
+								value={String(today.exerciseSnoozed)}
+							/>
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{t("stats.eyeCareWeek", weekEyeCare)}
+						</p>
 					</div>
 				</SettingRow>
 			</SettingPanel>
