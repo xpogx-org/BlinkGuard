@@ -63,6 +63,7 @@ export interface NotificationSoundPort {
 		kind: "blink" | "exercise" | "lookAway" | "starting" | "stopped" | "cheer",
 		options?: { force?: boolean; volume?: number },
 	): void;
+	stop(): void;
 }
 
 export type OsToastKind = "blink" | "exercise" | "lookAway";

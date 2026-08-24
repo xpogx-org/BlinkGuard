@@ -268,6 +268,7 @@ export const rendererIpc = {
 	}) => send(IPC_CHANNELS.updateGoalsConfig, config),
 	debugPreviewOverlay: (kind: DebugOverlayKind) =>
 		send(IPC_CHANNELS.debugPreviewOverlay, kind),
+	debugCleanPreview: () => send(IPC_CHANNELS.debugCleanPreview),
 	debugPreviewSound: (kind: DebugSoundKind, volume?: number) =>
 		send(IPC_CHANNELS.debugPreviewSound, kind, volume),
 	debugPreviewCheer: () => send(IPC_CHANNELS.debugPreviewCheer),

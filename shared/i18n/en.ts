@@ -93,6 +93,7 @@ export const en: MessageCatalog = {
 	"debug.overlays.title": "Preview overlays",
 	"debug.overlays.desc":
 		"Show reminder and eye-care popups without waiting for timers.",
+	"debug.clean": "Clean",
 	"debug.preview.blink": "Blink",
 	"debug.preview.starting": "Starting",
 	"debug.preview.stopped": "Stopped",

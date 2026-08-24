@@ -7,6 +7,7 @@ import type {
 	DebugOverlayKind,
 	DebugSoundKind,
 } from "../../../../shared/debug-preview";
+import { DebugCleanButton } from "./debug-clean-button";
 
 const OVERLAY_BUTTONS: { kind: DebugOverlayKind; labelKey: string }[] = [
 	{ kind: "blink", labelKey: "debug.preview.blink" },
@@ -36,6 +37,7 @@ export function DebugPreviewPanel() {
 				<SettingRow
 					title={t("debug.overlays.title")}
 					description={t("debug.overlays.desc")}
+					action={<DebugCleanButton />}
 				>
 					<div className="flex flex-wrap gap-2">
 						{OVERLAY_BUTTONS.map(({ kind, labelKey }) => (
@@ -56,6 +58,7 @@ export function DebugPreviewPanel() {
 				<SettingRow
 					title={t("debug.sounds.title")}
 					description={t("debug.sounds.desc")}
+					action={<DebugCleanButton />}
 				>
 					<div className="flex flex-wrap gap-2">
 						{SOUND_BUTTONS.map(({ kind, labelKey }) => (

@@ -9,6 +9,7 @@ import { useBlinkStats } from "@/features/statistics/model/use-blink-stats";
 import { useT } from "@/i18n";
 import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import { levelFromTotalBlinks } from "../../../../shared/blink-profile";
+import { DebugCleanButton } from "./debug-clean-button";
 
 interface DebugToolsPanelProps {
 	setPreferences: SetPreferences;
@@ -35,6 +36,7 @@ export function DebugToolsPanel({ setPreferences }: DebugToolsPanelProps) {
 				<SettingRow
 					title={t("debug.shop.title")}
 					description={t("debug.shop.desc")}
+					action={<DebugCleanButton />}
 				>
 					<div className="space-y-3">
 						<SettingRow
@@ -128,6 +130,7 @@ export function DebugToolsPanel({ setPreferences }: DebugToolsPanelProps) {
 				<SettingRow
 					title={t("debug.profile.title")}
 					description={t("debug.profile.desc")}
+					action={<DebugCleanButton />}
 				>
 					<div className="space-y-3">
 						<p className="text-sm text-muted-foreground">
@@ -195,6 +198,7 @@ export function DebugToolsPanel({ setPreferences }: DebugToolsPanelProps) {
 				<SettingRow
 					title={t("debug.achievements.title")}
 					description={t("debug.achievements.desc")}
+					action={<DebugCleanButton />}
 				>
 					<div className="space-y-3">
 						<SettingRow

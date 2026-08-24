@@ -70,7 +70,7 @@ function createWindows(): LookAwayWindowPort & {
 }
 
 function createSound(): NotificationSoundPort {
-	return { play: vi.fn() };
+	return { play: vi.fn(), stop: vi.fn() };
 }
 
 function createOs(shown = true) {

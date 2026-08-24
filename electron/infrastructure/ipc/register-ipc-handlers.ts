@@ -457,6 +457,14 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		if (!isDebugOverlayKind(kind)) return;
 		windows.previewDebugOverlay(kind);
 	});
+	on(IPC_CHANNELS.debugCleanPreview, () => {
+		reminders.dismissVisibleBlink();
+		windows.hideNoFace();
+		windows.closeExercise();
+		windows.closeLookAway();
+		windows.hideCheerToast();
+		sound.stop();
+	});
 	on(IPC_CHANNELS.debugPreviewSound, (_event, kind: unknown, volume?: unknown) => {
 		if (!isDebugSoundKind(kind)) return;
 		const options: { force: true; volume?: number } = { force: true };

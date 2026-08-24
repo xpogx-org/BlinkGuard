@@ -71,6 +71,9 @@ contextBridge.exposeInMainWorld('popupAPI', {
   }) => void) => {
     ipcRenderer.on(IPC_CHANNELS.playSound, (_event, payload) => callback(payload));
   },
+  onStopSound: (callback: () => void) => {
+    ipcRenderer.on(IPC_CHANNELS.stopSound, () => callback());
+  },
   notifyAudioFinished: () => {
     ipcRenderer.send(IPC_CHANNELS.audioFinished);
   },
@@ -157,6 +160,7 @@ declare global {
         path?: string;
         mode?: "file" | "cheer";
       }) => void) => void;
+      onStopSound: (callback: () => void) => void;
       notifyAudioFinished: () => void;
       notifyAudioError: (payload: {
         kind?: string;

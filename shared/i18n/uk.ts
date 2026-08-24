@@ -93,6 +93,7 @@ export const uk: MessageCatalog = {
 	"debug.overlays.title": "Перегляд оверлеїв",
 	"debug.overlays.desc":
 		"Показати попапи нагадувань і турботи про очі без очікування таймерів.",
+	"debug.clean": "Прибрати",
 	"debug.preview.blink": "Моргання",
 	"debug.preview.starting": "Запуск",
 	"debug.preview.stopped": "Зупинка",

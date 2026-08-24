@@ -99,6 +99,16 @@ export class NotificationSoundPlayer {
 		if (started) this.sendOrWait(job);
 	}
 
+	stop(): void {
+		if (this.disposed) return;
+		this.jobEpoch += 1;
+		this.clearWatchdog();
+		this.queue.clear();
+		if (this.window && !this.window.isDestroyed() && this.ready) {
+			this.window.webContents.send(IPC_CHANNELS.stopSound);
+		}
+	}
+
 	dispose(): void {
 		this.disposed = true;
 		this.clearWatchdog();

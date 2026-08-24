@@ -241,6 +241,11 @@ function onDeviceChange() {
 }
 
 function initSoundPlayer() {
+	window.popupAPI.onStopSound(() => {
+		playId += 1;
+		stopInFlight();
+	});
+
 	window.popupAPI.onPlaySound((payload) => {
 		playId += 1;
 		const id = playId;
