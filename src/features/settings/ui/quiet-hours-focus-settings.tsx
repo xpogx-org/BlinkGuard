@@ -1,14 +1,8 @@
-import {
-	AppWindow,
-	ChevronDown,
-	Gamepad2,
-	Moon,
-	Plus,
-	Trash2,
-} from "lucide-react";
+import { AppWindow, Gamepad2, Moon, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { Reveal } from "@/components/reveal";
+import { Select } from "@/components/select";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -347,47 +341,32 @@ export function QuietHoursFocusSettings({
 										</p>
 									)}
 								</div>
-								<label className="block space-y-1">
+								<div className="block space-y-1">
 									<span className="text-xs text-muted-foreground">
 										{t("appRules.runningLabel")}
 									</span>
-									<div className="relative">
-										<select
-											aria-label={t("appRules.runningAria")}
-											value=""
-											disabled={!canAddRule || picker.running.length === 0}
-											onFocus={() => {
-												void rendererIpc
-													.listPauseAppCandidates()
-													.then(setPicker);
-											}}
-											onChange={(event) => {
-												const picked = picker.running.find(
-													(app) =>
-														runningOptionValue(app) === event.target.value,
-												);
-												if (picked) addFilledRule(picked);
-											}}
-											className="w-full appearance-none rounded-md border border-border bg-background py-1.5 pl-2.5 pr-9 text-sm text-foreground disabled:opacity-50"
-										>
-											<option value="">
-												{t("appRules.runningPlaceholder")}
-											</option>
-											{picker.running.map((app) => (
-												<option
-													key={`${app.processName.toLowerCase()}\0${app.windowTitle.toLowerCase()}`}
-													value={runningOptionValue(app)}
-												>
-													{runningOptionLabel(app)}
-												</option>
-											))}
-										</select>
-										<ChevronDown
-											className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-											aria-hidden
-										/>
-									</div>
-								</label>
+									<Select
+										aria-label={t("appRules.runningAria")}
+										value=""
+										placeholder={t("appRules.runningPlaceholder")}
+										disabled={!canAddRule || picker.running.length === 0}
+										className="w-full"
+										onOpenChange={(open) => {
+											if (!open) return;
+											void rendererIpc.listPauseAppCandidates().then(setPicker);
+										}}
+										onChange={(next) => {
+											const picked = picker.running.find(
+												(app) => runningOptionValue(app) === next,
+											);
+											if (picked) addFilledRule(picked);
+										}}
+										options={picker.running.map((app) => ({
+											value: runningOptionValue(app),
+											label: runningOptionLabel(app),
+										}))}
+									/>
+								</div>
 								{picker.running.length === 0 ? (
 									<p className="text-xs text-muted-foreground">
 										{t("appRules.runningEmpty")}

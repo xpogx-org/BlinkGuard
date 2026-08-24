@@ -1,7 +1,8 @@
-import { Activity, ChevronDown, Clock, Moon, Play, Square } from "lucide-react";
+import { Activity, Clock, Moon, Play, Square } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/button";
 import { RangeSlider } from "@/components/range-slider";
+import { Select } from "@/components/select";
 import { SettingGrid } from "@/components/setting-grid";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
@@ -160,33 +161,34 @@ export function ReminderControls({
 					title={t("reminders.profile.title")}
 					description={t("reminders.profile.description")}
 					action={
-						<div className="relative">
-							<select
-								aria-label={t("reminders.profile.aria")}
-								value={preferences.blinkPromptProfile}
-								onChange={(event) => {
-									const blinkPromptProfile = event.target.value;
-									if (!isBlinkPromptProfile(blinkPromptProfile)) {
-										return;
-									}
-									setPreferences((current) => ({
-										...current,
-										blinkPromptProfile,
-									}));
-								}}
-								className="appearance-none rounded-md border border-border bg-background py-1.5 pl-2.5 pr-9 text-sm text-foreground"
-							>
-								<option value="gentle">{t("reminders.profile.gentle")}</option>
-								<option value="standard">
-									{t("reminders.profile.standard")}
-								</option>
-								<option value="strong">{t("reminders.profile.strong")}</option>
-							</select>
-							<ChevronDown
-								className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-								aria-hidden
-							/>
-						</div>
+						<Select
+							aria-label={t("reminders.profile.aria")}
+							value={preferences.blinkPromptProfile}
+							onChange={(next) => {
+								if (!isBlinkPromptProfile(next)) return;
+								setPreferences((current) => ({
+									...current,
+									blinkPromptProfile: next,
+								}));
+							}}
+							options={[
+								{
+									value: "gentle",
+									label: t("reminders.profile.gentle"),
+									description: t("reminders.profile.gentleShort"),
+								},
+								{
+									value: "standard",
+									label: t("reminders.profile.standard"),
+									description: t("reminders.profile.standardShort"),
+								},
+								{
+									value: "strong",
+									label: t("reminders.profile.strong"),
+									description: t("reminders.profile.strongShort"),
+								},
+							]}
+						/>
 					}
 				>
 					<p className="text-xs text-muted-foreground sm:text-sm">

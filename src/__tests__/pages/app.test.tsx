@@ -378,8 +378,8 @@ describe("settings shell", () => {
 		hydratePreferences({ hasCompletedOnboarding: true, locale: "en" });
 
 		fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-		const select = screen.getByLabelText("Select language");
-		fireEvent.change(select, { target: { value: "uk" } });
+		fireEvent.click(screen.getByRole("combobox", { name: "Select language" }));
+		fireEvent.click(screen.getByRole("option", { name: "Українська" }));
 
 		expect(screen.getByRole("button", { name: "Налаштування" })).toBeDefined();
 		expect(screen.getByText("Мова")).toBeDefined();
@@ -541,12 +541,12 @@ describe("settings shell", () => {
 		).toBeTruthy();
 
 		send.mockClear();
-		fireEvent.change(
+		fireEvent.click(
 			screen.getByRole("combobox", {
 				name: "How blink, exercise, and look-away prompts appear",
 			}),
-			{ target: { value: "native" } },
 		);
+		fireEvent.click(screen.getByRole("option", { name: /System banner/ }));
 
 		expect(send).toHaveBeenCalledWith(
 			IPC_CHANNELS.updateNotificationStyle,
@@ -566,12 +566,12 @@ describe("settings shell", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Reminders" }));
 		send.mockClear();
-		fireEvent.change(
+		fireEvent.click(
 			screen.getByRole("combobox", {
 				name: "Blink cue intensity profile",
 			}),
-			{ target: { value: "gentle" } },
 		);
+		fireEvent.click(screen.getByRole("option", { name: /^Gentle/ }));
 
 		expect(send).toHaveBeenCalledWith(
 			IPC_CHANNELS.updateBlinkPromptProfile,

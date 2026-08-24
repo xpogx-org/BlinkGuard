@@ -204,6 +204,9 @@ export const en: MessageCatalog = {
 		"Soft screen-edge glow first, then the overlay. Sound still waits until you ignore a visual cue.",
 	"reminders.profile.strongDesc":
 		"Glow, overlay, and sound together on the first miss — the most interruptive cue.",
+	"reminders.profile.standardShort": "Overlay first",
+	"reminders.profile.gentleShort": "Glow first",
+	"reminders.profile.strongShort": "Glow, overlay, and sound",
 	"reminders.inTypicalRange":
 		"Within the typical resting blink range (about 15–20/min).",
 	"reminders.guidanceTitle": "Blink rate guidance",

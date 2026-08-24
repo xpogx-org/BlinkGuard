@@ -1,7 +1,7 @@
-import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { Reveal } from "@/components/reveal";
+import { Select } from "@/components/select";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { StatusBanner } from "@/components/status-banner";
@@ -108,33 +108,29 @@ export function CameraDevicePicker({
 						</Button>
 					}
 				>
-					<div className="relative max-w-md">
-						<select
+					<div className="max-w-md">
+						<Select
 							aria-label={t("camera.deviceAria")}
 							value={selectedValue}
-							onChange={(event) => onChange(event.target.value)}
-							className="w-full appearance-none rounded-md border border-border bg-background py-1.5 pl-2.5 pr-9 text-sm text-foreground"
-						>
-							<option value={AUTO_VALUE}>{t("camera.deviceAuto")}</option>
-							{devices.map((device) => {
-								const value = cameraDeviceOptionValue(device);
-								return (
-									<option key={value} value={value}>
-										{device.name}
-									</option>
-								);
-							})}
-							{selected && !selectedInList ? (
-								<option value={selectedValue}>
-									{t("camera.deviceUnavailable", {
-										name: selected.name || selected.id,
-									})}
-								</option>
-							) : null}
-						</select>
-						<ChevronDown
-							className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-							aria-hidden
+							onChange={onChange}
+							className="w-full"
+							options={[
+								{ value: AUTO_VALUE, label: t("camera.deviceAuto") },
+								...devices.map((device) => ({
+									value: cameraDeviceOptionValue(device),
+									label: device.name,
+								})),
+								...(selected && !selectedInList
+									? [
+											{
+												value: selectedValue,
+												label: t("camera.deviceUnavailable", {
+													name: selected.name || selected.id,
+												}),
+											},
+										]
+									: []),
+							]}
 						/>
 					</div>
 					{devices.length === 0 ? (

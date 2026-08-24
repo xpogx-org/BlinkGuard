@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Select } from "@/components/select";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useT } from "@/i18n";
@@ -22,33 +22,23 @@ export function NotificationStyleSettings({
 				title={t("notifications.style.title")}
 				description={t("notifications.style.description")}
 				action={
-					<div className="relative">
-						<select
-							aria-label={t("notifications.style.aria")}
-							value={preferences.notificationStyle}
-							onChange={(event) => {
-								const notificationStyle = event.target.value;
-								if (!isNotificationStyleValue(notificationStyle)) {
-									return;
-								}
-								setPreferences((current) => ({
-									...current,
-									notificationStyle,
-								}));
-							}}
-							className="appearance-none rounded-md border border-border bg-background py-1.5 pl-2.5 pr-9 text-sm text-foreground"
-						>
-							<option value="overlay">
-								{t("notifications.style.overlay")}
-							</option>
-							<option value="native">{t("notifications.style.native")}</option>
-							<option value="both">{t("notifications.style.both")}</option>
-						</select>
-						<ChevronDown
-							className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-							aria-hidden
-						/>
-					</div>
+					<Select
+						aria-label={t("notifications.style.aria")}
+						value={preferences.notificationStyle}
+						onChange={(next) => {
+							if (!isNotificationStyleValue(next)) return;
+							setPreferences((current) => ({
+								...current,
+								notificationStyle: next,
+							}));
+						}}
+						className="max-w-[12.5rem]"
+						options={[
+							{ value: "overlay", label: t("notifications.style.overlay") },
+							{ value: "native", label: t("notifications.style.native") },
+							{ value: "both", label: t("notifications.style.both") },
+						]}
+					/>
 				}
 			/>
 		</SettingPanel>

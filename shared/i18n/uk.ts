@@ -207,6 +207,9 @@ export const uk: MessageCatalog = {
 		"Спочатку м’яке світіння по краю екрана, потім накладка. Звук також чекає, доки ви не проігноруєте візуальну підказку.",
 	"reminders.profile.strongDesc":
 		"Світіння, накладка й звук разом уже на першому пропуску — найпомітніша підказка.",
+	"reminders.profile.standardShort": "Спочатку накладка",
+	"reminders.profile.gentleShort": "Спочатку світіння",
+	"reminders.profile.strongShort": "Світіння, накладка й звук",
 	"reminders.inTypicalRange":
 		"У типовому діапазоні спокійного моргання (близько 15–20/хв).",
 	"reminders.guidanceTitle": "Орієнтири частоти моргання",

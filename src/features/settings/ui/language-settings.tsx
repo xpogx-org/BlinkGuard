@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Select } from "@/components/select";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useT } from "@/i18n";
@@ -23,24 +23,17 @@ export function LanguageSettings({
 				title={t("language.title")}
 				description={t("language.description")}
 				action={
-					<div className="relative">
-						<select
-							aria-label={t("language.toggleAria")}
-							value={preferences.locale}
-							onChange={(event) => {
-								const locale = event.target.value as Locale;
-								setPreferences((current) => applyLocale(current, locale));
-							}}
-							className="appearance-none rounded-md border border-border bg-background py-1.5 pl-2.5 pr-9 text-sm text-foreground"
-						>
-							<option value="en">{t("language.en")}</option>
-							<option value="uk">{t("language.uk")}</option>
-						</select>
-						<ChevronDown
-							className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-							aria-hidden
-						/>
-					</div>
+					<Select
+						aria-label={t("language.toggleAria")}
+						value={preferences.locale}
+						onChange={(next) => {
+							setPreferences((current) => applyLocale(current, next as Locale));
+						}}
+						options={[
+							{ value: "en", label: t("language.en") },
+							{ value: "uk", label: t("language.uk") },
+						]}
+					/>
 				}
 			/>
 		</SettingPanel>
