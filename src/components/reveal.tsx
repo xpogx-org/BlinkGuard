@@ -1,5 +1,5 @@
 import { type ReactNode, useRef } from "react";
-import { usePresence } from "@/features/about/model/use-presence";
+import { usePresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 
 interface RevealProps {

@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { SettingPanel } from "@/components/setting-panel";
 import { ToggleSwitch } from "@/components/toggle-switch";
-import { usePresence } from "@/features/about/model/use-presence";
 import {
 	type ProfileShareCardInput,
 	renderProfileShareCard,
 } from "@/features/profile/ui/profile-share-card";
 import { useI18n } from "@/i18n";
+import { usePresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 import { t as translate } from "../../../../shared/i18n";
 import { theme } from "../../../../shared/theme";

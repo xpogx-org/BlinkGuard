@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { useAutoUpdate } from "@/features/about/model/use-auto-update";
-import { usePresence } from "@/features/about/model/use-presence";
 import { useT } from "@/i18n";
+import { usePresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 import { theme } from "../../../../shared/theme";
 
