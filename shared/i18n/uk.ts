@@ -730,6 +730,7 @@ export const uk: MessageCatalog = {
 
 	// Tray / window titles
 	"tray.show": "Показати BlinkGuard",
+	"tray.snooze": "Відкласти",
 	"tray.snoozeBlink": "Відкласти моргання ({n} хв)",
 	"tray.snoozeBlink_few": "Відкласти моргання ({n} хв)",
 	"tray.snoozeBlink_plural": "Відкласти моргання ({n} хв)",

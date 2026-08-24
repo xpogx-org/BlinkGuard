@@ -88,6 +88,8 @@ interface IpcDependencies {
 	pushCameraCaptureStatus?: () => void;
 	/** Tray label refresh when snooze duration changes (no prefs echo). */
 	onSnoozeMinutesChanged?: () => void;
+	/** Tray accelerator refresh after Settings remaps global shortcuts. */
+	onKeyboardShortcutsChanged?: () => void;
 	settingsProfiles: SettingsProfilesService;
 }
 
@@ -113,6 +115,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		onShellReady,
 		pushCameraCaptureStatus,
 		onSnoozeMinutesChanged,
+		onKeyboardShortcutsChanged,
 		settingsProfiles,
 	} = deps;
 	const current = preferences.current;
@@ -338,6 +341,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		}
 		preferences.set("keyboardShortcuts", next);
 		shortcuts.registerAll(preferences.current.keyboardShortcuts);
+		onKeyboardShortcutsChanged?.();
 	});
 	on(IPC_CHANNELS.setShortcutCaptureMode, (_event, capturing: unknown) => {
 		shortcuts.setCaptureMode(Boolean(capturing));

@@ -387,6 +387,7 @@ function bootstrap(): void {
 			);
 			windows.sendPreferences();
 		},
+		() => preferences.keyboardShortcuts,
 	);
 	reminders.setOnTrackingChange((isTracking) => {
 		captureStatus.notifyTracking(isTracking);
@@ -456,6 +457,7 @@ function bootstrap(): void {
 			captureStatus.hydrate(sidecar.isCameraReady, preferences.isTracking);
 		},
 		onSnoozeMinutesChanged: () => tray.rebuildMenu(),
+		onKeyboardShortcutsChanged: () => tray.rebuildMenu(),
 	});
 
 	app.on("second-instance", () => {

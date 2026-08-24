@@ -1,10 +1,20 @@
-import { Menu, Tray, nativeImage, type MenuItemConstructorOptions } from "electron";
+import {
+	Menu,
+	Tray,
+	nativeImage,
+	type MenuItemConstructorOptions,
+	type NativeImage,
+} from "electron";
 import path from "node:path";
 import {
 	composeTrayTooltip,
 	type CameraCaptureStatusPayload,
 } from "../../../shared/camera-capture-status";
 import type { Locale } from "../../../shared/i18n";
+import {
+	DEFAULT_KEYBOARD_SHORTCUTS,
+	type KeyboardShortcuts,
+} from "../../../shared/preferences";
 import type { FocusPauseStatePayload } from "../../../shared/session-pause-status";
 import type { InteractionLogger } from "../logging/interaction-logger";
 import type { AppPaths } from "../paths/app-paths";
@@ -12,6 +22,7 @@ import type { WindowManager } from "../windows/window-manager";
 import {
 	buildTrayMenuSpec,
 	type TrayMenuItemSpec,
+	type TraySnoozeItemSpec,
 } from "./tray-menu-model";
 
 export class TrayController {
@@ -19,6 +30,8 @@ export class TrayController {
 	private pauseState: FocusPauseStatePayload | null = null;
 	private captureState: CameraCaptureStatusPayload | null = null;
 	private isTracking = false;
+	private colorIcon: NativeImage | null = null;
+	private idleIcon: NativeImage | null = null;
 
 	constructor(
 		private readonly paths: AppPaths,
@@ -33,13 +46,16 @@ export class TrayController {
 		private readonly onSnoozeLookAway: (() => void) | null = null,
 		private readonly getIsTracking: () => boolean = () => false,
 		private readonly onToggleTracking: (() => void) | null = null,
+		private readonly getKeyboardShortcuts: () => KeyboardShortcuts = () =>
+			DEFAULT_KEYBOARD_SHORTCUTS,
 	) {}
 
 	create(): void {
 		if (this.tray) return;
-		const icon = this.loadIcon();
-		this.tray = new Tray(icon);
+		this.colorIcon = this.loadIcon();
+		this.idleIcon = desaturateNativeImage(this.colorIcon);
 		this.isTracking = this.getIsTracking();
+		this.tray = new Tray(this.iconForTracking());
 		this.rebuildMenu(this.getLocale());
 		this.tray.on("click", () => {
 			this.interactions?.append({ source: "tray", action: "click-show" });
@@ -56,15 +72,19 @@ export class TrayController {
 
 	rebuildMenu(locale: Locale = this.getLocale()): void {
 		if (!this.tray) return;
+		const shortcuts = this.getKeyboardShortcuts();
 		const spec = buildTrayMenuSpec({
 			locale,
 			isTracking: this.isTracking,
 			capture: this.captureState,
+			pause: this.pauseState,
 			snoozeMinutes: this.getSnoozeMinutes(),
 			includeSnoozeBlink: this.onSnoozeBlink != null,
 			includeSnoozeExercise: this.onSnoozeExercise != null,
 			includeSnoozeLookAway: this.onSnoozeLookAway != null,
 			includeCheckForUpdates: this.onCheckForUpdates != null,
+			showAccelerator: shortcuts.openSettings,
+			trackingAccelerator: shortcuts.trackingToggle,
 		});
 		const items = spec.map((item) => this.toMenuItem(item));
 		this.tray.setContextMenu(Menu.buildFromTemplate(items));
@@ -73,7 +93,7 @@ export class TrayController {
 
 	setPauseState(payload: FocusPauseStatePayload): void {
 		this.pauseState = payload;
-		this.applyTooltip();
+		this.rebuildMenu();
 	}
 
 	setCaptureState(payload: CameraCaptureStatusPayload): void {
@@ -91,6 +111,7 @@ export class TrayController {
 	setTrackingState(isTracking: boolean): void {
 		if (this.isTracking === isTracking) return;
 		this.isTracking = isTracking;
+		this.applyIcon();
 		this.rebuildMenu();
 	}
 
@@ -98,6 +119,16 @@ export class TrayController {
 		if (!this.tray) return;
 		this.tray.destroy();
 		this.tray = null;
+	}
+
+	private applyIcon(): void {
+		this.tray?.setImage(this.iconForTracking());
+	}
+
+	private iconForTracking(): NativeImage {
+		const fallback = this.colorIcon ?? nativeImage.createEmpty();
+		if (this.isTracking) return this.colorIcon ?? fallback;
+		return this.idleIcon ?? fallback;
 	}
 
 	private applyTooltip(locale: Locale = this.getLocale()): void {
@@ -111,6 +142,7 @@ export class TrayController {
 			case "show":
 				return {
 					label: item.label,
+					...optionalAccelerator(item.accelerator),
 					click: () => {
 						this.interactions?.append({ source: "tray", action: "menu-show" });
 						this.windows.showMain();
@@ -119,6 +151,9 @@ export class TrayController {
 			case "tracking":
 				return {
 					label: item.label,
+					type: "checkbox",
+					checked: item.isTracking,
+					...optionalAccelerator(item.accelerator),
 					click: () => {
 						this.interactions?.append({
 							source: "tray",
@@ -130,21 +165,13 @@ export class TrayController {
 					},
 				};
 			case "camera":
+			case "pause":
 				return { label: item.label, enabled: false };
-			case "snooze-blink":
-				return this.snoozeMenuItem(item.label, "menu-snooze-blink", this.onSnoozeBlink);
-			case "snooze-exercise":
-				return this.snoozeMenuItem(
-					item.label,
-					"menu-snooze-exercise",
-					this.onSnoozeExercise,
-				);
-			case "snooze-look-away":
-				return this.snoozeMenuItem(
-					item.label,
-					"menu-snooze-look-away",
-					this.onSnoozeLookAway,
-				);
+			case "snooze":
+				return {
+					label: item.label,
+					submenu: item.submenu.map((child) => this.snoozeSubmenuItem(child)),
+				};
 			case "check-for-updates":
 				return {
 					label: item.label,
@@ -169,6 +196,31 @@ export class TrayController {
 		}
 	}
 
+	private snoozeSubmenuItem(
+		item: TraySnoozeItemSpec,
+	): MenuItemConstructorOptions {
+		switch (item.id) {
+			case "snooze-blink":
+				return this.snoozeMenuItem(
+					item.label,
+					"menu-snooze-blink",
+					this.onSnoozeBlink,
+				);
+			case "snooze-exercise":
+				return this.snoozeMenuItem(
+					item.label,
+					"menu-snooze-exercise",
+					this.onSnoozeExercise,
+				);
+			case "snooze-look-away":
+				return this.snoozeMenuItem(
+					item.label,
+					"menu-snooze-look-away",
+					this.onSnoozeLookAway,
+				);
+		}
+	}
+
 	private snoozeMenuItem(
 		label: string,
 		action: string,
@@ -183,7 +235,7 @@ export class TrayController {
 		};
 	}
 
-	private loadIcon() {
+	private loadIcon(): NativeImage {
 		const pngPath = path.join(this.paths.root, "assets", "icons", "icon.png");
 		let image = nativeImage.createFromPath(pngPath);
 		if (image.isEmpty() && process.platform === "win32") {
@@ -197,4 +249,29 @@ export class TrayController {
 		}
 		return image;
 	}
+}
+
+function optionalAccelerator(
+	accelerator: string | undefined,
+): Pick<MenuItemConstructorOptions, "accelerator"> {
+	return accelerator ? { accelerator } : {};
+}
+
+/** In-memory grayscale copy of the color tray icon (no second art file). */
+function desaturateNativeImage(image: NativeImage): NativeImage {
+	if (image.isEmpty()) return image;
+	const { width, height } = image.getSize();
+	if (width === 0 || height === 0) return image;
+	const src = image.toBitmap();
+	const dst = Buffer.from(src);
+	for (let i = 0; i < dst.length; i += 4) {
+		const blue = dst[i] ?? 0;
+		const green = dst[i + 1] ?? 0;
+		const red = dst[i + 2] ?? 0;
+		const gray = (red * 77 + green * 150 + blue * 29) >> 8;
+		dst[i] = gray;
+		dst[i + 1] = gray;
+		dst[i + 2] = gray;
+	}
+	return nativeImage.createFromBitmap(dst, { width, height });
 }

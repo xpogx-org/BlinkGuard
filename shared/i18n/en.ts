@@ -716,6 +716,7 @@ export const en: MessageCatalog = {
 
 	// Tray / window titles
 	"tray.show": "Show BlinkGuard",
+	"tray.snooze": "Snooze",
 	"tray.snoozeBlink": "Snooze blink ({n} min)",
 	"tray.snoozeBlink_few": "Snooze blink ({n} min)",
 	"tray.snoozeBlink_plural": "Snooze blink ({n} min)",

@@ -6,6 +6,10 @@ import {
 } from "../../../electron/infrastructure/tray/tray-menu-model";
 import type { CameraCaptureStatusPayload } from "../../../shared/camera-capture-status";
 import { t } from "../../../shared/i18n";
+import {
+	type FocusPauseStatePayload,
+	pauseStatusMessageKey,
+} from "../../../shared/session-pause-status";
 
 const monitoring: CameraCaptureStatusPayload = {
 	capturing: true,
@@ -17,16 +21,26 @@ const idle: CameraCaptureStatusPayload = {
 	surface: "idle",
 };
 
+const quietHoursPause: FocusPauseStatePayload = {
+	reason: "quiet-hours",
+	fullscreenDetectionSupported: true,
+	sessionPauseMode: "active",
+	sessionIdleCause: null,
+};
+
 function spec(overrides: Partial<BuildTrayMenuSpecInput> = {}) {
 	return buildTrayMenuSpec({
 		locale: "en",
 		isTracking: false,
 		capture: null,
+		pause: null,
 		snoozeMinutes: 5,
 		includeSnoozeBlink: true,
 		includeSnoozeExercise: true,
 		includeSnoozeLookAway: true,
 		includeCheckForUpdates: true,
+		showAccelerator: "",
+		trackingAccelerator: "",
 		...overrides,
 	});
 }
@@ -43,14 +57,14 @@ describe("trackingTrayLabelKey", () => {
 });
 
 describe("buildTrayMenuSpec", () => {
-	it("places Start/Stop after Show and before the camera status row", () => {
+	it("groups actions, status, snooze, and quit with separators", () => {
 		expect(itemIds(spec({ isTracking: false }))).toEqual([
 			"show",
 			"tracking",
+			"separator",
 			"camera",
-			"snooze-blink",
-			"snooze-exercise",
-			"snooze-look-away",
+			"separator",
+			"snooze",
 			"check-for-updates",
 			"separator",
 			"quit",
@@ -87,13 +101,98 @@ describe("buildTrayMenuSpec", () => {
 		expect(idleMenu.find((item) => item.id === "tracking")?.label).toBe(
 			t("en", "tracking.stop"),
 		);
-		expect(liveMenu.find((item) => item.id === "tracking")?.label).toBe(
-			t("en", "tracking.stop"),
-		);
+		expect(
+			spec({ isTracking: true, pause: quietHoursPause }).find(
+				(item) => item.id === "tracking",
+			)?.label,
+		).toBe(t("en", "tracking.stop"));
 		expect(
 			spec({ isTracking: false, capture: monitoring }).find(
 				(item) => item.id === "tracking",
 			)?.label,
 		).toBe(t("en", "tracking.start"));
+	});
+
+	it("inserts a disabled pause row only when pauseStatusMessageKey is set", () => {
+		const pauseKey = pauseStatusMessageKey(quietHoursPause);
+		expect(pauseKey).toBe("quietHours.paused");
+		expect(spec({ pause: null }).some((item) => item.id === "pause")).toBe(
+			false,
+		);
+		expect(itemIds(spec({ pause: quietHoursPause }))).toEqual([
+			"show",
+			"tracking",
+			"separator",
+			"camera",
+			"pause",
+			"separator",
+			"snooze",
+			"check-for-updates",
+			"separator",
+			"quit",
+		]);
+		expect(
+			spec({ pause: quietHoursPause }).find((item) => item.id === "pause"),
+		).toEqual({
+			id: "pause",
+			label: t("en", pauseKey ?? "quietHours.paused"),
+			enabled: false,
+		});
+	});
+
+	it("nests per-kind snooze items and omits the parent when none are included", () => {
+		const snooze = spec().find((item) => item.id === "snooze");
+		expect(snooze).toEqual({
+			id: "snooze",
+			label: t("en", "tray.snooze"),
+			submenu: [
+				{
+					id: "snooze-blink",
+					label: t("en", "tray.snoozeBlink", { n: 5 }),
+				},
+				{
+					id: "snooze-exercise",
+					label: t("en", "tray.snoozeExercise", { n: 5 }),
+				},
+				{
+					id: "snooze-look-away",
+					label: t("en", "tray.snoozeLookAway", { n: 5 }),
+				},
+			],
+		});
+		expect(
+			itemIds(
+				spec({
+					includeSnoozeBlink: false,
+					includeSnoozeExercise: false,
+					includeSnoozeLookAway: false,
+					includeCheckForUpdates: false,
+				}),
+			),
+		).toEqual(["show", "tracking", "separator", "camera", "separator", "quit"]);
+	});
+
+	it("attaches accelerators only when they are non-empty", () => {
+		expect(spec().find((item) => item.id === "show")).toEqual({
+			id: "show",
+			label: t("en", "tray.show"),
+		});
+		expect(
+			spec({ showAccelerator: "Ctrl+," }).find((item) => item.id === "show"),
+		).toEqual({
+			id: "show",
+			label: t("en", "tray.show"),
+			accelerator: "Ctrl+,",
+		});
+		expect(
+			spec({ trackingAccelerator: "Ctrl+I" }).find(
+				(item) => item.id === "tracking",
+			),
+		).toEqual({
+			id: "tracking",
+			label: t("en", "tracking.start"),
+			isTracking: false,
+			accelerator: "Ctrl+I",
+		});
 	});
 });
