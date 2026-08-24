@@ -31,7 +31,11 @@ export function SettingRow({
 				</div>
 				{action ? <div className="shrink-0">{action}</div> : null}
 			</div>
-			{children ? <div className="mt-4">{children}</div> : null}
+			{children ? (
+				<div className="mt-4 transition-[margin] duration-200 ease-out has-[[data-reveal-open=false]]:mt-0">
+					{children}
+				</div>
+			) : null}
 		</div>
 	);
 }

@@ -135,6 +135,7 @@ export const theme = {
 		enter: "motion-enter",
 		overlay: "motion-overlay",
 		dialog: "motion-dialog",
+		exit: "motion-exit",
 	},
 } as const;
 
