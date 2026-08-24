@@ -607,14 +607,9 @@ export const uk: MessageCatalog = {
 		"Відкрийте «Нагадування» і натисніть «Старт», щоб почати. Гарячу клавішу можна призначити будь-коли в Налаштуваннях.",
 
 	// Statistics
-	"stats.totals": "Підсумки",
-	"stats.totalsDesc":
-		"Усі зараховані моргання. Витрачайте «Доступно» в розділі «Нагороди».",
 	"stats.total": "Усього",
 	"stats.available": "Доступно",
 	"stats.spent": "Витрачено",
-	"stats.spendingNote":
-		"Покупки списують з «Доступно» і зберігаються разом зі статистикою.",
 	"stats.goals": "Цілі",
 	"stats.goalsDesc": "Прогрес до сьогоднішніх і тижневих цілей.",
 	"stats.goals.dailyBlinks": "Моргання за день",
@@ -622,7 +617,8 @@ export const uk: MessageCatalog = {
 	"stats.goals.weeklyBlinks": "Моргання за тиждень",
 	"stats.goals.weeklyTracking": "Відстеження за тиждень",
 	"stats.goals.met": "Досягнуто",
-	"stats.goals.off": "Цілі вимкнено — увімкніть їх у панелі «Цілі» вище.",
+	"stats.goals.off":
+		"Цілі вимкнено — увімкніть їх, щоб відстежувати денні й тижневі цілі.",
 	"stats.streak": "Серія",
 	"stats.streakDesc":
 		"Поспіль локальні дні з виконаними денними цілями. Щит серії покриває один пропуск.",
@@ -646,7 +642,7 @@ export const uk: MessageCatalog = {
 	"rewards.cheer": "Ура",
 	"rewards.cheerDesc": "Коротке святкове сповіщення і звук.",
 	"rewards.statsFlair": "Значок статистики",
-	"rewards.statsFlairDesc": "Косметичний бейдж на сторінці статистики.",
+	"rewards.statsFlairDesc": "Косметичний бейдж на сторінці профілю.",
 	"rewards.streakShield": "Щит серії",
 	"rewards.streakShieldDesc":
 		"Захищає серію на один пропущений день (макс. 1 заряд).",
@@ -665,12 +661,11 @@ export const uk: MessageCatalog = {
 	"stats.eyeCare": "Догляд за очима",
 	"stats.eyeCareDesc":
 		"Скільки разів сьогодні ви завершили, пропустили або відклали перерви «відвести погляд» і вправи.",
-	"stats.lookAwayCompleted": "Відвести погляд: виконано",
-	"stats.lookAwaySkipped": "Відвести погляд: пропущено",
-	"stats.lookAwaySnoozed": "Відвести погляд: відкладено",
-	"stats.exerciseCompleted": "Вправи: виконано",
-	"stats.exerciseSkipped": "Вправи: пропущено",
-	"stats.exerciseSnoozed": "Вправи: відкладено",
+	"stats.eyeCare.done": "Виконано",
+	"stats.eyeCare.skipped": "Пропущено",
+	"stats.eyeCare.snoozed": "Відкладено",
+	"stats.eyeCare.lookAway": "Відвести погляд",
+	"stats.eyeCare.exercise": "Вправи",
 	"stats.eyeCareWeek":
 		"Цього тижня: відвести погляд — {lookAwayCompleted} виконано, {lookAwaySkipped} пропущено, {lookAwaySnoozed} відкладено. Вправи: {exerciseCompleted} виконано, {exerciseSkipped} пропущено, {exerciseSnoozed} відкладено.",
 	"stats.chart": "Графік моргань",

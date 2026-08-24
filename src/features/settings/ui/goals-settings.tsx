@@ -1,10 +1,15 @@
 import { useState } from "react";
+import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
-import { useT } from "@/i18n";
+import { useBlinkStats } from "@/features/statistics/model/use-blink-stats";
+import { useI18n } from "@/i18n";
+import { cn } from "@/lib/utils";
+import type { GoalMetricProgress } from "../../../../shared/blink-stats";
+import { pluralKey } from "../../../../shared/i18n";
 import { DEFAULT_GOALS_CONFIG } from "../../../../shared/preferences";
 import type { SettingsPreferences } from "../model/preferences";
 import type { SetPreferences } from "../model/use-preferences";
@@ -44,11 +49,46 @@ function GoalNumberInput({
 	);
 }
 
+function GoalProgressRow({
+	label,
+	metric,
+	metLabel,
+}: {
+	label: string;
+	metric: GoalMetricProgress;
+	metLabel: string;
+}) {
+	const ratio =
+		metric.target > 0 ? Math.min(1, metric.current / metric.target) : 0;
+	return (
+		<div>
+			<div className="mb-1 flex items-center justify-between gap-2 text-xs">
+				<span className="text-muted-foreground">{label}</span>
+				<span className="tabular-nums text-foreground">
+					{metric.current}/{metric.target}
+					{metric.met ? ` · ${metLabel}` : ""}
+				</span>
+			</div>
+			<div className="h-1.5 overflow-hidden rounded-full bg-muted">
+				<div
+					className={cn(
+						"h-full rounded-full transition-[width]",
+						metric.met ? "bg-success" : "bg-primary",
+					)}
+					style={{ width: `${ratio * 100}%` }}
+				/>
+			</div>
+		</div>
+	);
+}
+
 export function GoalsSettings({
 	preferences,
 	setPreferences,
 }: GoalsSettingsProps) {
-	const t = useT();
+	const { t, locale } = useI18n();
+	const { snapshot } = useBlinkStats();
+	const { goals, streak } = snapshot;
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const atDefaults =
 		preferences.goalsEnabled === DEFAULT_GOALS_CONFIG.goalsEnabled &&
@@ -64,6 +104,16 @@ export function GoalsSettings({
 			...current,
 			...DEFAULT_GOALS_CONFIG,
 		}));
+
+	const streakKey = pluralKey("stats.streak.days", locale, streak.current);
+	const dailyGoals = [
+		{ key: "dailyBlinks", metric: goals.dailyBlinks },
+		{ key: "dailyTracking", metric: goals.dailyTrackingMinutes },
+	] as const;
+	const weeklyGoals = [
+		{ key: "weeklyBlinks", metric: goals.weeklyBlinks },
+		{ key: "weeklyTracking", metric: goals.weeklyTrackingMinutes },
+	] as const;
 
 	return (
 		<SettingPanel>
@@ -111,9 +161,54 @@ export function GoalsSettings({
 						/>
 					</div>
 				}
-			>
+			/>
+			<div className="mt-4">
+				{preferences.goalsEnabled ? (
+					<div className="space-y-3">
+						{dailyGoals.map(({ key, metric }) =>
+							metric.enabled ? (
+								<GoalProgressRow
+									key={key}
+									label={t(`stats.goals.${key}`)}
+									metric={metric}
+									metLabel={t("stats.goals.met")}
+								/>
+							) : null,
+						)}
+						{weeklyGoals.map(({ key, metric }) =>
+							metric.enabled ? (
+								<GoalProgressRow
+									key={key}
+									label={t(`stats.goals.${key}`)}
+									metric={metric}
+									metLabel={t("stats.goals.met")}
+								/>
+							) : null,
+						)}
+						<div className="flex flex-wrap items-center gap-3">
+							<p className="text-lg font-semibold tabular-nums tracking-tight">
+								{t(streakKey, { n: streak.current })}
+							</p>
+							<Badge
+								className={
+									streak.shieldCharges > 0
+										? "border-primary/40 bg-primary/10 text-primary"
+										: "text-muted-foreground"
+								}
+							>
+								{streak.shieldCharges > 0
+									? t("stats.streak.shieldReady")
+									: t("stats.streak.shieldEmpty")}
+							</Badge>
+						</div>
+					</div>
+				) : (
+					<p className="text-sm text-muted-foreground">
+						{t("stats.goals.off")}
+					</p>
+				)}
 				<Reveal open={settingsOpen}>
-					<div>
+					<div className="mt-3">
 						<Reveal open={preferences.goalsEnabled}>
 							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 								<GoalNumberInput
@@ -175,7 +270,7 @@ export function GoalsSettings({
 						</div>
 					</div>
 				</Reveal>
-			</SettingRow>
+			</div>
 		</SettingPanel>
 	);
 }

@@ -593,14 +593,9 @@ export const en: MessageCatalog = {
 		"Open Reminders and press Start to begin blink reminders. You can bind a shortcut anytime in Settings.",
 
 	// Statistics
-	"stats.totals": "Totals",
-	"stats.totalsDesc":
-		"Lifetime credited blinks. Spend Available in the Rewards section.",
 	"stats.total": "Total",
 	"stats.available": "Available",
 	"stats.spent": "Spent",
-	"stats.spendingNote":
-		"Purchases deduct from Available and are saved with your statistics.",
 	"stats.goals": "Goals",
 	"stats.goalsDesc": "Progress toward today’s and this week’s targets.",
 	"stats.goals.dailyBlinks": "Daily blinks",
@@ -608,7 +603,8 @@ export const en: MessageCatalog = {
 	"stats.goals.weeklyBlinks": "Weekly blinks",
 	"stats.goals.weeklyTracking": "Weekly tracking",
 	"stats.goals.met": "Met",
-	"stats.goals.off": "Goals are off — enable them in the Goals panel above.",
+	"stats.goals.off":
+		"Goals are off — turn them on to track daily and weekly targets.",
 	"stats.streak": "Streak",
 	"stats.streakDesc":
 		"Consecutive local days meeting all enabled daily goals. A streak shield covers one miss.",
@@ -632,7 +628,7 @@ export const en: MessageCatalog = {
 	"rewards.cheer": "Cheer",
 	"rewards.cheerDesc": "Play a short celebration toast and sound.",
 	"rewards.statsFlair": "Stats flair",
-	"rewards.statsFlairDesc": "Cosmetic badge on the Statistics page.",
+	"rewards.statsFlairDesc": "Cosmetic badge on your Profile.",
 	"rewards.streakShield": "Streak shield",
 	"rewards.streakShieldDesc":
 		"Protect your streak for one missed day (max 1 charge).",
@@ -651,12 +647,11 @@ export const en: MessageCatalog = {
 	"stats.eyeCare": "Eye care",
 	"stats.eyeCareDesc":
 		"How often you finished, skipped, or snoozed look-away and exercise prompts today.",
-	"stats.lookAwayCompleted": "Look-away done",
-	"stats.lookAwaySkipped": "Look-away skipped",
-	"stats.lookAwaySnoozed": "Look-away snoozed",
-	"stats.exerciseCompleted": "Exercises done",
-	"stats.exerciseSkipped": "Exercises skipped",
-	"stats.exerciseSnoozed": "Exercises snoozed",
+	"stats.eyeCare.done": "Done",
+	"stats.eyeCare.skipped": "Skipped",
+	"stats.eyeCare.snoozed": "Snoozed",
+	"stats.eyeCare.lookAway": "Look-away",
+	"stats.eyeCare.exercise": "Exercises",
 	"stats.eyeCareWeek":
 		"This week: look-away {lookAwayCompleted} done, {lookAwaySkipped} skipped, {lookAwaySnoozed} snoozed. Exercises: {exerciseCompleted} done, {exerciseSkipped} skipped, {exerciseSnoozed} snoozed.",
 	"stats.chart": "Blink chart",
