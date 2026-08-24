@@ -50,6 +50,13 @@ export function useSettingsProfiles(enabled: boolean) {
 		void refresh();
 	}, [enabled, refresh]);
 
+	useEffect(() => {
+		if (!enabled) return;
+		return rendererIpc.onPreferences(() => {
+			void refresh();
+		});
+	}, [enabled, refresh]);
+
 	const run = useCallback(
 		async (
 			action: () => Promise<SettingsProfilesResult>,

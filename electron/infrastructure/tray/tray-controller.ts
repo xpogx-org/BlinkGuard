@@ -21,9 +21,17 @@ import type { AppPaths } from "../paths/app-paths";
 import type { WindowManager } from "../windows/window-manager";
 import {
 	buildTrayMenuSpec,
+	shouldSwitchTraySetup,
 	type TrayMenuItemSpec,
+	type TraySetupsSnapshot,
+	type TraySetupItemSpec,
 	type TraySnoozeItemSpec,
 } from "./tray-menu-model";
+
+const EMPTY_SETUPS: TraySetupsSnapshot = {
+	profiles: [],
+	activeSetupId: null,
+};
 
 export class TrayController {
 	private tray: Tray | null = null;
@@ -48,6 +56,8 @@ export class TrayController {
 		private readonly onToggleTracking: (() => void) | null = null,
 		private readonly getKeyboardShortcuts: () => KeyboardShortcuts = () =>
 			DEFAULT_KEYBOARD_SHORTCUTS,
+		private readonly getSetups: () => TraySetupsSnapshot = () => EMPTY_SETUPS,
+		private readonly onSwitchSetup: ((id: string) => void) | null = null,
 	) {}
 
 	create(): void {
@@ -73,6 +83,7 @@ export class TrayController {
 	rebuildMenu(locale: Locale = this.getLocale()): void {
 		if (!this.tray) return;
 		const shortcuts = this.getKeyboardShortcuts();
+		const setups = this.getSetups();
 		const spec = buildTrayMenuSpec({
 			locale,
 			isTracking: this.isTracking,
@@ -85,6 +96,8 @@ export class TrayController {
 			includeCheckForUpdates: this.onCheckForUpdates != null,
 			showAccelerator: shortcuts.openSettings,
 			trackingAccelerator: shortcuts.trackingToggle,
+			setups: setups.profiles,
+			activeSetupId: setups.activeSetupId,
 		});
 		const items = spec.map((item) => this.toMenuItem(item));
 		this.tray.setContextMenu(Menu.buildFromTemplate(items));
@@ -172,6 +185,11 @@ export class TrayController {
 					label: item.label,
 					submenu: item.submenu.map((child) => this.snoozeSubmenuItem(child)),
 				};
+			case "setups":
+				return {
+					label: item.label,
+					submenu: item.submenu.map((child) => this.setupSubmenuItem(child)),
+				};
 			case "check-for-updates":
 				return {
 					label: item.label,
@@ -194,6 +212,27 @@ export class TrayController {
 					},
 				};
 		}
+	}
+
+	private setupSubmenuItem(
+		item: TraySetupItemSpec,
+	): MenuItemConstructorOptions {
+		return {
+			label: item.label,
+			type: "radio",
+			checked: item.checked,
+			click: () => {
+				if (!shouldSwitchTraySetup(item.id, item.checked ? item.id : null)) {
+					return;
+				}
+				this.interactions?.append({
+					source: "tray",
+					action: "setup-switch",
+					detail: { id: item.id },
+				});
+				this.onSwitchSetup?.(item.id);
+			},
+		};
 	}
 
 	private snoozeSubmenuItem(

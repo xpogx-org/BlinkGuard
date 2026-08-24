@@ -31,6 +31,7 @@ function createService(options?: {
 	store?: MemoryProfilesStore;
 	apply?: (snapshot: unknown) => void;
 	ids?: string[];
+	onChanged?: () => void;
 }) {
 	const store = options?.store ?? new MemoryProfilesStore();
 	let live = options?.live ?? { ...DEFAULT_PREFERENCES };
@@ -43,6 +44,7 @@ function createService(options?: {
 		apply as never,
 		() => ids[idIndex++] ?? crypto.randomUUID(),
 		() => "2026-08-21T12:00:00.000Z",
+		options?.onChanged ?? null,
 	);
 	return {
 		service,
@@ -236,5 +238,31 @@ describe("SettingsProfilesService", () => {
 		service.switch({ id: "id-1" });
 		expect(apply).toHaveBeenCalledOnce();
 		expect(apply.mock.calls[0]?.[0]?.snoozeMinutes).toBe(15);
+	});
+
+	it("switch of a missing id is not-found and does not apply", () => {
+		const { service, apply } = createService();
+		expect(service.save({ name: "Desk" }).ok).toBe(true);
+		expect(service.switch({ id: "missing" })).toEqual({
+			ok: false,
+			code: "not-found",
+		});
+		expect(apply).not.toHaveBeenCalled();
+	});
+
+	it("onChanged fires after save, switch, and delete, not list", () => {
+		const onChanged = vi.fn();
+		const { service } = createService({ onChanged });
+		expect(service.save({ name: "Desk" }).ok).toBe(true);
+		expect(service.save({ name: "Weekend" }).ok).toBe(true);
+		expect(onChanged).toHaveBeenCalledTimes(2);
+		service.list();
+		expect(onChanged).toHaveBeenCalledTimes(2);
+		expect(service.switch({ id: "id-1" }).ok).toBe(true);
+		expect(onChanged).toHaveBeenCalledTimes(3);
+		expect(service.delete({ id: "id-2" }).ok).toBe(true);
+		expect(onChanged).toHaveBeenCalledTimes(4);
+		expect(service.switch({ id: "missing" }).ok).toBe(false);
+		expect(onChanged).toHaveBeenCalledTimes(4);
 	});
 });

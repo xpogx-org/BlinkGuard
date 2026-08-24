@@ -750,6 +750,7 @@ export const uk: MessageCatalog = {
 	"tray.snoozeLookAway": "Відкласти погляд вдалину ({n} хв)",
 	"tray.snoozeLookAway_few": "Відкласти погляд вдалину ({n} хв)",
 	"tray.snoozeLookAway_plural": "Відкласти погляд вдалину ({n} хв)",
+	"tray.setups": "Набори",
 	"tray.checkForUpdates": "Перевірити оновлення",
 	"tray.quit": "Вийти",
 	"tray.cameraIdle": "Камера неактивна",

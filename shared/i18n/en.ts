@@ -736,6 +736,7 @@ export const en: MessageCatalog = {
 	"tray.snoozeLookAway": "Snooze look-away ({n} min)",
 	"tray.snoozeLookAway_few": "Snooze look-away ({n} min)",
 	"tray.snoozeLookAway_plural": "Snooze look-away ({n} min)",
+	"tray.setups": "Setups",
 	"tray.checkForUpdates": "Check for updates",
 	"tray.quit": "Quit",
 	"tray.cameraIdle": "Camera idle",

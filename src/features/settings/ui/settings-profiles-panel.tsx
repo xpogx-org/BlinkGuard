@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { Reveal } from "@/components/reveal";
 import { SettingGrid } from "@/components/setting-grid";
@@ -34,6 +34,12 @@ export function SettingsProfilesPanel({ active }: { active: boolean }) {
 	const [renameId, setRenameId] = useState<string | null>(null);
 	const [renameDraft, setRenameDraft] = useState("");
 	const [confirm, setConfirm] = useState<ConfirmState>(null);
+	const activeProfileId = profiles.activeProfileId;
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: re-run when active setup changes (tray switch)
+	useEffect(() => {
+		setConfirm(null);
+	}, [activeProfileId]);
 
 	const atCap = profiles.profiles.length >= SETTINGS_PROFILE_CAP;
 	const canCreate = nameDraft.trim().length > 0 && !atCap && !profiles.busy;

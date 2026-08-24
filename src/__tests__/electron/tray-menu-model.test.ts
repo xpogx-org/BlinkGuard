@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
 	type BuildTrayMenuSpecInput,
 	buildTrayMenuSpec,
+	shouldSwitchTraySetup,
 	trackingTrayLabelKey,
+	traySwitchPayload,
 } from "../../../electron/infrastructure/tray/tray-menu-model";
 import type { CameraCaptureStatusPayload } from "../../../shared/camera-capture-status";
 import { t } from "../../../shared/i18n";
@@ -10,6 +12,7 @@ import {
 	type FocusPauseStatePayload,
 	pauseStatusMessageKey,
 } from "../../../shared/session-pause-status";
+import { SETTINGS_PROFILE_CAP } from "../../../shared/settings-profiles";
 
 const monitoring: CameraCaptureStatusPayload = {
 	capturing: true,
@@ -193,6 +196,74 @@ describe("buildTrayMenuSpec", () => {
 			label: t("en", "tracking.start"),
 			isTracking: false,
 			accelerator: "Ctrl+I",
+		});
+	});
+
+	it("nests setups after snooze with the active radio checked", () => {
+		const menu = spec({
+			setups: [
+				{ id: "desk", name: "Desk" },
+				{ id: "weekend", name: "Weekend" },
+			],
+			activeSetupId: "weekend",
+		});
+		expect(itemIds(menu)).toEqual([
+			"show",
+			"tracking",
+			"separator",
+			"camera",
+			"separator",
+			"snooze",
+			"setups",
+			"check-for-updates",
+			"separator",
+			"quit",
+		]);
+		expect(menu.find((item) => item.id === "setups")).toEqual({
+			id: "setups",
+			label: t("en", "tray.setups"),
+			submenu: [
+				{ id: "desk", label: "Desk", checked: false },
+				{ id: "weekend", label: "Weekend", checked: true },
+			],
+		});
+	});
+
+	it("omits the setups submenu when the list is empty", () => {
+		expect(spec({ setups: [] }).some((item) => item.id === "setups")).toBe(
+			false,
+		);
+		expect(spec().some((item) => item.id === "setups")).toBe(false);
+	});
+
+	it("caps setups submenu children at SETTINGS_PROFILE_CAP", () => {
+		const setups = Array.from({ length: SETTINGS_PROFILE_CAP + 2 }, (_, i) => ({
+			id: `id-${i + 1}`,
+			name: `Setup ${i + 1}`,
+		}));
+		const submenu = spec({ setups, activeSetupId: "id-1" }).find(
+			(item) => item.id === "setups",
+		);
+		expect(submenu && "submenu" in submenu ? submenu.submenu : []).toHaveLength(
+			SETTINGS_PROFILE_CAP,
+		);
+	});
+});
+
+describe("shouldSwitchTraySetup", () => {
+	it("no-ops the already-active setup and empty ids", () => {
+		expect(shouldSwitchTraySetup("desk", "desk")).toBe(false);
+		expect(shouldSwitchTraySetup("", "desk")).toBe(false);
+		expect(shouldSwitchTraySetup("weekend", "desk")).toBe(true);
+		expect(shouldSwitchTraySetup("weekend", null)).toBe(true);
+	});
+});
+
+describe("traySwitchPayload", () => {
+	it("always confirms dirty so tray matches Switch anyway", () => {
+		expect(traySwitchPayload("weekend")).toEqual({
+			id: "weekend",
+			confirmDirty: true,
 		});
 	});
 });

@@ -3,6 +3,7 @@ import {
 	type CameraCaptureStatusPayload,
 } from "../../../shared/camera-capture-status";
 import { pluralKey, t, type Locale } from "../../../shared/i18n";
+import { SETTINGS_PROFILE_CAP } from "../../../shared/settings-profiles";
 import {
 	pauseStatusMessageKey,
 	type FocusPauseStatePayload,
@@ -19,15 +20,32 @@ export type TraySnoozeItemSpec = {
 	label: string;
 };
 
+export type TraySetupItemSpec = {
+	id: string;
+	label: string;
+	checked: boolean;
+};
+
 export type TrayMenuItemSpec =
 	| { id: "show"; label: string; accelerator?: string }
 	| { id: "tracking"; label: string; isTracking: boolean; accelerator?: string }
 	| { id: "camera"; label: string; enabled: false }
 	| { id: "pause"; label: string; enabled: false }
 	| { id: "snooze"; label: string; submenu: TraySnoozeItemSpec[] }
+	| { id: "setups"; label: string; submenu: TraySetupItemSpec[] }
 	| { id: "check-for-updates"; label: string }
 	| { id: "separator" }
 	| { id: "quit"; label: string };
+
+export type TraySetupSummary = {
+	id: string;
+	name: string;
+};
+
+export type TraySetupsSnapshot = {
+	profiles: TraySetupSummary[];
+	activeSetupId: string | null;
+};
 
 export type BuildTrayMenuSpecInput = {
 	locale: Locale;
@@ -41,7 +59,25 @@ export type BuildTrayMenuSpecInput = {
 	includeCheckForUpdates: boolean;
 	showAccelerator: string;
 	trackingAccelerator: string;
+	setups?: TraySetupSummary[];
+	activeSetupId?: string | null;
 };
+
+/** Tray click on the already-active radio is a no-op (do not re-apply). */
+export function shouldSwitchTraySetup(
+	clickedId: string,
+	activeSetupId: string | null,
+): boolean {
+	return clickedId.length > 0 && clickedId !== activeSetupId;
+}
+
+/** Tray always confirms dirty — same outcome as Settings “Switch anyway”. */
+export function traySwitchPayload(id: string): {
+	id: string;
+	confirmDirty: true;
+} {
+	return { id, confirmDirty: true };
+}
 
 export function buildTrayMenuSpec(
 	input: BuildTrayMenuSpecInput,
@@ -91,6 +127,17 @@ export function buildTrayMenuSpec(
 			submenu: snoozeSubmenu,
 		});
 	}
+	const setupsSubmenu = setupsSubmenuSpec(
+		input.setups ?? [],
+		input.activeSetupId ?? null,
+	);
+	if (setupsSubmenu.length > 0) {
+		items.push({
+			id: "setups",
+			label: t(locale, "tray.setups"),
+			submenu: setupsSubmenu,
+		});
+	}
 	if (input.includeCheckForUpdates) {
 		items.push({
 			id: "check-for-updates",
@@ -132,6 +179,18 @@ function snoozeSubmenuSpec(
 		});
 	}
 	return submenu;
+}
+
+function setupsSubmenuSpec(
+	setups: TraySetupSummary[],
+	activeSetupId: string | null,
+): TraySetupItemSpec[] {
+	const capped = setups.slice(0, SETTINGS_PROFILE_CAP);
+	return capped.map((setup) => ({
+		id: setup.id,
+		label: setup.name,
+		checked: setup.id === activeSetupId,
+	}));
 }
 
 function optionalAccelerator(accelerator: string): { accelerator?: string } {

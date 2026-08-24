@@ -43,6 +43,7 @@ export class SettingsProfilesService {
 		private readonly applySettingsProfile: ApplySettingsProfileFn,
 		private readonly createId: () => string = () => crypto.randomUUID(),
 		private readonly nowIso: () => string = () => new Date().toISOString(),
+		private readonly onChanged: (() => void) | null = null,
 	) {}
 
 	private readState(): SettingsProfilesState {
@@ -51,6 +52,7 @@ export class SettingsProfilesService {
 
 	private writeState(state: SettingsProfilesState): void {
 		this.store.save(sanitizeSettingsProfilesState(state));
+		this.onChanged?.();
 	}
 
 	private isDirty(state: SettingsProfilesState): boolean {

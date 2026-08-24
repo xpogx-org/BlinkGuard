@@ -44,6 +44,7 @@ import { NotificationSoundPlayer } from "./infrastructure/sound/notification-sou
 import { OsNotificationPlayer } from "./infrastructure/notifications/os-notification-player";
 import { ElectronPreferenceStore } from "./infrastructure/store/electron-preference-store";
 import { TrayController } from "./infrastructure/tray/tray-controller";
+import { traySwitchPayload } from "./infrastructure/tray/tray-menu-model";
 import { AutoUpdateService } from "./infrastructure/updates/auto-update-service";
 import { WindowManager } from "./infrastructure/windows/window-manager";
 import { IPC_CHANNELS } from "../shared/ipc-channels";
@@ -360,6 +361,7 @@ function bootstrap(): void {
 			autoUpdates.dispose();
 		},
 	);
+	let settingsProfiles!: SettingsProfilesService;
 	const tray = new TrayController(
 		paths,
 		windows,
@@ -390,6 +392,22 @@ function bootstrap(): void {
 			windows.sendPreferences();
 		},
 		() => preferences.keyboardShortcuts,
+		() => {
+			const listed = settingsProfiles.list();
+			if (!listed.ok) {
+				return { profiles: [], activeSetupId: null };
+			}
+			return {
+				profiles: listed.profiles.map((profile) => ({
+					id: profile.id,
+					name: profile.name,
+				})),
+				activeSetupId: listed.activeProfileId,
+			};
+		},
+		(id) => {
+			settingsProfiles.switch(traySwitchPayload(id));
+		},
 	);
 	reminders.setOnTrackingChange((isTracking) => {
 		captureStatus.notifyTracking(isTracking);
@@ -410,10 +428,13 @@ function bootstrap(): void {
 		applyLaunchAtLogin,
 		tray,
 	);
-	const settingsProfiles = new SettingsProfilesService(
+	settingsProfiles = new SettingsProfilesService(
 		new PreferenceStoreSettingsProfilesAdapter(settingsProfilesStore),
 		() => preferencesService.current,
 		(snapshot) => preferenceActions.applySettingsProfile(snapshot),
+		undefined,
+		undefined,
+		() => tray.rebuildMenu(),
 	);
 	shortcuts.setOpenCameraPreview(() => preferenceActions.showCameraWindow());
 
