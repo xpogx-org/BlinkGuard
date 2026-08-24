@@ -9,6 +9,10 @@ import {
 	withNativeFallback,
 } from "../../shared/notification-style";
 import {
+	NOOP_EYE_CARE_STATS,
+	type EyeCareStatsRecorder,
+} from "../../shared/blink-stats";
+import {
 	sanitizeLookAwayHint,
 	sanitizeLookAwayTitle,
 	type AppPreferences,
@@ -42,6 +46,7 @@ export class LookAwayService {
 		private readonly sound: NotificationSoundPort,
 		private readonly notificationGate: NotificationGate = ALLOW_ALL_GATE,
 		private readonly osNotifications: OsNotificationPort = NO_OP_OS_NOTIFICATIONS,
+		private readonly stats: EyeCareStatsRecorder = NOOP_EYE_CARE_STATS,
 	) {}
 
 	start(): void {
@@ -65,11 +70,14 @@ export class LookAwayService {
 	}
 
 	skip(): void {
+		const wasShowing = this.session !== null;
 		this.dismissVisible();
 		this.store.set("lastLookAwayTime", Date.now());
+		if (wasShowing) this.stats.recordEyeCare("lookAway", "skipped");
 	}
 
 	snooze(): void {
+		const wasShowing = this.session !== null;
 		this.dismissVisible();
 		// Defer the regular cadence so the 60s tick does not race the snooze.
 		this.store.set("lastLookAwayTime", Date.now());
@@ -80,6 +88,7 @@ export class LookAwayService {
 			() => this.show(),
 			promptSnoozeMs(this.preferences.snoozeMinutes),
 		);
+		if (wasShowing) this.stats.recordEyeCare("lookAway", "snoozed");
 	}
 
 	resetTimer(): void {
@@ -161,6 +170,7 @@ export class LookAwayService {
 
 	private endSessionIfCurrent(session: PromptSession): void {
 		if (this.session !== session) return;
+		this.stats.recordEyeCare("lookAway", "completed");
 		if (session.overlay) {
 			if (this.windows.closeLookAwayIfCurrent(session.overlay)) {
 				this.state.isLookAwayShowing = false;

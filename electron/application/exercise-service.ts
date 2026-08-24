@@ -1,3 +1,7 @@
+import {
+	NOOP_EYE_CARE_STATS,
+	type EyeCareStatsRecorder,
+} from "../../shared/blink-stats";
 import { resolveExercisePrompts, t } from "../../shared/i18n";
 import {
 	resolvePromptSurfaces,
@@ -39,6 +43,7 @@ export class ExerciseService {
 		private readonly sound: NotificationSoundPort,
 		private readonly notificationGate: NotificationGate = ALLOW_ALL_GATE,
 		private readonly osNotifications: OsNotificationPort = NO_OP_OS_NOTIFICATIONS,
+		private readonly stats: EyeCareStatsRecorder = NOOP_EYE_CARE_STATS,
 	) {}
 
 	start(): void {
@@ -62,11 +67,14 @@ export class ExerciseService {
 	}
 
 	skip(): void {
+		const wasShowing = this.session !== null;
 		this.dismissVisible();
 		this.store.set("lastExerciseTime", Date.now());
+		if (wasShowing) this.stats.recordEyeCare("exercise", "skipped");
 	}
 
 	snooze(): void {
+		const wasShowing = this.session !== null;
 		this.dismissVisible();
 		if (this.state.exerciseSnoozeTimeout) {
 			clearTimeout(this.state.exerciseSnoozeTimeout);
@@ -75,6 +83,7 @@ export class ExerciseService {
 			() => this.show(),
 			promptSnoozeMs(this.preferences.snoozeMinutes),
 		);
+		if (wasShowing) this.stats.recordEyeCare("exercise", "snoozed");
 	}
 
 	resetTimer(): void {
@@ -152,6 +161,7 @@ export class ExerciseService {
 
 	private endSessionIfCurrent(session: PromptSession): void {
 		if (this.session !== session) return;
+		this.stats.recordEyeCare("exercise", "completed");
 		if (session.overlay) {
 			if (this.windows.closeExerciseIfCurrent(session.overlay)) {
 				this.state.isExerciseShowing = false;

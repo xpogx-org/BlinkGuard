@@ -11,6 +11,7 @@ import {
 	availableBlinks,
 	computeStreak,
 	DEFAULT_BLINK_STATS,
+	EMPTY_EYE_CARE_COUNTS,
 	emptyDayStats,
 	formatTrackingDuration,
 	goalProgress,
@@ -19,6 +20,7 @@ import {
 	normalizeBlinkStatsState,
 	pruneDays,
 	recordBlink,
+	recordEyeCareOutcome,
 	recordSessionStart,
 	rewardOffers,
 	shiftDateKey,
@@ -30,6 +32,7 @@ import {
 	totalsSummary,
 	toWeekChart,
 	toYearChart,
+	weekEyeCareTotals,
 } from "../../../shared/blink-stats";
 
 function withDays(
@@ -61,6 +64,7 @@ describe("blink-stats helpers", () => {
 			blinks: 1,
 			trackingMs: 0,
 			sessions: 0,
+			...EMPTY_EYE_CARE_COUNTS,
 		});
 		expect(toDayChart(state, "2026-08-07")[14]?.value).toBe(1);
 		expect(totalsSummary(state)).toEqual({
@@ -206,6 +210,59 @@ describe("blink-stats helpers", () => {
 		expect(february).toHaveLength(28);
 		expect(february[0]?.label).toBe("1");
 		expect(february[27]?.label).toBe("28");
+	});
+
+	it("records eye-care outcomes and keeps them through sanitize and prune", () => {
+		const now = new Date(2026, 7, 7, 10, 0, 0);
+		let state = recordEyeCareOutcome(
+			DEFAULT_BLINK_STATS,
+			"lookAway",
+			"completed",
+			now,
+		);
+		state = recordEyeCareOutcome(state, "lookAway", "skipped", now);
+		state = recordEyeCareOutcome(state, "lookAway", "snoozed", now);
+		state = recordEyeCareOutcome(state, "exercise", "completed", now);
+		expect(todaySummary(state, "2026-08-07")).toMatchObject({
+			lookAwayCompleted: 1,
+			lookAwaySkipped: 1,
+			lookAwaySnoozed: 1,
+			exerciseCompleted: 1,
+			exerciseSkipped: 0,
+			blinks: 0,
+		});
+		expect(weekEyeCareTotals(state, "2026-08-07").lookAwayCompleted).toBe(1);
+		expect(state.totalBlinks).toBe(0);
+
+		const normalized = normalizeBlinkStatsState({
+			days: [
+				{
+					date: "2026-08-07",
+					blinks: 3,
+					lookAwayCompleted: 2,
+				},
+			],
+		});
+		expect(normalized.days[0]).toMatchObject({
+			lookAwayCompleted: 2,
+			lookAwaySkipped: 0,
+			exerciseCompleted: 0,
+			hourlyBlinks: expect.any(Array),
+		});
+
+		const pruned = pruneDays(
+			{
+				...DEFAULT_BLINK_STATS,
+				days: [
+					{ ...emptyDayStats("2025-01-01"), lookAwayCompleted: 9 },
+					{ ...emptyDayStats("2026-08-07"), lookAwayCompleted: 4 },
+				],
+			},
+			366,
+			"2026-08-07",
+		);
+		expect(pruned.days.map((day) => day.date)).toEqual(["2026-08-07"]);
+		expect(pruned.days[0]?.lookAwayCompleted).toBe(4);
 	});
 
 	it("prunes days outside retention", () => {

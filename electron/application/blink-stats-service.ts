@@ -29,13 +29,17 @@ import {
 	localDateKey,
 	normalizeBlinkStatsState,
 	recordBlink,
+	recordEyeCareOutcome,
 	recordSessionStart,
+	type EyeCarePromptKind,
+	type EyeCarePromptOutcome,
 	spendBlinks,
 	todaySummary,
 	toBlinkStatsSnapshot,
 	totalsSummary,
 	goalProgress,
 	rewardOffers,
+	weekEyeCareTotals,
 } from "../../shared/blink-stats";
 import {
 	achievementSnapshotFields,
@@ -418,6 +422,7 @@ export class BlinkStatsService {
 		return {
 			today: todaySummary(this.state, today),
 			totals: totalsSummary(this.state),
+			weekEyeCare: weekEyeCareTotals(this.state, today),
 			...this.cachedCharts,
 			blinksPerMinute,
 			blinkRateReady: ready,
@@ -429,6 +434,16 @@ export class BlinkStatsService {
 			hasStatsFlair: this.state.unlockedRewardIds.includes("statsFlair"),
 			...achievementFields,
 		};
+	}
+
+	recordEyeCare(
+		kind: EyeCarePromptKind,
+		outcome: EyeCarePromptOutcome,
+		now: Date = new Date(),
+	): void {
+		this.state = recordEyeCareOutcome(this.state, kind, outcome, now);
+		this.persist();
+		this.schedulePush();
 	}
 
 	recordBlink(now: Date = new Date()): void {

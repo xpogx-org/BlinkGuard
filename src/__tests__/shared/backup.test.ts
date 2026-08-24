@@ -30,6 +30,12 @@ describe("backup document", () => {
 					trackingMs: 60_000,
 					sessions: 1,
 					hourlyBlinks: Array.from({ length: 24 }, () => 0),
+					lookAwayCompleted: 3,
+					lookAwaySkipped: 1,
+					lookAwaySnoozed: 0,
+					exerciseCompleted: 2,
+					exerciseSkipped: 1,
+					exerciseSnoozed: 0,
 				},
 			],
 			totalBlinks: 12,
@@ -62,6 +68,8 @@ describe("backup document", () => {
 		expect(parsed.value.preferences?.isTracking).toBe(false);
 		expect(parsed.value.blinkStats?.totalBlinks).toBe(12);
 		expect(parsed.value.blinkStats?.days[0]?.blinks).toBe(12);
+		expect(parsed.value.blinkStats?.days[0]?.lookAwayCompleted).toBe(3);
+		expect(parsed.value.blinkStats?.days[0]?.exerciseCompleted).toBe(2);
 		expect(parsed.value.blinkStats?.unlockedRewardIds).toContain("statsFlair");
 		expect(parsed.value.blinkStats?.unlockedAchievementIds).toContain(
 			"firstBlink",
@@ -140,7 +148,8 @@ describe("backup document", () => {
 
 	it("imports prefs without quietHoursByWeekday as inherit-all", () => {
 		const legacyPrefs = { ...DEFAULT_PREFERENCES };
-		delete (legacyPrefs as { quietHoursByWeekday?: unknown }).quietHoursByWeekday;
+		delete (legacyPrefs as { quietHoursByWeekday?: unknown })
+			.quietHoursByWeekday;
 		const document = buildBackupDocument({
 			scope: "preferences",
 			appVersion: "1.0.0",

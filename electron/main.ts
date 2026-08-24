@@ -278,6 +278,7 @@ function bootstrap(): void {
 		sound,
 		notificationGate,
 		osNotifications,
+		blinkStats,
 	);
 	const lookAway = new LookAwayService(
 		preferences,
@@ -287,6 +288,7 @@ function bootstrap(): void {
 		sound,
 		notificationGate,
 		osNotifications,
+		blinkStats,
 	);
 	osNotifications.setActivationHandlers({
 		onClick: () => windows.showMain(),

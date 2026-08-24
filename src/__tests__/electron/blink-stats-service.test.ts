@@ -376,11 +376,10 @@ describe("BlinkStatsService", () => {
 		service.replaceState({
 			days: [
 				{
-					date: "2026-08-01",
+					...emptyDayStats("2026-08-01"),
 					blinks: 40,
 					trackingMs: 120_000,
 					sessions: 2,
-					hourlyBlinks: Array.from({ length: 24 }, () => 0),
 				},
 			],
 			totalBlinks: 40,
@@ -520,6 +519,28 @@ describe("BlinkStatsService", () => {
 		expect(service.getSnapshot().unlockedAchievementIds).toContain(
 			"firstCheer",
 		);
+		service.dispose();
+	});
+
+	it("records eye-care outcomes, restore keeps them, and reset clears them", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(store);
+		service.recordEyeCare("lookAway", "completed");
+		service.recordEyeCare("exercise", "skipped");
+		expect(service.getSnapshot().today.lookAwayCompleted).toBe(1);
+		expect(service.getSnapshot().today.exerciseSkipped).toBe(1);
+		expect(service.getSnapshot().weekEyeCare.lookAwayCompleted).toBe(1);
+
+		const persisted = service.getPersistedState();
+		expect(persisted.days[0]?.lookAwayCompleted).toBe(1);
+
+		service.reset();
+		expect(service.getSnapshot().today.lookAwayCompleted).toBe(0);
+		expect(service.getSnapshot().today.exerciseSkipped).toBe(0);
+
+		service.replaceState(persisted);
+		expect(service.getSnapshot().today.lookAwayCompleted).toBe(1);
+		expect(service.getSnapshot().today.exerciseSkipped).toBe(1);
 		service.dispose();
 	});
 });

@@ -32,13 +32,58 @@ export { DEFAULT_GOALS_CONFIG };
 export const BLINK_STATS_RETENTION_DAYS = 366;
 export const BLINK_STATS_STORE_KEY = "state";
 
+export type EyeCarePromptKind = "lookAway" | "exercise";
+export type EyeCarePromptOutcome = "completed" | "skipped" | "snoozed";
+
+export type EyeCareDayCounts = {
+	lookAwayCompleted: number;
+	lookAwaySkipped: number;
+	lookAwaySnoozed: number;
+	exerciseCompleted: number;
+	exerciseSkipped: number;
+	exerciseSnoozed: number;
+};
+
+export type EyeCareStatsRecorder = {
+	recordEyeCare(kind: EyeCarePromptKind, outcome: EyeCarePromptOutcome): void;
+};
+
+export const NOOP_EYE_CARE_STATS: EyeCareStatsRecorder = {
+	recordEyeCare: () => {},
+};
+
+export const EMPTY_EYE_CARE_COUNTS: EyeCareDayCounts = {
+	lookAwayCompleted: 0,
+	lookAwaySkipped: 0,
+	lookAwaySnoozed: 0,
+	exerciseCompleted: 0,
+	exerciseSkipped: 0,
+	exerciseSnoozed: 0,
+};
+
+const EYE_CARE_FIELD: Record<
+	EyeCarePromptKind,
+	Record<EyeCarePromptOutcome, keyof EyeCareDayCounts>
+> = {
+	lookAway: {
+		completed: "lookAwayCompleted",
+		skipped: "lookAwaySkipped",
+		snoozed: "lookAwaySnoozed",
+	},
+	exercise: {
+		completed: "exerciseCompleted",
+		skipped: "exerciseSkipped",
+		snoozed: "exerciseSnoozed",
+	},
+};
+
 export type DayBlinkStats = {
 	date: string;
 	blinks: number;
 	trackingMs: number;
 	sessions: number;
 	hourlyBlinks: number[];
-};
+} & EyeCareDayCounts;
 
 export type BlinkStatsState = {
 	days: DayBlinkStats[];
@@ -107,7 +152,7 @@ export type TodayBlinkSummary = {
 	blinks: number;
 	trackingMs: number;
 	sessions: number;
-};
+} & EyeCareDayCounts;
 
 export type BlinkTotalsSummary = {
 	/** Lifetime earned blinks. */
@@ -141,6 +186,7 @@ export function emptyDayStats(date: string): DayBlinkStats {
 		trackingMs: 0,
 		sessions: 0,
 		hourlyBlinks: emptyHourlyBlinks(),
+		...EMPTY_EYE_CARE_COUNTS,
 	};
 }
 
@@ -257,6 +303,42 @@ export function recordSessionStart(
 	if (!day) return pruneDays(next);
 	day.sessions += 1;
 	return pruneDays(next, BLINK_STATS_RETENTION_DAYS, date);
+}
+
+export function recordEyeCareOutcome(
+	state: BlinkStatsState,
+	kind: EyeCarePromptKind,
+	outcome: EyeCarePromptOutcome,
+	now: Date = new Date(),
+): BlinkStatsState {
+	const date = localDateKey(now);
+	let next = ensureDay(state, date);
+	next = cloneState(next);
+	const day = next.days.find((entry) => entry.date === date);
+	if (!day) return pruneDays(next);
+	const field = EYE_CARE_FIELD[kind][outcome];
+	day[field] += 1;
+	return pruneDays(next, BLINK_STATS_RETENTION_DAYS, date);
+}
+
+export function weekEyeCareTotals(
+	state: BlinkStatsState,
+	today: string = localDateKey(),
+): EyeCareDayCounts {
+	const monday = startOfWeekMonday(today);
+	const totals = { ...EMPTY_EYE_CARE_COUNTS };
+	for (let offset = 0; offset < 7; offset += 1) {
+		const date = shiftDateKey(monday, offset);
+		const day = dayByDate(state, date);
+		if (!day) continue;
+		totals.lookAwayCompleted += day.lookAwayCompleted;
+		totals.lookAwaySkipped += day.lookAwaySkipped;
+		totals.lookAwaySnoozed += day.lookAwaySnoozed;
+		totals.exerciseCompleted += day.exerciseCompleted;
+		totals.exerciseSkipped += day.exerciseSkipped;
+		totals.exerciseSnoozed += day.exerciseSnoozed;
+	}
+	return totals;
 }
 
 export function availableBlinks(state: BlinkStatsState): number {
@@ -593,6 +675,12 @@ export function todaySummary(
 		blinks: day?.blinks ?? 0,
 		trackingMs: day?.trackingMs ?? 0,
 		sessions: day?.sessions ?? 0,
+		lookAwayCompleted: day?.lookAwayCompleted ?? 0,
+		lookAwaySkipped: day?.lookAwaySkipped ?? 0,
+		lookAwaySnoozed: day?.lookAwaySnoozed ?? 0,
+		exerciseCompleted: day?.exerciseCompleted ?? 0,
+		exerciseSkipped: day?.exerciseSkipped ?? 0,
+		exerciseSnoozed: day?.exerciseSnoozed ?? 0,
 	};
 }
 
@@ -692,6 +780,7 @@ export type BlinkStatsSnapshot = {
 	achievementsUnlocked: number;
 	achievementsTotal: number;
 	achievementProgress: Partial<Record<AchievementId, AchievementProgress>>;
+	weekEyeCare: EyeCareDayCounts;
 };
 
 export function toBlinkStatsSnapshot(
@@ -724,6 +813,7 @@ export function toBlinkStatsSnapshot(
 		streak,
 		rewards: rewardOffers(state),
 		hasStatsFlair: state.unlockedRewardIds.includes("statsFlair"),
+		weekEyeCare: weekEyeCareTotals(state, today),
 		...achievementSnapshotFields({
 			stats: state,
 			streak: streak.current,
@@ -800,6 +890,12 @@ export function normalizeBlinkStatsState(raw: unknown): BlinkStatsState {
 			trackingMs: nonNegativeInt(day.trackingMs) ?? 0,
 			sessions: nonNegativeInt(day.sessions) ?? 0,
 			hourlyBlinks: hourly.slice(0, 24),
+			lookAwayCompleted: nonNegativeInt(day.lookAwayCompleted) ?? 0,
+			lookAwaySkipped: nonNegativeInt(day.lookAwaySkipped) ?? 0,
+			lookAwaySnoozed: nonNegativeInt(day.lookAwaySnoozed) ?? 0,
+			exerciseCompleted: nonNegativeInt(day.exerciseCompleted) ?? 0,
+			exerciseSkipped: nonNegativeInt(day.exerciseSkipped) ?? 0,
+			exerciseSnoozed: nonNegativeInt(day.exerciseSnoozed) ?? 0,
 		});
 	}
 

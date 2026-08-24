@@ -7,6 +7,8 @@ import type {
 	NotificationSoundPort,
 } from "../../../electron/application/ports/runtime-ports";
 import { snoozeAllPrompts } from "../../../electron/application/snooze-all";
+import { EXERCISE_POPUP_VISIBLE_MS } from "../../../electron/domain/reminder-policy";
+import type { EyeCareStatsRecorder } from "../../../shared/blink-stats";
 import {
 	type AppPreferences,
 	DEFAULT_PREFERENCES,
@@ -501,5 +503,87 @@ describe("ExerciseService", () => {
 		expect(os.dismiss).toHaveBeenCalledWith("exercise");
 		expect(state.isExerciseShowing).toBe(false);
 		expect(windows.showExercise).not.toHaveBeenCalled();
+	});
+
+	it("records completed when the popup timer finishes", () => {
+		const stats = { recordEyeCare: vi.fn() } satisfies EyeCareStatsRecorder;
+		const preferences = createPreferences({ lookAwayEnabled: false });
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastExerciseTime", Date.now() - 61_000);
+		const service = new ExerciseService(
+			preferences,
+			state,
+			store,
+			createWindows(),
+			createSound(),
+			undefined,
+			undefined,
+			stats,
+		);
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+		expect(stats.recordEyeCare).not.toHaveBeenCalled();
+		vi.advanceTimersByTime(EXERCISE_POPUP_VISIBLE_MS);
+		expect(stats.recordEyeCare).toHaveBeenCalledWith("exercise", "completed");
+	});
+
+	it("records skipped on skip while showing, not when idle", () => {
+		const stats = { recordEyeCare: vi.fn() } satisfies EyeCareStatsRecorder;
+		const preferences = createPreferences({ lookAwayEnabled: false });
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastExerciseTime", Date.now() - 61_000);
+		const service = new ExerciseService(
+			preferences,
+			state,
+			store,
+			createWindows(),
+			createSound(),
+			undefined,
+			undefined,
+			stats,
+		);
+
+		service.skip();
+		expect(stats.recordEyeCare).not.toHaveBeenCalled();
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+		service.skip();
+		expect(stats.recordEyeCare).toHaveBeenCalledWith("exercise", "skipped");
+		expect(stats.recordEyeCare).not.toHaveBeenCalledWith(
+			"exercise",
+			"completed",
+		);
+	});
+
+	it("records snoozed and not completed", () => {
+		const stats = { recordEyeCare: vi.fn() } satisfies EyeCareStatsRecorder;
+		const preferences = createPreferences({ lookAwayEnabled: false });
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastExerciseTime", Date.now() - 61_000);
+		const service = new ExerciseService(
+			preferences,
+			state,
+			store,
+			createWindows(),
+			createSound(),
+			undefined,
+			undefined,
+			stats,
+		);
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+		service.snooze();
+		expect(stats.recordEyeCare).toHaveBeenCalledWith("exercise", "snoozed");
+		vi.advanceTimersByTime(EXERCISE_POPUP_VISIBLE_MS);
+		expect(stats.recordEyeCare).not.toHaveBeenCalledWith(
+			"exercise",
+			"completed",
+		);
 	});
 });
