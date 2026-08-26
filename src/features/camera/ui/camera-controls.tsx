@@ -49,12 +49,12 @@ export function CameraControls({
 					setIsWindowOpen={setIsWindowOpen}
 					captureSurface={captureSurface}
 					error={error}
+					calibration={calibration}
 				/>
 			) : (
 				<CameraTuningPanel
 					preferences={preferences}
 					setPreferences={setPreferences}
-					calibration={calibration}
 				/>
 			)}
 		</>

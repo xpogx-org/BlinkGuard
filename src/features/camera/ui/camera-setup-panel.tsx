@@ -6,6 +6,8 @@ import { SettingGrid } from "@/components/setting-grid";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { ToggleSwitch } from "@/components/toggle-switch";
+import type { CameraCalibration } from "@/features/camera/model/use-camera-calibration";
+import { CameraCalibrationSettings } from "@/features/camera/ui/camera-calibration-settings";
 import type { SettingsPreferences } from "@/features/settings/model/preferences";
 import type { SetPreferences } from "@/features/settings/model/use-preferences";
 import { useI18n, useT } from "@/i18n";
@@ -30,6 +32,7 @@ interface CameraSetupPanelProps {
 	setIsWindowOpen: (open: boolean) => void;
 	captureSurface: CameraCaptureSurface;
 	error: string | null;
+	calibration: CameraCalibration;
 }
 
 export function CameraSetupPanel({
@@ -39,6 +42,7 @@ export function CameraSetupPanel({
 	setIsWindowOpen,
 	captureSurface,
 	error,
+	calibration,
 }: CameraSetupPanelProps) {
 	const t = useT();
 	const { locale } = useI18n();
@@ -68,23 +72,10 @@ export function CameraSetupPanel({
 				: undefined;
 
 	const toggleCamera = () => {
-		const enabled = !preferences.cameraEnabled;
-		const update = () => {
-			setPreferences((current) => ({
-				...current,
-				isTracking: false,
-				cameraEnabled: enabled,
-			}));
-			if (enabled) rendererIpc.startCameraTracking();
-			else rendererIpc.stopCameraTracking();
-		};
-
-		if (preferences.isTracking) {
-			rendererIpc.stopReminders();
-			setTimeout(update, 100);
-		} else {
-			update();
-		}
+		setPreferences((current) => ({
+			...current,
+			cameraEnabled: !current.cameraEnabled,
+		}));
 	};
 
 	const setCameraQuality = (cameraQuality: CameraQuality) => {
@@ -101,7 +92,7 @@ export function CameraSetupPanel({
 						"h-full",
 						cameraOn
 							? "border-primary/40 bg-primary/5"
-							: "border-warning/40 bg-warning/10",
+							: "border-border bg-muted/30",
 					)}
 				>
 					<SettingRow
@@ -110,13 +101,13 @@ export function CameraSetupPanel({
 								<Camera
 									className={cn(
 										"h-4 w-4",
-										cameraOn ? "text-primary" : "text-warning",
+										cameraOn ? "text-primary" : "text-muted-foreground",
 									)}
 									aria-hidden
 								/>
 								<span
 									className={cn(
-										cameraOn ? "text-primary" : "text-warning-foreground",
+										cameraOn ? "text-primary" : "text-foreground",
 									)}
 								>
 									{t("camera.detection")}
@@ -143,7 +134,7 @@ export function CameraSetupPanel({
 								<span
 									className={cn(
 										"col-start-1 row-start-1",
-										cameraOn ? "text-primary/80" : "text-warning-foreground/85",
+										cameraOn ? "text-primary/80" : "text-muted-foreground",
 									)}
 								>
 									{cameraOn
@@ -246,6 +237,11 @@ export function CameraSetupPanel({
 					</SettingRow>
 				</SettingPanel>
 			</SettingGrid>
+
+			<CameraCalibrationSettings
+				calibration={calibration}
+				disabled={!cameraOn}
+			/>
 
 			<CameraDevicePicker
 				preferences={preferences}
