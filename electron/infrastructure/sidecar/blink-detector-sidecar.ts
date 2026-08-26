@@ -23,6 +23,8 @@ import {
 	isCameraQuality,
 	toSidecarCameraQualityMessage,
 } from "../../../shared/camera-quality";
+import type { FaceStatus } from "../../../shared/face-status";
+import { isReliableFaceStatus } from "../../../shared/face-status";
 import {
 	type CameraDeviceInfo,
 	type CameraDeviceNotice,
@@ -69,7 +71,7 @@ interface SidecarCallbacks {
 
 interface FaceDataSample {
 	faceDetected?: boolean;
-	faceStatus?: string;
+	faceStatus?: FaceStatus;
 	ear?: number;
 	blink?: boolean;
 	blink_phase?: string;
@@ -543,10 +545,13 @@ export class BlinkDetectorSidecar {
 
 	private sampleFaceDataForCalibration(data: FaceDataSample): void {
 		if (!this.calibrationActive) return;
-		this.calibrationFaceDetected = Boolean(data.faceDetected);
+		const reliable = isReliableFaceStatus(
+			Boolean(data.faceDetected),
+			data.faceStatus,
+		);
+		this.calibrationFaceDetected = reliable;
 		if (this.calibrationPhase !== "open_eye") return;
-		if (!data.faceDetected) return;
-		if (data.faceStatus !== "ok") return;
+		if (!reliable) return;
 		if (data.blink) return;
 		if (data.blink_phase === "start" || data.blink_phase === "complete") {
 			return;

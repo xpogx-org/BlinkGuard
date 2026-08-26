@@ -49,6 +49,7 @@ import { AutoUpdateService } from "./infrastructure/updates/auto-update-service"
 import { WindowManager } from "./infrastructure/windows/window-manager";
 import { IPC_CHANNELS } from "../shared/ipc-channels";
 import { sameCameraDevice } from "../shared/camera-devices";
+import { isReliableFaceStatus } from "../shared/face-status";
 import { goalsConfigFromPreferences } from "../shared/preferences";
 
 if (process.platform === "darwin") {
@@ -160,8 +161,12 @@ function bootstrap(): void {
 				windows.sendToCamera(IPC_CHANNELS.blinkDetected, data);
 			},
 			onFaceData: (data: any) => {
-				reminders.onFaceDetection(!!data.faceDetected);
-				blinkStats.onFaceVisibility(!!data.faceDetected);
+				const reliable = isReliableFaceStatus(
+					Boolean(data.faceDetected),
+					data.faceStatus,
+				);
+				reminders.onFaceDetection(reliable);
+				blinkStats.onFaceVisibility(reliable);
 				windows.sendToCamera(IPC_CHANNELS.faceTrackingData, data);
 			},
 			onVideoStream: (data) => {

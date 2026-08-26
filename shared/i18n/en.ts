@@ -869,6 +869,12 @@ export const en: MessageCatalog = {
 		"Center your face in the frame, improve lighting, and clean the camera lens.",
 	"popup.camera.hintTooFar":
 		"Move closer so your face fills more of the frame.",
+	"popup.camera.hintTooClose":
+		"Move back so your full face stays in view.",
+	"popup.camera.hintTooHigh":
+		"Lower your head and look at the camera.",
+	"popup.camera.hintUnreliable":
+		"Face the camera squarely and center your face. Tracking pauses until your eyes are clearly visible.",
 	"popup.camera.streamError": "Camera stream unavailable",
 
 	// Profile

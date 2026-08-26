@@ -236,6 +236,30 @@ describe("BlinkDetectorSidecar EAR calibration samples", () => {
 
 		expect(internal.calibrationSamples).toEqual([0.28]);
 	});
+
+	it("ignores too_close and unreliable_landmarks like too_far", () => {
+		const { sidecar, child } = createSidecar();
+		expect(sidecar.startEarCalibration()).toBe(true);
+		const internal = sidecar as unknown as { calibrationSamples: number[] };
+
+		emitFaceData(child, {
+			faceDetected: false,
+			faceStatus: "too_close",
+			ear: 0.28,
+		});
+		emitFaceData(child, {
+			faceDetected: false,
+			faceStatus: "unreliable_landmarks",
+			ear: 0.27,
+		});
+		emitFaceData(child, {
+			faceDetected: true,
+			faceStatus: "ok",
+			ear: 0.26,
+		});
+
+		expect(internal.calibrationSamples).toEqual([0.26]);
+	});
 });
 
 describe("isBenignSidecarStderr", () => {

@@ -7,9 +7,10 @@ let currentThreshold = 0.2;
 let thresholdUpdateTimer = null;
 /** EMA for face box only — HOG boxes jitter; keep light tracking lag. */
 let smoothedFaceRect = null;
-const FACE_OVERLAY_SMOOTH = 0.85;
+let lastReliableTracking = false;
+const FACE_OVERLAY_SMOOTH = 0.55;
 /** Normalized jump above this snaps (re-acquire / large head move). */
-const FACE_OVERLAY_SNAP = 0.12;
+const FACE_OVERLAY_SNAP = 0.08;
 /** Reused decode target; drop stale JPEGs so preview does not queue lag. */
 const previewImage = new window.Image();
 let previewDecodeBusy = false;
@@ -30,12 +31,12 @@ function resetSmoothedOverlay() {
 	smoothedFaceRect = null;
 }
 
-function smoothFaceRect(next) {
+function smoothFaceRect(next, { smooth = true } = {}) {
 	if (!next || !next.width || !next.height) {
 		smoothedFaceRect = null;
 		return null;
 	}
-	if (!smoothedFaceRect) {
+	if (!smooth || !smoothedFaceRect) {
 		smoothedFaceRect = {
 			x: next.x,
 			y: next.y,
@@ -76,6 +77,45 @@ function smoothEyeLandmarks(points) {
 	return points.map((p) => ({ x: p.x, y: p.y }));
 }
 
+function isReliableFaceTracking(faceData) {
+	return (
+		faceData &&
+		faceData.faceDetected === true &&
+		faceData.faceStatus === "ok"
+	);
+}
+
+function hasWeakFaceBBoxHint(faceStatus) {
+	return (
+		faceStatus === "too_far" ||
+		faceStatus === "too_close" ||
+		faceStatus === "head_too_high" ||
+		faceStatus === "unreliable_landmarks"
+	);
+}
+
+function faceHintKey(faceStatus) {
+	if (faceStatus === "too_far") return "popup.camera.hintTooFar";
+	if (faceStatus === "too_close") return "popup.camera.hintTooClose";
+	if (faceStatus === "head_too_high") return "popup.camera.hintTooHigh";
+	if (faceStatus === "unreliable_landmarks") {
+		return "popup.camera.hintUnreliable";
+	}
+	return "popup.camera.hintNone";
+}
+
+function shouldShowMissingOverlay(faceData) {
+	return !isReliableFaceTracking(faceData);
+}
+
+function syncTrackingRecovery(faceData) {
+	const reliable = isReliableFaceTracking(faceData);
+	if (reliable && !lastReliableTracking) {
+		resetSmoothedOverlay();
+	}
+	lastReliableTracking = reliable;
+}
+
 function setFaceMissingOverlay(visible, faceStatus) {
 	const overlay = document.getElementById("face-missing-overlay");
 	const hint = document.getElementById("face-missing-hint");
@@ -83,10 +123,7 @@ function setFaceMissingOverlay(visible, faceStatus) {
 
 	overlay.classList.toggle("is-visible", Boolean(visible));
 	if (visible && hint) {
-		const hintKey =
-			faceStatus === "too_far"
-				? "popup.camera.hintTooFar"
-				: "popup.camera.hintNone";
+		const hintKey = faceHintKey(faceStatus);
 		hint.textContent = tr(hintKey);
 		hint.setAttribute("data-i18n", hintKey);
 	}
@@ -129,7 +166,7 @@ function updateInfoDisplay(eyeSize, isBlinking = false) {
 }
 
 function resetBlinkDisplay() {
-	if (lastFaceData && lastFaceData.faceDetected) {
+	if (lastFaceData && isReliableFaceTracking(lastFaceData)) {
 		const eyeSize = lastFaceData.ear || 0;
 		const status = document.getElementById("status");
 		if (status) {
@@ -160,9 +197,11 @@ function drawOverlays(faceData) {
 	const canvas = document.getElementById("canvas");
 	if (!canvas || !faceData) return;
 
+	syncTrackingRecovery(faceData);
+	const reliable = isReliableFaceTracking(faceData);
 	const ctx = canvas.getContext("2d");
-	if (faceData.faceDetected) {
-		const rect = smoothFaceRect(faceData.faceRect);
+	if (reliable) {
+		const rect = smoothFaceRect(faceData.faceRect, { smooth: true });
 		drawFaceRect(ctx, canvas, rect, "#00FF00");
 
 		const landmarks = smoothEyeLandmarks(faceData.eyeLandmarks);
@@ -194,8 +233,8 @@ function drawOverlays(faceData) {
 		updateInfoDisplay(eyeSize, isBlinking);
 		setFaceMissingOverlay(false);
 	} else {
-		if (faceData.faceStatus === "too_far") {
-			const rect = smoothFaceRect(faceData.faceRect);
+		const rect = smoothFaceRect(faceData.faceRect, { smooth: false });
+		if (hasWeakFaceBBoxHint(faceData.faceStatus)) {
 			drawFaceRect(ctx, canvas, rect, "#FACC15");
 		} else {
 			resetSmoothedOverlay();
@@ -207,15 +246,16 @@ function drawOverlays(faceData) {
 			status.style.background = "rgba(255, 0, 0, 0.5)";
 		}
 		updateInfoDisplay(null);
-		setFaceMissingOverlay(true, faceData.faceStatus || "none");
+		setFaceMissingOverlay(shouldShowMissingOverlay(faceData), faceData.faceStatus || "none");
 	}
 }
 
 function applyFaceTrackingUi(data) {
+	syncTrackingRecovery(data);
 	const timeSinceLastBlink = Date.now() - lastBlinkTime;
 	const shouldShowBlink = timeSinceLastBlink < 350;
 
-	if (data.faceDetected) {
+	if (isReliableFaceTracking(data)) {
 		const eyeSize = data.ear || 0;
 		const isBlinking = data.blink || shouldShowBlink;
 
@@ -232,7 +272,7 @@ function applyFaceTrackingUi(data) {
 		updateInfoDisplay(eyeSize, isBlinking);
 		setFaceMissingOverlay(false);
 	} else {
-		if (data.faceStatus !== "too_far") {
+		if (!hasWeakFaceBBoxHint(data.faceStatus)) {
 			resetSmoothedOverlay();
 		}
 		const status = document.getElementById("status");
@@ -241,7 +281,7 @@ function applyFaceTrackingUi(data) {
 			status.style.background = "rgba(255, 0, 0, 0.5)";
 		}
 		updateInfoDisplay(null);
-		setFaceMissingOverlay(true, data.faceStatus || "none");
+		setFaceMissingOverlay(shouldShowMissingOverlay(data), data.faceStatus || "none");
 	}
 }
 
@@ -258,7 +298,7 @@ function initCameraPopup() {
 			clearTimeout(blinkDisplayTimer);
 		}
 
-		if (lastFaceData && lastFaceData.faceDetected) {
+		if (lastFaceData && isReliableFaceTracking(lastFaceData)) {
 			const status = document.getElementById("status");
 			if (status) {
 				status.textContent = tr("popup.camera.blinkDetected");
@@ -349,8 +389,11 @@ function initCameraPopup() {
 	if (window.__i18n) {
 		window.__i18n.onApply = function () {
 			updateInfoDisplay(lastFaceData ? lastFaceData.ear : null);
-			if (lastFaceData && !lastFaceData.faceDetected) {
-				setFaceMissingOverlay(true, lastFaceData.faceStatus || "none");
+			if (lastFaceData && !isReliableFaceTracking(lastFaceData)) {
+				setFaceMissingOverlay(
+					shouldShowMissingOverlay(lastFaceData),
+					lastFaceData.faceStatus || "none",
+				);
 			}
 		};
 	}
