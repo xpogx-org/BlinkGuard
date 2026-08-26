@@ -217,6 +217,16 @@ export function SettingsShell({
 	const active = sections.find((item) => item.id === section) ?? sections[0];
 	const showOnboarding = prefsHydrated && !preferences.hasCompletedOnboarding;
 
+	const handleOnboardingComplete = (options: { cameraEnabled: boolean }) => {
+		if (options.cameraEnabled) {
+			setSection("camera");
+			setCameraTab("setup");
+			return;
+		}
+		setSection("reminders");
+		setRemindersTab("schedule");
+	};
+
 	useEffect(() => {
 		if (!prefsHydrated) return;
 		void (async () => {
@@ -256,6 +266,7 @@ export function SettingsShell({
 					preferences={preferences}
 					setPreferences={setPreferences}
 					shortcut={shortcuts}
+					onComplete={handleOnboardingComplete}
 				/>
 			) : null}
 			<UpdateToast {...autoUpdate} />
@@ -404,6 +415,10 @@ export function SettingsShell({
 										setPreferences={setPreferences}
 										onIntervalChange={changeReminderInterval}
 										onToggleTracking={toggleTracking}
+										onOpenCamera={() => {
+											setSection("camera");
+											setCameraTab("setup");
+										}}
 									/>
 								) : (
 									<QuietHoursFocusSettings

@@ -1,4 +1,4 @@
-import { Activity, Clock, Moon, Play, Square } from "lucide-react";
+import { Activity, Camera, Clock, Moon, Play, Square } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/button";
 import { RangeSlider } from "@/components/range-slider";
@@ -16,6 +16,7 @@ interface ReminderControlsProps {
 	setPreferences: Dispatch<SetStateAction<SettingsPreferences>>;
 	onIntervalChange: (seconds: number) => void;
 	onToggleTracking: () => void;
+	onOpenCamera?: () => void;
 }
 
 function formatBlinksPerMinute(intervalSeconds: number): string {
@@ -32,6 +33,7 @@ export function ReminderControls({
 	setPreferences,
 	onIntervalChange,
 	onToggleTracking,
+	onOpenCamera,
 }: ReminderControlsProps) {
 	const { t, locale } = useI18n();
 	const cameraOn = preferences.cameraEnabled;
@@ -155,6 +157,28 @@ export function ReminderControls({
 					</div>
 				</SettingPanel>
 			</SettingGrid>
+
+			{!cameraOn && onOpenCamera ? (
+				<SettingPanel className="border-dashed">
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<div className="min-w-0 space-y-1">
+							<p className="flex items-center gap-2 text-sm font-medium">
+								<Camera
+									className="h-4 w-4 shrink-0 text-muted-foreground"
+									aria-hidden
+								/>
+								{t("reminders.cameraUpsell.title")}
+							</p>
+							<p className="text-xs text-muted-foreground sm:text-sm">
+								{t("reminders.cameraUpsell.desc")}
+							</p>
+						</div>
+						<Button type="button" size="sm" onClick={onOpenCamera}>
+							{t("reminders.cameraUpsell.action")}
+						</Button>
+					</div>
+				</SettingPanel>
+			) : null}
 
 			<SettingPanel>
 				<SettingRow

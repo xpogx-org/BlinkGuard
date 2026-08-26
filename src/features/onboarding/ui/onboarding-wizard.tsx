@@ -6,13 +6,17 @@ import {
 	LogIn,
 	Moon,
 	Play,
+	Sparkles,
 	Timer,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Reveal } from "@/components/reveal";
 import { SettingPanel } from "@/components/setting-panel";
 import { ToggleSwitch } from "@/components/toggle-switch";
+import { useCameraCalibration } from "@/features/camera/model/use-camera-calibration";
+import { CameraCalibrationSettings } from "@/features/camera/ui/camera-calibration-settings";
 import { applyLocale } from "@/features/settings/model/apply-locale";
 import type { SettingsPreferences } from "@/features/settings/model/preferences";
 import type { SetPreferences } from "@/features/settings/model/use-preferences";
@@ -24,20 +28,33 @@ import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import type { Locale } from "../../../../shared/i18n";
 import { theme } from "../../../../shared/theme";
 
+type OnboardingStepId =
+	| "language"
+	| "mode"
+	| "accuracy"
+	| "shortcut"
+	| "quiet"
+	| "ready";
+
 interface OnboardingWizardProps {
 	preferences: SettingsPreferences;
 	setPreferences: SetPreferences;
 	shortcut: ReturnType<typeof useShortcutControls>;
+	onComplete?: (options: { cameraEnabled: boolean }) => void;
 }
 
 export function OnboardingWizard({
 	preferences,
 	setPreferences,
 	shortcut,
+	onComplete,
 }: OnboardingWizardProps) {
 	const t = useT();
-	const [stepIndex, setStepIndex] = useState(0);
+	const calibration = useCameraCalibration(preferences, setPreferences);
+	const [currentStepId, setCurrentStepId] =
+		useState<OnboardingStepId>("language");
 	const [stepDirection, setStepDirection] = useState<1 | -1>(1);
+	const [launchAtLoginChoice, setLaunchAtLoginChoice] = useState(true);
 	const [fullscreenDetectionSupported, setFullscreenDetectionSupported] =
 		useState<boolean | null>(null);
 
@@ -49,46 +66,82 @@ export function OnboardingWizard({
 		[],
 	);
 
-	const steps = [
-		{
-			id: "language" as const,
-			title: t("onboarding.step.language"),
-			label: t("onboarding.step.languageLabel"),
-		},
-		{
-			id: "mode" as const,
-			title: t("onboarding.step.mode"),
-			label: t("onboarding.step.modeLabel"),
-		},
-		{
-			id: "shortcut" as const,
-			title: t("onboarding.step.shortcut"),
-			label: t("onboarding.step.shortcutLabel"),
-		},
-		{
-			id: "quiet" as const,
-			title: t("onboarding.step.quiet"),
-			label: t("onboarding.step.quietLabel"),
-		},
-		{
-			id: "ready" as const,
-			title: t("onboarding.step.ready"),
-			label: t("onboarding.step.readyLabel"),
-		},
-	];
+	const steps = useMemo(() => {
+		const list: {
+			id: OnboardingStepId;
+			title: string;
+			label: string;
+		}[] = [
+			{
+				id: "language",
+				title: t("onboarding.step.language"),
+				label: t("onboarding.step.languageLabel"),
+			},
+			{
+				id: "mode",
+				title: t("onboarding.step.mode"),
+				label: t("onboarding.step.modeLabel"),
+			},
+		];
+		if (preferences.cameraEnabled) {
+			list.push({
+				id: "accuracy",
+				title: t("onboarding.step.accuracy"),
+				label: t("onboarding.step.accuracyLabel"),
+			});
+		}
+		list.push(
+			{
+				id: "shortcut",
+				title: t("onboarding.step.shortcut"),
+				label: t("onboarding.step.shortcutLabel"),
+			},
+			{
+				id: "quiet",
+				title: t("onboarding.step.quiet"),
+				label: t("onboarding.step.quietLabel"),
+			},
+			{
+				id: "ready",
+				title: t("onboarding.step.ready"),
+				label: t("onboarding.step.readyLabel"),
+			},
+		);
+		return list;
+	}, [preferences.cameraEnabled, t]);
+
+	useEffect(() => {
+		if (steps.some((item) => item.id === currentStepId)) return;
+		setCurrentStepId(steps[0]?.id ?? "language");
+	}, [currentStepId, steps]);
+
+	const stepIndex = Math.max(
+		0,
+		steps.findIndex((item) => item.id === currentStepId),
+	);
+	const step = steps[stepIndex] ?? steps[0];
 	const isLast = stepIndex === steps.length - 1;
-	const step = steps[stepIndex];
 	const fullscreenUnsupported = fullscreenDetectionSupported === false;
 
 	const complete = () => {
+		const cameraEnabled = preferences.cameraEnabled;
 		setPreferences((current) => ({
 			...current,
 			hasCompletedOnboarding: true,
+			isTracking: true,
+			launchAtLogin: launchAtLoginChoice,
 		}));
+		rendererIpc.startReminders(preferences.reminderInterval);
+		onComplete?.({ cameraEnabled });
 	};
 
 	const selectLocale = (locale: Locale) => {
 		setPreferences((current) => applyLocale(current, locale));
+	};
+
+	const goToStep = (id: OnboardingStepId, direction: 1 | -1) => {
+		setStepDirection(direction);
+		setCurrentStepId(id);
 	};
 
 	return (
@@ -193,15 +246,20 @@ export function OnboardingWizard({
 									className={cn(
 										"rounded-lg border p-4 text-left transition-colors",
 										!preferences.cameraEnabled
-											? "border-primary bg-primary/10"
+											? "border-primary bg-primary/10 ring-1 ring-primary/30"
 											: "border-border hover:bg-muted",
 									)}
 									aria-pressed={!preferences.cameraEnabled}
 								>
-									<Timer
-										className="mb-2 h-5 w-5 text-muted-foreground"
-										aria-hidden
-									/>
+									<div className="mb-2 flex items-center gap-2">
+										<Timer
+											className="h-5 w-5 text-muted-foreground"
+											aria-hidden
+										/>
+										<Badge className="text-2xs uppercase tracking-wide">
+											{t("onboarding.recommended")}
+										</Badge>
+									</div>
 									<p className="text-sm font-medium">{t("onboarding.timer")}</p>
 									<p className="mt-1 text-xs text-muted-foreground">
 										{t("onboarding.timerDesc")}
@@ -238,6 +296,16 @@ export function OnboardingWizard({
 							<p className="text-xs text-muted-foreground">
 								{t("onboarding.modeCameraNote")}
 							</p>
+						</div>
+					) : null}
+
+					{step.id === "accuracy" ? (
+						<div className="space-y-3">
+							<p className="flex items-start gap-2 text-sm text-muted-foreground">
+								<Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+								{t("onboarding.accuracyDesc")}
+							</p>
+							<CameraCalibrationSettings calibration={calibration} />
 						</div>
 					) : null}
 
@@ -360,10 +428,10 @@ export function OnboardingWizard({
 							<p className="flex items-start gap-2 text-sm text-muted-foreground">
 								<Play className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
 								{preferences.keyboardShortcuts.trackingToggle
-									? t("onboarding.readyDesc", {
+									? t("onboarding.readyDescArmed", {
 											shortcut: preferences.keyboardShortcuts.trackingToggle,
 										})
-									: t("onboarding.readyDescUnbound")}
+									: t("onboarding.readyDescArmedUnbound")}
 							</p>
 							<div className="space-y-3 border-t border-border pt-4">
 								<div className="flex items-center justify-between gap-4">
@@ -377,12 +445,9 @@ export function OnboardingWizard({
 									<div className="shrink-0">
 										<ToggleSwitch
 											aria-label={t("launch.toggleAria")}
-											checked={preferences.launchAtLogin}
+											checked={launchAtLoginChoice}
 											onChange={() =>
-												setPreferences((current) => ({
-													...current,
-													launchAtLogin: !current.launchAtLogin,
-												}))
+												setLaunchAtLoginChoice((current) => !current)
 											}
 										/>
 									</div>
@@ -405,8 +470,8 @@ export function OnboardingWizard({
 								type="button"
 								variant="secondary"
 								onClick={() => {
-									setStepDirection(-1);
-									setStepIndex((current) => current - 1);
+									const previous = steps[stepIndex - 1];
+									if (previous) goToStep(previous.id, -1);
 								}}
 							>
 								{t("common.back")}
@@ -420,8 +485,8 @@ export function OnboardingWizard({
 							<Button
 								type="button"
 								onClick={() => {
-									setStepDirection(1);
-									setStepIndex((current) => current + 1);
+									const next = steps[stepIndex + 1];
+									if (next) goToStep(next.id, 1);
 								}}
 							>
 								{t("common.next")}

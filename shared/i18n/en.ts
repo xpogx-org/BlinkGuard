@@ -13,7 +13,7 @@ export const en: MessageCatalog = {
 	"app.reminders.tab.pause": "Pause",
 	"app.section.camera": "Camera",
 	"app.section.camera.desc":
-		"Connect the camera, then calibrate detection and coaching.",
+		"Optional webcam blink detection — enable, calibrate, and tune accuracy.",
 	"app.camera.tabsAria": "Camera views",
 	"app.camera.tab.setup": "Setup",
 	"app.camera.tab.tuning": "Tuning",
@@ -191,6 +191,10 @@ export const en: MessageCatalog = {
 		"upper bound if you blink once whenever a reminder would fire (reminders only appear after you have not blinked for the interval).",
 	"reminders.rateHint.timer":
 		"cue cadence for micro-break blink reminders — not a detected miss.",
+	"reminders.cameraUpsell.title": "Want blink-aware reminders?",
+	"reminders.cameraUpsell.desc":
+		"Turn on the camera for reminders when you forget to blink, plus live blink stats and coaching.",
+	"reminders.cameraUpsell.action": "Set up camera",
 	"reminders.profile.title": "Blink cue intensity",
 	"reminders.profile.description":
 		"How strong the first blink nudge feels before any sound.",
@@ -266,7 +270,7 @@ export const en: MessageCatalog = {
 	"camera.dismissDeviceNotice": "Dismiss camera device notice",
 	"camera.calibration": "Calibration",
 	"camera.calibrationDesc":
-		"Two short steps: keep eyes open for about 8 seconds, then look at the camera and blink at least 6 times. This tunes blink thresholds and the credit vote to your face. Calibration can gently adapt when lighting drifts; use Calibrate for a hard reset.",
+		"Two short steps tune blink detection to your face. Optional but recommended when the camera is on.",
 	"camera.calibrate": "Calibrate",
 	"camera.cancelCalibration": "Cancel ({n}s)",
 	"camera.calibrationPhaseOpenEye": "Keep eyes open",
@@ -561,6 +565,8 @@ export const en: MessageCatalog = {
 	"onboarding.step.languageLabel": "Language",
 	"onboarding.step.mode": "Reminder mode",
 	"onboarding.step.modeLabel": "Mode",
+	"onboarding.step.accuracy": "Make it accurate",
+	"onboarding.step.accuracyLabel": "Calibrate",
 	"onboarding.step.shortcut": "Keyboard shortcut",
 	"onboarding.step.shortcutLabel": "Shortcut",
 	"onboarding.step.launch": "Launch at login",
@@ -573,12 +579,15 @@ export const en: MessageCatalog = {
 		"Choose the language for settings and reminder popups.",
 	"onboarding.timer": "Timer",
 	"onboarding.timerDesc":
-		"Reminders on a fixed interval. Works without a camera.",
+		"Fixed-interval blink breaks. Works without a camera — recommended for most people.",
+	"onboarding.recommended": "Recommended",
 	"onboarding.camera": "Camera",
 	"onboarding.cameraDesc":
-		"Blink-aware reminders when you forget to blink (webcam required).",
+		"More accurate when you are at your desk — blink-aware timing, live stats, and coaching.",
 	"onboarding.modeCameraNote":
-		"Without camera blink tracking, blink-aware reminders, live blink stats, coaching, and rewards stay inactive. Timer reminders and eye-care popups still work.",
+		"Timer reminders and eye-care popups work in both modes. Camera adds blink-aware timing, live blink stats, coaching, and rewards.",
+	"onboarding.accuracyDesc":
+		"Optional: a quick calibration tunes detection to your face. You can skip and calibrate later in Camera → Setup.",
 	"onboarding.shortcutHint":
 		"Use this shortcut anytime to start or stop blink reminders.",
 	"onboarding.shortcutMoreInSettings":
@@ -591,6 +600,10 @@ export const en: MessageCatalog = {
 		"Open Reminders and press Start, or use {shortcut} anytime to start or stop blink reminders.",
 	"onboarding.readyDescUnbound":
 		"Open Reminders and press Start to begin blink reminders. You can bind a shortcut anytime in Settings.",
+	"onboarding.readyDescArmed":
+		"Blink reminders are on. Use {shortcut} anytime to pause or resume. Close this window — BlinkGuard keeps running in the tray.",
+	"onboarding.readyDescArmedUnbound":
+		"Blink reminders are on. Close this window — BlinkGuard keeps running in the tray. Bind a shortcut anytime in Settings.",
 
 	// Statistics
 	"stats.total": "Total",

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/app";
 import { version } from "../../../package.json";
@@ -192,6 +192,7 @@ describe("settings shell", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Camera" }));
 		expect(screen.getByRole("tab", { name: "Setup" })).toBeDefined();
 		expect(screen.getByText("Camera Detection")).toBeDefined();
+		expect(screen.getByText("Calibration")).toBeDefined();
 		expect(screen.getByText("Camera Quality")).toBeDefined();
 		expect(screen.queryByText("MGD Mode")).toBeNull();
 
@@ -207,8 +208,8 @@ describe("settings shell", () => {
 		const canObserveCameraScroll = cameraScroller.scrollTop === 80;
 
 		fireEvent.click(screen.getByRole("tab", { name: "Tuning" }));
-		expect(screen.getByText("Calibration")).toBeDefined();
 		expect(screen.getByText("MGD Mode")).toBeDefined();
+		expect(screen.getByText("Calibration reminders")).toBeDefined();
 		expect(screen.queryByText("Camera Detection")).toBeNull();
 
 		const tuningScroller = document.querySelector(
@@ -296,6 +297,8 @@ describe("settings shell", () => {
 			IPC_CHANNELS.updateHasCompletedOnboarding,
 			true,
 		);
+		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.startBlinkReminders, 3000);
+		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateLaunchAtLogin, true);
 	});
 
 	it("dismisses onboarding when Finish is pressed", () => {
@@ -313,6 +316,36 @@ describe("settings shell", () => {
 			IPC_CHANNELS.updateHasCompletedOnboarding,
 			true,
 		);
+		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.startBlinkReminders, 3000);
+		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateLaunchAtLogin, true);
+	});
+
+	it("shows camera accuracy step when camera mode is selected in onboarding", () => {
+		render(<App />);
+		hydratePreferences({ hasCompletedOnboarding: false });
+
+		const dialog = () => screen.getByRole("dialog");
+		fireEvent.click(within(dialog()).getByRole("button", { name: "Next" }));
+		fireEvent.click(
+			within(dialog()).getByRole("button", {
+				name: /More accurate when you are at your desk/i,
+			}),
+		);
+		fireEvent.click(within(dialog()).getByRole("button", { name: "Next" }));
+
+		expect(
+			within(dialog()).getByRole("heading", { name: "Make it accurate" }),
+		).toBeDefined();
+	});
+
+	it("shows camera upsell on reminders when camera is off", () => {
+		render(<App />);
+		hydratePreferences({ hasCompletedOnboarding: true, cameraEnabled: false });
+
+		fireEvent.click(screen.getByRole("button", { name: "Reminders" }));
+		expect(screen.getByText("Want blink-aware reminders?")).toBeDefined();
+		fireEvent.click(screen.getByRole("button", { name: "Set up camera" }));
+		expect(screen.getByRole("heading", { name: "Camera" })).toBeDefined();
 	});
 
 	it("renders eye-care controls for exercises and look-away", () => {
