@@ -5,6 +5,8 @@ import type { SessionPauseService } from "../../application/session-pause-servic
 import type { ProcessCleanup } from "../process/process-cleanup";
 import type { WindowManager } from "../windows/window-manager";
 
+export type QuitResolution = "proceed" | "cancel";
+
 export class AppLifecycle {
 	private isQuitting = false;
 	private shutdownComplete = false;
@@ -17,6 +19,7 @@ export class AppLifecycle {
 		private readonly cleanup: ProcessCleanup,
 		private readonly blinkStats: BlinkStatsService,
 		private readonly onShutdown?: () => void,
+		private readonly onBeforeQuit?: () => Promise<QuitResolution>,
 	) {}
 
 	attachTray(tray: { destroy(): void }): void {
@@ -32,7 +35,7 @@ export class AppLifecycle {
 		app.on("before-quit", (event) => {
 			if (this.shutdownComplete) return;
 			event.preventDefault();
-			void this.shutdown().then(() => app.quit());
+			void this.confirmAndQuit();
 		});
 		powerMonitor.on("suspend", () => {
 			this.sessionPause.setPowerFlags({ suspended: true });
@@ -59,6 +62,13 @@ export class AppLifecycle {
 	/** Explicit quit from tray / OS — runs graceful shutdown then exits. */
 	quit(): void {
 		if (this.isQuitting) return;
+		void this.confirmAndQuit();
+	}
+
+	private async confirmAndQuit(): Promise<void> {
+		if (this.isQuitting) return;
+		const resolution = (await this.onBeforeQuit?.()) ?? "proceed";
+		if (resolution === "cancel") return;
 		void this.shutdown().then(() => app.quit());
 	}
 

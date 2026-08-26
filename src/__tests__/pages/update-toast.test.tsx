@@ -95,7 +95,9 @@ describe("UpdateToast", () => {
 			screen.getByRole("status", { name: "Update downloaded" }),
 		).toBeDefined();
 		expect(
-			screen.getByText("BlinkGuard 2.2.0 will install when you quit the app."),
+			screen.getByText(
+				"BlinkGuard 2.2.0 is ready. Restart from About to update now, or you'll be asked when you quit.",
+			),
 		).toBeDefined();
 		act(() => {
 			vi.advanceTimersByTime(4000);

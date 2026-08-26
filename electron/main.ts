@@ -360,6 +360,7 @@ function bootstrap(): void {
 			calibrationNudge.dispose();
 			autoUpdates.dispose();
 		},
+		() => autoUpdates.resolveQuitWithStagedUpdate(),
 	);
 	let settingsProfiles!: SettingsProfilesService;
 	const tray = new TrayController(

@@ -796,7 +796,13 @@ export const uk: MessageCatalog = {
 	"updates.ready.later": "Пізніше",
 	"updates.readyOnQuit.title": "Оновлення завантажено",
 	"updates.readyOnQuit.message":
-		"BlinkGuard {version} встановиться, коли ви закриєте застосунок.",
+		"BlinkGuard {version} готовий. Перезапустіть з розділу «Про програму», щоб оновити зараз, або вам запропонують це під час виходу.",
+	"updates.quitPrompt.title": "Оновлення готове",
+	"updates.quitPrompt.message":
+		"BlinkGuard {version} завантажено. Встановити перед виходом?",
+	"updates.quitPrompt.install": "Встановити і вийти",
+	"updates.quitPrompt.quitWithout": "Вийти без встановлення",
+	"updates.quitPrompt.cancel": "Скасувати",
 
 	// Popup chrome
 	"popup.blink.title": "Нагадування проморгати",

@@ -61,9 +61,11 @@ function parseSemverTriplet(version: string): [number, number, number] | null {
  * unsupported platform, or when the build has no embedded feed
  * (`app-update.yml` from publish config).
  *
- * Silent launch → toast surface (ephemeral); install on quit via autoInstallOnAppQuit.
- * Manual About/tray → dialog; `ready` Restart only for interactive checks.
+ * Silent launch → toast surface (ephemeral); consent prompt on explicit quit.
+ * Manual About/tray → dialog with Restart / Later for interactive checks.
  * Background interval → quiet unless an update is actually available.
+ * Install only via explicit Restart or quit-time consent (`autoInstallOnAppQuit`
+ * is false).
  *
  * Always re-checks GitHub latest even with a staged download so a newer release
  * published before Restart replaces the stale package (no version ladder; feed
@@ -100,7 +102,7 @@ export class AutoUpdateService {
 			if (!hasUpdateFeed(process.resourcesPath)) return;
 
 			autoUpdater.autoDownload = true;
-			autoUpdater.autoInstallOnAppQuit = true;
+			autoUpdater.autoInstallOnAppQuit = false;
 
 			autoUpdater.on("error", (error) => {
 				console.error("Auto-update error:", error);
@@ -309,6 +311,42 @@ export class AutoUpdateService {
 	}
 
 	/**
+	 * Tray Quit / before-quit: ask whether to install a staged update.
+	 * Returns `proceed` to continue normal quit, `cancel` to stay running or
+	 * when install was chosen (`quitAndInstall` handles exit).
+	 */
+	async resolveQuitWithStagedUpdate(): Promise<"proceed" | "cancel"> {
+		if (!this.downloadedVersion) return "proceed";
+		try {
+			const locale = this.getLocale();
+			const { response } = await dialog.showMessageBox({
+				type: "info",
+				title: t(locale, "updates.quitPrompt.title"),
+				message: t(locale, "updates.quitPrompt.message", {
+					version: this.downloadedVersion,
+				}),
+				buttons: [
+					t(locale, "updates.quitPrompt.install"),
+					t(locale, "updates.quitPrompt.quitWithout"),
+					t(locale, "updates.quitPrompt.cancel"),
+				],
+				defaultId: 0,
+				cancelId: 2,
+				noLink: true,
+			});
+			if (response === 0) {
+				this.installUpdate();
+				return "cancel";
+			}
+			if (response === 1) return "proceed";
+			return "cancel";
+		} catch (error) {
+			console.error("Auto-update quit prompt failed:", error);
+			return "proceed";
+		}
+	}
+
+	/**
 	 * Install a previously downloaded update (About / in-app Restart).
 	 * Re-checks GitHub latest first so a newer release replaces a stale stage.
 	 */
@@ -353,7 +391,7 @@ export class AutoUpdateService {
 		return interactive ? "dialog" : "toast";
 	}
 
-	/** Interactive → Restart dialog; silent → toast (install on quit). */
+	/** Interactive → Restart dialog; silent → toast (prompt on quit). */
 	private presentReady(version: string, interactive: boolean): void {
 		this.present(
 			{
@@ -418,7 +456,7 @@ export class AutoUpdateService {
 				});
 				return;
 			case "ready":
-				// Toast-only silent ready: no native prompt; autoInstallOnAppQuit handles it.
+				// Toast-only silent ready: in-app toast; quit prompt handles install.
 				if (status.surface !== "dialog") return;
 				void dialog
 					.showMessageBox({

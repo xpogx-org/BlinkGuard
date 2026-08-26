@@ -402,4 +402,54 @@ describe("AutoUpdateService", () => {
 		vi.advanceTimersByTime(UPDATE_CHECK_MS * 2);
 		expect(checkForUpdatesMock).not.toHaveBeenCalled();
 	});
+
+	it("start disables autoInstallOnAppQuit", () => {
+		const svc = createService();
+		svc.start();
+		expect(autoUpdater.autoInstallOnAppQuit).toBe(false);
+	});
+
+	it("resolveQuitWithStagedUpdate proceeds when no staged update", async () => {
+		const svc = createService();
+		svc.start();
+		await expect(svc.resolveQuitWithStagedUpdate()).resolves.toBe("proceed");
+		expect(showMessageBox).not.toHaveBeenCalled();
+	});
+
+	it("resolveQuitWithStagedUpdate installs when user chooses Install", async () => {
+		showMessageBox.mockResolvedValueOnce({ response: 0 });
+		const svc = createService();
+		svc.start();
+		svc.checkForUpdates();
+		autoUpdater.emit("update-downloaded", { version: "7.0.0" });
+		checkForUpdatesMock.mockClear();
+		quitAndInstall.mockClear();
+		await expect(svc.resolveQuitWithStagedUpdate()).resolves.toBe("cancel");
+		expect(showMessageBox).toHaveBeenCalledTimes(1);
+		expect(checkForUpdatesMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("resolveQuitWithStagedUpdate proceeds without install when user quits without", async () => {
+		showMessageBox.mockResolvedValueOnce({ response: 1 });
+		const svc = createService();
+		svc.start();
+		svc.checkForUpdates();
+		autoUpdater.emit("update-downloaded", { version: "7.1.0" });
+		quitAndInstall.mockClear();
+		await expect(svc.resolveQuitWithStagedUpdate()).resolves.toBe("proceed");
+		expect(showMessageBox).toHaveBeenCalledTimes(1);
+		expect(quitAndInstall).not.toHaveBeenCalled();
+	});
+
+	it("resolveQuitWithStagedUpdate cancels quit when user dismisses prompt", async () => {
+		showMessageBox.mockResolvedValueOnce({ response: 2 });
+		const svc = createService();
+		svc.start();
+		svc.checkForUpdates();
+		autoUpdater.emit("update-downloaded", { version: "7.2.0" });
+		quitAndInstall.mockClear();
+		await expect(svc.resolveQuitWithStagedUpdate()).resolves.toBe("cancel");
+		expect(showMessageBox).toHaveBeenCalledTimes(1);
+		expect(quitAndInstall).not.toHaveBeenCalled();
+	});
 });
