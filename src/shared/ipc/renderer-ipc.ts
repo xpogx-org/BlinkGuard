@@ -259,6 +259,10 @@ export const rendererIpc = {
 	resetBlinkStats: () => send(IPC_CHANNELS.resetBlinkStats),
 	spendBlinkReward: (rewardId: string) =>
 		send(IPC_CHANNELS.spendBlinkReward, rewardId),
+	equipCheerTheme: (theme: string) =>
+		send(IPC_CHANNELS.equipCheerTheme, theme),
+	equipPopupPreset: (presetId: string) =>
+		send(IPC_CHANNELS.equipPopupPreset, presetId),
 	updateGoalsConfig: (config: {
 		goalsEnabled: boolean;
 		dailyBlinkGoal: number;

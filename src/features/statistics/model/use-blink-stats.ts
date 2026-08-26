@@ -34,5 +34,24 @@ export function useBlinkStats() {
 		rendererIpc.spendBlinkReward(rewardId);
 	};
 
-	return { snapshot, clearStatistics, purchaseReward };
+	const equipCheerTheme = (theme: string) => {
+		rendererIpc.equipCheerTheme(theme);
+	};
+
+	const equipPopupPreset = (presetId: string) => {
+		rendererIpc.equipPopupPreset(presetId);
+	};
+
+	const clearPopupPreset = () => {
+		rendererIpc.equipPopupPreset("custom");
+	};
+
+	return {
+		snapshot,
+		clearStatistics,
+		purchaseReward,
+		equipCheerTheme,
+		equipPopupPreset,
+		clearPopupPreset,
+	};
 }
