@@ -362,7 +362,7 @@ class OpenCVCamera:
 
 	def _platform_backends(self):
 		if sys.platform == "win32":
-			# LOCKED (field-validated, built-in laptop cam / “Паша”, post-2.4.0):
+			# LOCKED (field-validated, built-in laptop cam, diagnostics 20260809, post-2.4.0):
 			# Prefer MSMF first. Do NOT switch back to DSHOW-first without new
 			# Export diagnostics — DSHOW + forced MJPG + 4:3 snap produced
 			# sustained black frames (luma≈0.3) on that machine; MSMF worked.
