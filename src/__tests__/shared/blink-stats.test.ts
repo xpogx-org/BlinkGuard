@@ -10,6 +10,8 @@ import {
 	applyRewardPurchase,
 	availableBlinks,
 	computeStreak,
+	equipCheerTheme,
+	equipPopupPreset,
 	DEFAULT_BLINK_STATS,
 	EMPTY_EYE_CARE_COUNTS,
 	emptyDayStats,
@@ -307,6 +309,11 @@ describe("blink-stats helpers", () => {
 		expect(normalized.streakShieldCharges).toBe(0);
 		expect(normalized.rewardPurchaseCounts).toEqual({});
 		expect(normalized.shopDiscountLevel).toBe(0);
+		expect(normalized.unlockedCheerThemeIds).toEqual([]);
+		expect(normalized.equippedCheerTheme).toBe("random");
+		expect(normalized.unlockedPopupPresetIds).toEqual([]);
+		expect(normalized.equippedPopupPresetId).toBeNull();
+		expect(normalized.snoozeTokenCharges).toBe(0);
 	});
 
 	it("keeps valid achievement ids on normalize and snapshot", () => {
@@ -489,5 +496,36 @@ describe("blink-stats helpers", () => {
 		expect(cheerOffer?.cost).toBe(
 			discountedRewardCost(BLINK_REWARDS.cheer.cost, 50),
 		);
+	});
+
+	it("unlocks cheer themes, popup presets, and snooze tokens", () => {
+		const budget =
+			BLINK_REWARDS.cheerThemeBounce.cost +
+			BLINK_REWARDS.popupPresetAurora.cost +
+			BLINK_REWARDS.snoozeToken.cost * 2;
+		const state = withDays([], { totalBlinks: budget });
+
+		const bounce = applyRewardPurchase(state, "cheerThemeBounce");
+		expect(bounce?.unlockedCheerThemeIds).toContain("bounce");
+		expect(bounce?.unlockedRewardIds).toContain("cheerThemeBounce");
+
+		const aurora = applyRewardPurchase(bounce ?? state, "popupPresetAurora");
+		expect(aurora?.unlockedPopupPresetIds).toContain("aurora");
+
+		const token1 = applyRewardPurchase(aurora ?? state, "snoozeToken");
+		expect(token1?.snoozeTokenCharges).toBe(1);
+		const token2 = applyRewardPurchase(token1 ?? state, "snoozeToken");
+		expect(token2?.snoozeTokenCharges).toBe(2);
+		expect(applyRewardPurchase(token2 ?? state, "snoozeToken")).toBeNull();
+
+		const equipped = equipCheerTheme(token2 ?? state, "bounce");
+		expect(equipped?.equippedCheerTheme).toBe("bounce");
+		const preset = equipPopupPreset(equipped ?? state, "aurora");
+		expect(preset?.equippedPopupPresetId).toBe("aurora");
+
+		const offers = rewardOffers(preset ?? state);
+		const bounceOffer = offers.find((o) => o.id === "cheerThemeBounce");
+		expect(bounceOffer?.isEquipped).toBe(true);
+		expect(bounceOffer?.canEquip).toBe(false);
 	});
 });

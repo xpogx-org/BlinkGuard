@@ -10,6 +10,10 @@ import {
 } from "./classifier-calibration";
 import { isValidEarCalibration } from "./ear-calibration";
 import {
+	isPopupPresetId,
+	type PopupPresetId,
+} from "./popup-presets";
+import {
 	defaultExercisePrompts,
 	defaultLookAwayHint,
 	defaultLookAwayTitle,
@@ -508,6 +512,8 @@ export interface PersistedPreferences {
 	/** Blink/editor size per Electron `display.id` (string). */
 	popupSizesByDisplayId: Record<string, Size>;
 	popupColors: PopupColors;
+	/** Shop reward glow preset applied to popups; null = custom / no glow. */
+	popupGlowPreset: PopupPresetId | null;
 	popupMessage: string;
 	/** When true, blink / exercise / look-away popups ignore mouse (watermark); snooze via tray. */
 	blinkPopupClickThrough: boolean;
@@ -645,6 +651,7 @@ export const DEFAULT_PREFERENCES: Readonly<PersistedPreferences> = {
 		text: theme.popup.text,
 		transparency: theme.popup.transparency,
 	},
+	popupGlowPreset: null,
 	popupMessage: defaultPopupMessage("en"),
 	blinkPopupClickThrough: true,
 	notificationStyle: DEFAULT_NOTIFICATION_STYLE,
@@ -1024,6 +1031,11 @@ function sanitizePopupColors(value: unknown, fallback: PopupColors): PopupColors
 	};
 }
 
+function sanitizePopupGlowPreset(value: unknown): PopupPresetId | null {
+	if (isPopupPresetId(value)) return value;
+	return null;
+}
+
 export type SanitizePersistedPreferencesOptions = {
 	/** When true, always persist isTracking as false (backup import). */
 	forceIsTrackingFalse?: boolean;
@@ -1153,6 +1165,7 @@ export function sanitizePersistedPreferences(
 			record.popupSizesByDisplayId,
 		),
 		popupColors: sanitizePopupColors(record.popupColors, defaults.popupColors),
+		popupGlowPreset: sanitizePopupGlowPreset(record.popupGlowPreset),
 		popupMessage:
 			typeof record.popupMessage === "string" && record.popupMessage.trim()
 				? record.popupMessage

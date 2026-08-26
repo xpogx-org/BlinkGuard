@@ -130,6 +130,8 @@ export const IPC_CHANNELS = {
 	switchSettingsProfile: "switch-settings-profile",
 	updateGoalsConfig: "update-goals-config",
 	spendBlinkReward: "spend-blink-reward",
+	equipCheerTheme: "equip-cheer-theme",
+	equipPopupPreset: "equip-popup-preset",
 	shellReady: "shell-ready",
 } as const;
 
@@ -244,6 +246,8 @@ export const MAIN_RENDERER_SEND_CHANNELS = [
 	IPC_CHANNELS.installUpdate,
 	IPC_CHANNELS.updateGoalsConfig,
 	IPC_CHANNELS.spendBlinkReward,
+	IPC_CHANNELS.equipCheerTheme,
+	IPC_CHANNELS.equipPopupPreset,
 	IPC_CHANNELS.shellReady,
 ] as const;
 

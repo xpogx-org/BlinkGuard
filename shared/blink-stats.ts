@@ -9,11 +9,26 @@ import {
 	BLINK_REWARDS,
 	discountedRewardCost,
 	isBlinkRewardId,
+	REWARD_CATEGORY_ORDER,
 	shopDiscountPercent,
 	shopDiscountUpgradeCost,
 	SHOP_DISCOUNT_MAX_LEVEL,
+	SNOOZE_TOKEN_MAX_CHARGES,
 	type BlinkRewardId,
+	type RewardCategory,
 } from "./blink-rewards";
+import {
+	canEquipCheerTheme,
+	normalizeEquippedCheerTheme,
+	normalizeUnlockedCheerThemeIds,
+	type CheerThemeId,
+	type EquippedCheerTheme,
+} from "./cheer-themes";
+import {
+	normalizeEquippedPopupPresetId,
+	normalizeUnlockedPopupPresetIds,
+	type PopupPresetId,
+} from "./popup-presets";
 import { BLINK_RATE_WINDOW_MS } from "./blink-rate";
 import {
 	monthLabels,
@@ -103,6 +118,16 @@ export type BlinkStatsState = {
 	rewardPurchaseCounts: Partial<Record<BlinkRewardId, number>>;
 	/** Shop discount upgrade level (0…10 → 0%…50%). */
 	shopDiscountLevel: number;
+	/** Shop-unlocked cheer themes (bounce, fanfare, sparkle). */
+	unlockedCheerThemeIds: CheerThemeId[];
+	/** Active cheer pattern; `random` cycles all families. */
+	equippedCheerTheme: EquippedCheerTheme;
+	/** Shop-unlocked popup color presets. */
+	unlockedPopupPresetIds: PopupPresetId[];
+	/** Equipped popup preset; null = user custom colors. */
+	equippedPopupPresetId: PopupPresetId | null;
+	/** Banked snooze tokens from shop (0…2). */
+	snoozeTokenCharges: number;
 };
 
 export type GoalMetricProgress = {
@@ -127,8 +152,13 @@ export type StreakSummary = {
 	shieldCharges: number;
 };
 
+export type RewardEquipKind = "cheerTheme" | "popupPreset";
+
 export type RewardOffer = {
 	id: BlinkRewardId;
+	category: RewardCategory;
+	titleKey: string;
+	descriptionKey: string;
 	/** Effective cost of the next purchase (discount applied except for shopDiscount). */
 	cost: number;
 	owned: boolean;
@@ -140,6 +170,11 @@ export type RewardOffer = {
 	/** Current shop-wide discount percent from state. */
 	discountPercent: number;
 	atMax: boolean;
+	cheerThemeId?: CheerThemeId;
+	popupPresetId?: PopupPresetId;
+	equipKind?: RewardEquipKind;
+	isEquipped?: boolean;
+	canEquip?: boolean;
 };
 
 export type ChartBucket = {
@@ -173,6 +208,11 @@ export const DEFAULT_BLINK_STATS: BlinkStatsState = {
 	streakShieldUsedDates: [],
 	rewardPurchaseCounts: {},
 	shopDiscountLevel: 0,
+	unlockedCheerThemeIds: [],
+	equippedCheerTheme: "random",
+	unlockedPopupPresetIds: [],
+	equippedPopupPresetId: null,
+	snoozeTokenCharges: 0,
 };
 
 export function emptyHourlyBlinks(): number[] {
@@ -220,6 +260,11 @@ function cloneState(state: BlinkStatsState): BlinkStatsState {
 		streakShieldUsedDates: [...state.streakShieldUsedDates],
 		rewardPurchaseCounts: { ...state.rewardPurchaseCounts },
 		shopDiscountLevel: state.shopDiscountLevel,
+		unlockedCheerThemeIds: [...state.unlockedCheerThemeIds],
+		equippedCheerTheme: state.equippedCheerTheme,
+		unlockedPopupPresetIds: [...state.unlockedPopupPresetIds],
+		equippedPopupPresetId: state.equippedPopupPresetId,
+		snoozeTokenCharges: state.snoozeTokenCharges,
 	};
 }
 
@@ -256,6 +301,11 @@ export function pruneDays(
 		),
 		rewardPurchaseCounts: { ...(state.rewardPurchaseCounts ?? {}) },
 		shopDiscountLevel: state.shopDiscountLevel ?? 0,
+		unlockedCheerThemeIds: [...state.unlockedCheerThemeIds],
+		equippedCheerTheme: state.equippedCheerTheme,
+		unlockedPopupPresetIds: [...state.unlockedPopupPresetIds],
+		equippedPopupPresetId: state.equippedPopupPresetId,
+		snoozeTokenCharges: state.snoozeTokenCharges,
 	};
 }
 
@@ -553,23 +603,43 @@ export function rewardOffers(
 ): RewardOffer[] {
 	const available = availableBlinks(state);
 	const discountPercent = shopDiscountPercent(state.shopDiscountLevel);
-	return (Object.keys(BLINK_REWARDS) as BlinkRewardId[]).map((id) => {
+	const cheerCtx = {
+		unlockedCheerThemeIds: state.unlockedCheerThemeIds,
+		equippedCheerTheme: state.equippedCheerTheme,
+	};
+	const offers = (Object.keys(BLINK_REWARDS) as BlinkRewardId[]).map((id) => {
 		const def = BLINK_REWARDS[id];
-		const purchaseCount =
+		let purchaseCount =
 			id === "shopDiscount"
 				? state.shopDiscountLevel ?? 0
-				: (state.rewardPurchaseCounts?.[id] ?? 0);
-		const owned =
-			def.oneTime && state.unlockedRewardIds.includes(id);
-		const charges =
-			id === "streakShield" ? state.streakShieldCharges : 0;
-		const atMaxCharges =
+				: id === "snoozeToken"
+					? state.snoozeTokenCharges
+					: (state.rewardPurchaseCounts?.[id] ?? 0);
+		let owned = def.oneTime && state.unlockedRewardIds.includes(id);
+		let charges =
+			id === "streakShield"
+				? state.streakShieldCharges
+				: id === "snoozeToken"
+					? state.snoozeTokenCharges
+					: 0;
+		let atMaxCharges =
 			id === "streakShield" &&
 			charges >= (def.maxCharges ?? 1);
+		const atMaxSnooze =
+			id === "snoozeToken" &&
+			state.snoozeTokenCharges >= (def.maxStock ?? SNOOZE_TOKEN_MAX_CHARGES);
 		const atMaxDiscount =
 			id === "shopDiscount" &&
 			state.shopDiscountLevel >= (def.maxLevels ?? SHOP_DISCOUNT_MAX_LEVEL);
-		const atMax = owned || atMaxCharges || atMaxDiscount;
+
+		if (def.cheerThemeId) {
+			owned = state.unlockedCheerThemeIds.includes(def.cheerThemeId);
+		}
+		if (def.popupPresetId) {
+			owned = state.unlockedPopupPresetIds.includes(def.popupPresetId);
+		}
+
+		const atMax = owned || atMaxCharges || atMaxDiscount || atMaxSnooze;
 
 		let maxPurchases: number | null = null;
 		if (id === "shopDiscount") {
@@ -578,6 +648,8 @@ export function rewardOffers(
 			maxPurchases = 1;
 		} else if (id === "streakShield") {
 			maxPurchases = def.maxCharges ?? 1;
+		} else if (id === "snoozeToken") {
+			maxPurchases = def.maxStock ?? SNOOZE_TOKEN_MAX_CHARGES;
 		}
 
 		let cost: number;
@@ -588,8 +660,27 @@ export function rewardOffers(
 		}
 
 		const canBuy = !atMax && available >= cost;
+
+		let equipKind: RewardEquipKind | undefined;
+		let isEquipped = false;
+		let canEquip = false;
+		if (def.cheerThemeId && owned) {
+			equipKind = "cheerTheme";
+			isEquipped = state.equippedCheerTheme === def.cheerThemeId;
+			canEquip =
+				!isEquipped && canEquipCheerTheme(cheerCtx, def.cheerThemeId);
+		}
+		if (def.popupPresetId && owned) {
+			equipKind = "popupPreset";
+			isEquipped = state.equippedPopupPresetId === def.popupPresetId;
+			canEquip = !isEquipped;
+		}
+
 		return {
 			id,
+			category: def.category,
+			titleKey: def.titleKey,
+			descriptionKey: def.descriptionKey,
 			cost,
 			owned,
 			charges,
@@ -598,8 +689,18 @@ export function rewardOffers(
 			maxPurchases,
 			discountPercent,
 			atMax,
+			cheerThemeId: def.cheerThemeId,
+			popupPresetId: def.popupPresetId,
+			equipKind,
+			isEquipped,
+			canEquip,
 		};
 	});
+	return offers.sort(
+		(a, b) =>
+			REWARD_CATEGORY_ORDER.indexOf(a.category) -
+			REWARD_CATEGORY_ORDER.indexOf(b.category),
+	);
 }
 
 /**
@@ -627,6 +728,21 @@ export function applyRewardPurchase(
 	) {
 		return null;
 	}
+	if (
+		rewardId === "snoozeToken" &&
+		state.snoozeTokenCharges >= (def.maxStock ?? SNOOZE_TOKEN_MAX_CHARGES)
+	) {
+		return null;
+	}
+	if (def.cheerThemeId && state.unlockedCheerThemeIds.includes(def.cheerThemeId)) {
+		return null;
+	}
+	if (
+		def.popupPresetId &&
+		state.unlockedPopupPresetIds.includes(def.popupPresetId)
+	) {
+		return null;
+	}
 
 	const discountPercent = shopDiscountPercent(state.shopDiscountLevel);
 	const cost =
@@ -647,6 +763,22 @@ export function applyRewardPurchase(
 			next.streakShieldCharges + 1,
 		);
 	}
+	if (rewardId === "snoozeToken") {
+		next.snoozeTokenCharges = Math.min(
+			def.maxStock ?? SNOOZE_TOKEN_MAX_CHARGES,
+			next.snoozeTokenCharges + 1,
+		);
+	}
+	if (def.cheerThemeId) {
+		next.unlockedCheerThemeIds = [
+			...new Set([...next.unlockedCheerThemeIds, def.cheerThemeId]),
+		];
+	}
+	if (def.popupPresetId) {
+		next.unlockedPopupPresetIds = [
+			...new Set([...next.unlockedPopupPresetIds, def.popupPresetId]),
+		];
+	}
 	if (rewardId === "shopDiscount") {
 		next.shopDiscountLevel = Math.min(
 			def.maxLevels ?? SHOP_DISCOUNT_MAX_LEVEL,
@@ -662,6 +794,47 @@ export function applyRewardPurchase(
 			[rewardId]: (next.rewardPurchaseCounts[rewardId] ?? 0) + 1,
 		};
 	}
+	return next;
+}
+
+export function equipCheerTheme(
+	state: BlinkStatsState,
+	themeId: CheerThemeId,
+): BlinkStatsState | null {
+	const ctx = {
+		unlockedCheerThemeIds: state.unlockedCheerThemeIds,
+		equippedCheerTheme: state.equippedCheerTheme,
+	};
+	if (!canEquipCheerTheme(ctx, themeId)) return null;
+	const next = cloneState(state);
+	next.equippedCheerTheme = themeId;
+	return next;
+}
+
+export function equipCheerThemeRandom(
+	state: BlinkStatsState,
+): BlinkStatsState {
+	const next = cloneState(state);
+	next.equippedCheerTheme = "random";
+	return next;
+}
+
+export function equipPopupPreset(
+	state: BlinkStatsState,
+	presetId: PopupPresetId,
+): BlinkStatsState | null {
+	if (!state.unlockedPopupPresetIds.includes(presetId)) return null;
+	const next = cloneState(state);
+	next.equippedPopupPresetId = presetId;
+	return next;
+}
+
+export function clearEquippedPopupPreset(
+	state: BlinkStatsState,
+): BlinkStatsState {
+	if (state.equippedPopupPresetId == null) return state;
+	const next = cloneState(state);
+	next.equippedPopupPresetId = null;
 	return next;
 }
 
@@ -776,6 +949,10 @@ export type BlinkStatsSnapshot = {
 	rewards: RewardOffer[];
 	/** True when stats-flair cosmetic is unlocked. */
 	hasStatsFlair: boolean;
+	equippedCheerTheme: EquippedCheerTheme;
+	equippedPopupPresetId: PopupPresetId | null;
+	unlockedCheerThemeIds: CheerThemeId[];
+	unlockedPopupPresetIds: PopupPresetId[];
 	unlockedAchievementIds: AchievementId[];
 	achievementsUnlocked: number;
 	achievementsTotal: number;
@@ -813,6 +990,10 @@ export function toBlinkStatsSnapshot(
 		streak,
 		rewards: rewardOffers(state),
 		hasStatsFlair: state.unlockedRewardIds.includes("statsFlair"),
+		equippedCheerTheme: state.equippedCheerTheme,
+		equippedPopupPresetId: state.equippedPopupPresetId,
+		unlockedCheerThemeIds: [...state.unlockedCheerThemeIds],
+		unlockedPopupPresetIds: [...state.unlockedPopupPresetIds],
 		weekEyeCare: weekEyeCareTotals(state, today),
 		...achievementSnapshotFields({
 			stats: state,
@@ -966,6 +1147,21 @@ export function normalizeBlinkStatsState(raw: unknown): BlinkStatsState {
 		rewardPurchaseCounts.shopDiscount = shopDiscountLevel;
 	}
 
+	const unlockedCheerThemeIds = normalizeUnlockedCheerThemeIds(
+		record.unlockedCheerThemeIds,
+	);
+	const equippedCheerTheme = normalizeEquippedCheerTheme(
+		record.equippedCheerTheme,
+	);
+	const unlockedPopupPresetIds = normalizeUnlockedPopupPresetIds(
+		record.unlockedPopupPresetIds,
+	);
+	const equippedPopupPresetId = normalizeEquippedPopupPresetId(
+		record.equippedPopupPresetId,
+	);
+	let snoozeTokenCharges = nonNegativeInt(record.snoozeTokenCharges) ?? 0;
+	snoozeTokenCharges = Math.min(SNOOZE_TOKEN_MAX_CHARGES, snoozeTokenCharges);
+
 	return pruneDays({
 		days,
 		totalBlinks: Math.max(totalBlinks, daysSum),
@@ -976,5 +1172,10 @@ export function normalizeBlinkStatsState(raw: unknown): BlinkStatsState {
 		streakShieldUsedDates,
 		rewardPurchaseCounts,
 		shopDiscountLevel,
+		unlockedCheerThemeIds,
+		equippedCheerTheme,
+		unlockedPopupPresetIds,
+		equippedPopupPresetId,
+		snoozeTokenCharges,
 	});
 }
