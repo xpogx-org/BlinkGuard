@@ -184,12 +184,16 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		preferences.set("darkMode", enabled as boolean);
 	});
 	on(IPC_CHANNELS.updateCameraEnabled, (_event, enabled: unknown) => {
+		const wasEnabled = current.cameraEnabled;
 		preferences.set("cameraEnabled", enabled as boolean);
 		if (windows.reminder && !windows.reminder.isDestroyed()) {
 			windows.reminder.webContents.send(
 				IPC_CHANNELS.cameraMode,
 				enabled as boolean,
 			);
+		}
+		if (wasEnabled !== enabled && current.isTracking) {
+			reminders.resyncLoopsForCameraModeChange();
 		}
 	});
 	on(IPC_CHANNELS.updateCameraQuality, (_event, quality: unknown) => {
@@ -347,22 +351,24 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		shortcuts.setCaptureMode(Boolean(capturing));
 	});
 	on(IPC_CHANNELS.startCameraTracking, () => {
-		if (current.isTracking) {
-			stopTrackingSession(
-				{ reminders, exercises, lookAway, preferences: current },
-				true,
-			);
-		}
+		const wasEnabled = current.cameraEnabled;
 		preferences.set("cameraEnabled", true);
+		if (windows.reminder && !windows.reminder.isDestroyed()) {
+			windows.reminder.webContents.send(IPC_CHANNELS.cameraMode, true);
+		}
+		if (!wasEnabled && current.isTracking) {
+			reminders.resyncLoopsForCameraModeChange();
+		}
 	});
 	on(IPC_CHANNELS.stopCameraTracking, () => {
-		if (current.isTracking) {
-			stopTrackingSession(
-				{ reminders, exercises, lookAway, preferences: current },
-				true,
-			);
-		}
+		const wasEnabled = current.cameraEnabled;
 		preferences.set("cameraEnabled", false);
+		if (windows.reminder && !windows.reminder.isDestroyed()) {
+			windows.reminder.webContents.send(IPC_CHANNELS.cameraMode, false);
+		}
+		if (wasEnabled && current.isTracking) {
+			reminders.resyncLoopsForCameraModeChange();
+		}
 	});
 	on(IPC_CHANNELS.skipExercise, () => exercises.skip());
 	on(IPC_CHANNELS.snoozeExercise, () => exercises.snooze());
