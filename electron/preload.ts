@@ -68,6 +68,7 @@ contextBridge.exposeInMainWorld('popupAPI', {
     volume: number;
     path?: string;
     mode?: "file" | "cheer";
+    cheerTheme?: string;
   }) => void) => {
     ipcRenderer.on(IPC_CHANNELS.playSound, (_event, payload) => callback(payload));
   },

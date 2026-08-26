@@ -86,6 +86,47 @@ function updateColors(colors) {
 		);
 	}
 	applyPopupSurfaceAlpha();
+	applyPopupGlow(colors);
+}
+
+const POPUP_GLOW_VAR_KEYS = ["outer", "mid", "inner", "accent", "accent2"];
+
+function clearPopupGlow(root) {
+	delete root.dataset.popupGlow;
+	for (const key of POPUP_GLOW_VAR_KEYS) {
+		root.style.removeProperty(`--popup-glow-${key}`);
+	}
+}
+
+function applyPopupGlow(colors) {
+	const root = document.documentElement;
+	const preset = colors?.glowPreset;
+	const glow = colors?.glow;
+	if (
+		(preset === "aurora" || preset === "sunset") &&
+		glow &&
+		typeof glow === "object"
+	) {
+		root.dataset.popupGlow = preset;
+		for (const key of POPUP_GLOW_VAR_KEYS) {
+			if (typeof glow[key] === "string") {
+				root.style.setProperty(`--popup-glow-${key}`, glow[key]);
+			}
+		}
+		// Tie accent tokens used elsewhere (icons, ambient-adjacent chrome).
+		if (glow.accent) {
+			root.style.setProperty("--popup-accent", glow.accent);
+			root.style.setProperty(
+				"--popup-accent-soft",
+				`color-mix(in srgb, ${glow.accent} 14%, transparent)`,
+			);
+		}
+		if (glow.accent2) {
+			root.style.setProperty("--popup-accent-hover", glow.accent2);
+		}
+		return;
+	}
+	clearPopupGlow(root);
 }
 
 function updateMessage(message) {

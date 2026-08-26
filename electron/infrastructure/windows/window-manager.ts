@@ -30,6 +30,7 @@ import {
 	type Size,
 } from "../../../shared/preferences";
 import { IPC_CHANNELS } from "../../../shared/ipc-channels";
+import { buildPopupAppearancePayload } from "../../../shared/popup-presets";
 import { BLINK_RATE_COACH_DISMISS_MS } from "../../domain/blink-rate-coaching";
 import {
 	EXERCISE_POPUP_VISIBLE_MS,
@@ -244,7 +245,7 @@ export class WindowManager {
 			this.sendI18n(popup);
 			popup.webContents.send(
 				IPC_CHANNELS.updateColors,
-				this.preferences.popupColors,
+				this.popupAppearancePayload(),
 			);
 			if (kind === "blink") {
 				const locale =
@@ -539,6 +540,10 @@ export class WindowManager {
 		void popup.loadFile(path.join(this.paths.publicDir, "exercise.html"));
 		popup.webContents.on("did-finish-load", () => {
 			this.sendI18n(popup);
+			popup.webContents.send(
+				IPC_CHANNELS.updateColors,
+				this.popupAppearancePayload(),
+			);
 			popup.webContents.send(IPC_CHANNELS.updateExercisePrompt, prompt);
 			this.sendClickThrough(popup);
 			if (!interactive) {
@@ -644,6 +649,10 @@ export class WindowManager {
 		});
 		popup.webContents.on("did-finish-load", () => {
 			this.sendI18n(popup);
+			popup.webContents.send(
+				IPC_CHANNELS.updateColors,
+				this.popupAppearancePayload(),
+			);
 			const locale =
 				this.preferences.locale === "uk" ? "uk" : "en";
 			popup.webContents.send(IPC_CHANNELS.updateLookAwayCopy, {
@@ -746,7 +755,7 @@ export class WindowManager {
 			this.sendI18n(window);
 			window.webContents.send(
 				IPC_CHANNELS.updateColors,
-				this.preferences.popupColors,
+				this.popupAppearancePayload(),
 			);
 			window.webContents.send(IPC_CHANNELS.currentPopupState, {
 				size,
@@ -839,21 +848,28 @@ export class WindowManager {
 	}
 
 	applyPopupAppearance(): void {
-		// Push colors/transparency into CSS (card alpha). Do not use
+		// Push colors/transparency/glow into CSS (card alpha). Do not use
 		// BrowserWindow.setOpacity — it soft-composites glyphs on Windows GPUs.
+		const payload = this.popupAppearancePayload();
 		for (const window of [
 			this.reminder,
 			this.editor,
 			this.ambient,
+			this.exercise,
+			this.lookAway,
 			...this.ambientChrome,
 		]) {
 			if (window && !window.isDestroyed()) {
-				window.webContents.send(
-					IPC_CHANNELS.updateColors,
-					this.preferences.popupColors,
-				);
+				window.webContents.send(IPC_CHANNELS.updateColors, payload);
 			}
 		}
+	}
+
+	private popupAppearancePayload() {
+		return buildPopupAppearancePayload(
+			this.preferences.popupColors,
+			this.preferences.popupGlowPreset ?? null,
+		);
 	}
 
 	/**
@@ -1039,7 +1055,7 @@ export class WindowManager {
 			this.sendI18n(popup);
 			popup.webContents.send(
 				IPC_CHANNELS.updateColors,
-				this.preferences.popupColors,
+				this.popupAppearancePayload(),
 			);
 			popup.setIgnoreMouseEvents(true);
 			pinPanelAboveSystemChrome(popup, bounds);

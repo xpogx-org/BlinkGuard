@@ -18,6 +18,12 @@ import {
 	SHOP_DISCOUNT_MAX_LEVEL,
 } from "../../shared/blink-rewards";
 import {
+	CHEER_THEME_IDS,
+	resolveCheerTheme,
+	type CheerThemeId,
+} from "../../shared/cheer-themes";
+import type { PopupPresetId } from "../../shared/popup-presets";
+import {
 	BLINK_STATS_STORE_KEY,
 	DEFAULT_BLINK_STATS,
 	type BlinkStatsSnapshot,
@@ -25,7 +31,11 @@ import {
 	type GoalsConfig,
 	addTrackingMs,
 	applyRewardPurchase,
+	clearEquippedPopupPreset,
 	computeStreak,
+	equipCheerTheme,
+	equipCheerThemeRandom,
+	equipPopupPreset,
 	localDateKey,
 	normalizeBlinkStatsState,
 	recordBlink,
@@ -93,6 +103,9 @@ export class BlinkStatsService {
 	> | null = null;
 	private cachedLocale: Locale | null = null;
 	private cheerEffects: CheerRewardEffects = {};
+	private debugCheerThemeCycle = 0;
+	/** One-shot override while previewCheer runs (sync onCheer). */
+	private cheerThemeOverride: string | null = null;
 
 	/**
 	 * When true (camera face-aware): BPM denominator + trackingMs use face-visible
@@ -165,9 +178,57 @@ export class BlinkStatsService {
 		this.faceVisible = false;
 	}
 
-	/** Dev Debug: play Cheer FX without spending blinks. */
+	/** Dev Debug: play Cheer FX without spending blinks; cycles pattern families. */
 	previewCheer(): void {
+		const theme =
+			CHEER_THEME_IDS[this.debugCheerThemeCycle % CHEER_THEME_IDS.length];
+		this.debugCheerThemeCycle += 1;
+		this.cheerThemeOverride = theme;
 		this.cheerEffects.onCheer?.({ kind: "cheer" });
+		this.cheerThemeOverride = null;
+	}
+
+	resolveCheerThemeForPlay(): CheerThemeId {
+		return resolveCheerTheme(
+			{
+				unlockedCheerThemeIds: this.state.unlockedCheerThemeIds,
+				equippedCheerTheme: this.state.equippedCheerTheme,
+			},
+			this.cheerThemeOverride,
+		);
+	}
+
+	equipCheerTheme(theme: CheerThemeId | "random"): boolean {
+		const next =
+			theme === "random"
+				? equipCheerThemeRandom(this.state)
+				: equipCheerTheme(this.state, theme);
+		if (!next || next === this.state) return false;
+		this.state = next;
+		this.persist();
+		this.schedulePush(true);
+		return true;
+	}
+
+	equipPopupPreset(presetId: PopupPresetId): PopupPresetId | null {
+		const next = equipPopupPreset(this.state, presetId);
+		if (!next) return null;
+		this.state = next;
+		this.persist();
+		this.schedulePush(true);
+		return presetId;
+	}
+
+	clearEquippedPopupPreset(): void {
+		const next = clearEquippedPopupPreset(this.state);
+		if (next === this.state) return;
+		this.state = next;
+		this.persist();
+		this.schedulePush(true);
+	}
+
+	getEquippedPopupPresetId(): PopupPresetId | null {
+		return this.state.equippedPopupPresetId;
 	}
 
 	/** Dev Debug: play level-up celebration without changing stats. */
@@ -432,6 +493,10 @@ export class BlinkStatsService {
 			streak: streakResult.streak,
 			rewards: rewardOffers(this.state),
 			hasStatsFlair: this.state.unlockedRewardIds.includes("statsFlair"),
+			equippedCheerTheme: this.state.equippedCheerTheme,
+			equippedPopupPresetId: this.state.equippedPopupPresetId,
+			unlockedCheerThemeIds: [...this.state.unlockedCheerThemeIds],
+			unlockedPopupPresetIds: [...this.state.unlockedPopupPresetIds],
 			...achievementFields,
 		};
 	}
@@ -488,7 +553,7 @@ export class BlinkStatsService {
 		this.markChartsDirty();
 		this.persist();
 		const newly = this.applyNewAchievements();
-		if (rewardId === "cheer") {
+		if (rewardId === "cheer" || BLINK_REWARDS[rewardId].cheerThemeId) {
 			this.cheerEffects.onCheer?.({ kind: "cheer" });
 		} else {
 			this.celebrateAchievements(newly, "live");

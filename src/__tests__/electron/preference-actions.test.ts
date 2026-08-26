@@ -284,6 +284,11 @@ describe("PreferenceActions", () => {
 				streakShieldUsedDates: [],
 				rewardPurchaseCounts: {},
 				shopDiscountLevel: 0,
+				unlockedCheerThemeIds: [],
+				equippedCheerTheme: "random",
+				unlockedPopupPresetIds: [],
+				equippedPopupPresetId: null,
+				snoozeTokenCharges: 0,
 			},
 		});
 

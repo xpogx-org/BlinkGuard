@@ -8,8 +8,10 @@ import {
 	sanitizeCameraDevice,
 } from "../../../shared/camera-devices";
 import { isBlinkRewardId } from "../../../shared/blink-rewards";
+import { isCheerThemeId } from "../../../shared/cheer-themes";
 import { isDebugOverlayKind, isDebugSoundKind } from "../../../shared/debug-preview";
 import { IPC_CHANNELS } from "../../../shared/ipc-channels";
+import { POPUP_PRESETS, isPopupPresetId } from "../../../shared/popup-presets";
 import { sanitizeNotificationStyle } from "../../../shared/notification-style";
 import type { PauseAppRule, Point, PopupColors, Size } from "../../../shared/preferences";
 import {
@@ -167,6 +169,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	});
 	on(IPC_CHANNELS.updatePopupColors, (_event, colors: unknown) => {
 		preferences.set("popupColors", colors as PopupColors);
+		preferences.set("popupGlowPreset", null);
 		windows.applyPopupAppearance();
 	});
 	on(IPC_CHANNELS.updatePopupTransparency, (_event, transparency: unknown) => {
@@ -473,9 +476,14 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	});
 	on(IPC_CHANNELS.debugPreviewSound, (_event, kind: unknown, volume?: unknown) => {
 		if (!isDebugSoundKind(kind)) return;
-		const options: { force: true; volume?: number } = { force: true };
+		const options: { force: true; volume?: number; cheerTheme?: string } = {
+			force: true,
+		};
 		if (typeof volume === "number") {
 			options.volume = volume;
+		}
+		if (kind === "cheer") {
+			options.cheerTheme = "__cycle__";
 		}
 		sound.play(kind, options);
 	});
@@ -578,6 +586,34 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	on(IPC_CHANNELS.spendBlinkReward, (_event, rewardId: unknown) => {
 		if (!isBlinkRewardId(rewardId)) return;
 		blinkStats.purchaseReward(rewardId);
+		windows.sendToMain(IPC_CHANNELS.loadBlinkStats, blinkStats.getSnapshot());
+	});
+	on(IPC_CHANNELS.equipCheerTheme, (_event, theme: unknown) => {
+		if (theme === "random") {
+			blinkStats.equipCheerTheme("random");
+		} else if (isCheerThemeId(theme)) {
+			blinkStats.equipCheerTheme(theme);
+		} else {
+			return;
+		}
+		windows.sendToMain(IPC_CHANNELS.loadBlinkStats, blinkStats.getSnapshot());
+	});
+	on(IPC_CHANNELS.equipPopupPreset, (_event, presetId: unknown) => {
+		if (presetId === "custom") {
+			blinkStats.clearEquippedPopupPreset();
+			preferences.set("popupGlowPreset", null);
+			windows.applyPopupAppearance();
+			windows.sendToMain(IPC_CHANNELS.loadBlinkStats, blinkStats.getSnapshot());
+			return;
+		}
+		if (!isPopupPresetId(presetId)) return;
+		const equipped = blinkStats.equipPopupPreset(presetId);
+		if (!equipped) return;
+		const preset = POPUP_PRESETS[equipped];
+		preferences.set("popupColors", { ...preset.colors });
+		preferences.set("popupGlowPreset", equipped);
+		windows.applyPopupAppearance();
+		windows.sendPreferences();
 		windows.sendToMain(IPC_CHANNELS.loadBlinkStats, blinkStats.getSnapshot());
 	});
 	on(IPC_CHANNELS.updateGoalsConfig, (_event, raw: unknown) => {

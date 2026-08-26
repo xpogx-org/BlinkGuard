@@ -1,0 +1,98 @@
+/* Animated outer glow for shop popup presets (Aurora / Sunset). */
+
+html[data-popup-glow] body {
+	box-sizing: border-box;
+	padding: 10px;
+}
+
+html[data-popup-glow] .reminder-card,
+html[data-popup-glow] .exercise-container,
+html[data-popup-glow] .look-away-container {
+	position: relative;
+	isolation: isolate;
+	overflow: visible;
+	border-color: color-mix(in srgb, var(--popup-glow-accent) 28%, transparent);
+	/* Glow animates on ::before/::after only — never override reminder fadeIn/fadeInOut
+	   or exercise popup-enter; those set opacity and would leave the card stuck at 0. */
+}
+
+html[data-popup-glow] .reminder-card::before,
+html[data-popup-glow] .exercise-container::before,
+html[data-popup-glow] .look-away-container::before {
+	content: "";
+	position: absolute;
+	inset: -2px;
+	z-index: -2;
+	border-radius: inherit;
+	pointer-events: none;
+	background: linear-gradient(
+		125deg,
+		var(--popup-glow-accent),
+		var(--popup-glow-accent2),
+		var(--popup-glow-accent)
+	);
+	background-size: 220% 220%;
+	filter: blur(16px);
+	opacity: 0.38;
+	animation: popupGlowShift 7s ease-in-out infinite;
+}
+
+html[data-popup-glow] .reminder-card::after,
+html[data-popup-glow] .exercise-container::after,
+html[data-popup-glow] .look-away-container::after {
+	content: "";
+	position: absolute;
+	inset: -1px;
+	z-index: -1;
+	border-radius: inherit;
+	pointer-events: none;
+	box-shadow:
+		0 0 6px var(--popup-glow-inner),
+		0 0 14px color-mix(in srgb, var(--popup-glow-mid) 55%, transparent),
+		0 0 22px var(--popup-glow-mid);
+	animation: popupGlowHalo 5.5s ease-in-out infinite;
+}
+
+@keyframes popupGlowShift {
+	0%,
+	100% {
+		background-position: 0% 50%;
+		opacity: 0.3;
+	}
+	50% {
+		background-position: 100% 50%;
+		opacity: 0.44;
+	}
+}
+
+@keyframes popupGlowHalo {
+	0%,
+	100% {
+		opacity: 0.28;
+		transform: scale(1);
+		box-shadow:
+			0 0 5px var(--popup-glow-inner),
+			0 0 12px color-mix(in srgb, var(--popup-glow-mid) 50%, transparent),
+			0 0 20px var(--popup-glow-mid);
+	}
+	50% {
+		opacity: 0.42;
+		transform: scale(1.008);
+		box-shadow:
+			0 0 8px var(--popup-glow-inner),
+			0 0 18px color-mix(in srgb, var(--popup-glow-mid) 60%, transparent),
+			0 0 28px color-mix(in srgb, var(--popup-glow-outer) 70%, transparent);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html[data-popup-glow] .reminder-card::before,
+	html[data-popup-glow] .exercise-container::before,
+	html[data-popup-glow] .look-away-container::before,
+	html[data-popup-glow] .reminder-card::after,
+	html[data-popup-glow] .exercise-container::after,
+	html[data-popup-glow] .look-away-container::after {
+		animation: none;
+		opacity: 0.32;
+	}
+}

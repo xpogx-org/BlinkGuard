@@ -121,12 +121,20 @@ function bootstrap(): void {
 	const sound = new NotificationSoundPlayer(paths, preferences, app.isPackaged);
 	const osNotifications = new OsNotificationPlayer();
 
+	const equippedPopupPreset = blinkStats.getEquippedPopupPresetId();
+	if (equippedPopupPreset) {
+		preferencesService.set("popupGlowPreset", equippedPopupPreset);
+	}
+
 	blinkStats.setPushHandler((snapshot) => {
 		windows.sendToMain(IPC_CHANNELS.loadBlinkStats, snapshot);
 	});
 	blinkStats.setCheerEffects({
 		onCheer: (celebration) => {
-			sound.play("cheer", { force: true });
+			sound.play("cheer", {
+				force: true,
+				cheerTheme: blinkStats.resolveCheerThemeForPlay(),
+			});
 			windows.showCheerToast(celebration);
 		},
 	});

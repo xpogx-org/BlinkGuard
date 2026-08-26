@@ -22,6 +22,7 @@ export type PlaySoundPayload = {
 	volume: number;
 	path?: string;
 	mode?: "file" | "cheer";
+	cheerTheme?: string;
 };
 
 export type AudioErrorPayload = {
@@ -75,7 +76,7 @@ export class NotificationSoundPlayer {
 
 	play(
 		kind: NotificationSoundKind,
-		options?: { force?: boolean; volume?: number },
+		options?: { force?: boolean; volume?: number; cheerTheme?: string },
 	): void {
 		if (this.disposed) return;
 		if (!options?.force && !this.preferences.soundEnabled) return;
@@ -87,7 +88,7 @@ export class NotificationSoundPlayer {
 		if (volumePercent <= 0) return;
 
 		const volume = Math.min(1, Math.max(0, volumePercent / 100));
-		const payload = this.buildPayload(kind, volume);
+		const payload = this.buildPayload(kind, volume, options?.cheerTheme);
 		if (!payload) return;
 
 		const job: SoundPlayJob = {
@@ -119,9 +120,14 @@ export class NotificationSoundPlayer {
 	private buildPayload(
 		kind: NotificationSoundKind,
 		volume: number,
+		cheerTheme?: string,
 	): PlaySoundPayload | null {
 		if (kind === "cheer") {
-			return { kind, mode: "cheer", volume };
+			const payload: PlaySoundPayload = { kind, mode: "cheer", volume };
+			if (typeof cheerTheme === "string" && cheerTheme.length > 0) {
+				payload.cheerTheme = cheerTheme;
+			}
+			return payload;
 		}
 
 		const soundPath = this.isProd

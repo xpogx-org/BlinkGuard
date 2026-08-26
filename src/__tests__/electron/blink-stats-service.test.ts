@@ -390,6 +390,11 @@ describe("BlinkStatsService", () => {
 			streakShieldUsedDates: [],
 			rewardPurchaseCounts: { statsFlair: 1 },
 			shopDiscountLevel: 0,
+			unlockedCheerThemeIds: [],
+			equippedCheerTheme: "random",
+			unlockedPopupPresetIds: [],
+			equippedPopupPresetId: null,
+			snoozeTokenCharges: 0,
 		});
 
 		expect(service.getPersistedState().totalBlinks).toBe(40);
