@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import unittest
 
 from blink_detector_package.domain.blink_detection import (
@@ -21,10 +22,14 @@ from blink_detector_package.domain.blink_detection import (
 )
 from blink_detector_package.domain.pose import (
 	PITCH_WEIGHT_SPAN,
+	MAX_FACE_AREA_FRAC,
+	estimate_head_pose_heuristic,
 	evaluate_pose_gate,
+	face_area_fraction,
 	face_bbox_plausible,
 	get_pose_profile,
 	interocular_distance_px,
+	is_face_too_close,
 	lerp,
 	pose_weight,
 	select_largest_face,
@@ -189,6 +194,19 @@ def _frontal_landmarks(yaw_offset=0.0, pitch_shift=0.0):
 	return points
 
 
+def _rotate_landmarks(landmarks, cx, cy, deg):
+	rad = math.radians(deg)
+	cos_r = math.cos(rad)
+	sin_r = math.sin(rad)
+	return [
+		(
+			cx + (x - cx) * cos_r - (y - cy) * sin_r,
+			cy + (x - cx) * sin_r + (y - cy) * cos_r,
+		)
+		for x, y in landmarks
+	]
+
+
 class PoseTests(unittest.TestCase):
 	def test_select_largest_face(self):
 		faces = [_FakeFace(40, 40), _FakeFace(100, 80), _FakeFace(50, 50)]
@@ -227,6 +245,14 @@ class PoseTests(unittest.TestCase):
 		"""Filled-frame close-up may touch edges; area fraction saves it."""
 		close = _FakeFace(400, 320, left=0, top=0)
 		self.assertTrue(face_bbox_plausible(close, 480, 360))
+
+	def test_face_area_fraction_and_too_close(self):
+		desk = _FakeFace(140, 160, left=170, top=80)
+		close = _FakeFace(400, 320, left=0, top=0)
+		self.assertLess(face_area_fraction(desk, 480, 360), MAX_FACE_AREA_FRAC)
+		self.assertFalse(is_face_too_close(desk, 480, 360))
+		self.assertGreater(face_area_fraction(close, 480, 360), MAX_FACE_AREA_FRAC)
+		self.assertTrue(is_face_too_close(close, 480, 360))
 
 	def test_estimate_yaw_and_pitch(self):
 		frontal = estimate_head_pose(_frontal_landmarks())

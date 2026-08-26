@@ -258,6 +258,7 @@ class PreallocatedBuffers:
 		self._hog_detect_clahe = None
 		self._upscale_patch = None
 		self.last_yunet_rect = None
+		self.last_yunet_keypoints = None
 		self.last_refine_kind = None
 		self.yunet_input_size = None
 		self.reset_detect_stats()
@@ -393,11 +394,75 @@ def _bump_detect_stat(buffers, name):
 		buffers.bump_detect_stat(name)
 
 
-def _remember_yunet(buffers, yunet_face, kind):
+def _remember_yunet(buffers, yunet_face, kind, yunet_keypoints=None):
 	if buffers is None:
 		return
 	buffers.last_yunet_rect = yunet_face
 	buffers.last_refine_kind = kind
+	if yunet_keypoints is not None:
+		buffers.last_yunet_keypoints = yunet_keypoints
+
+
+def yunet_row_to_keypoints(row):
+	"""Five YuNet facial keypoints in pixel coords (right eye, left eye, nose)."""
+	try:
+		return {
+			"right_eye": (float(row[4]), float(row[5])),
+			"left_eye": (float(row[6]), float(row[7])),
+			"nose": (float(row[8]), float(row[9])),
+		}
+	except (TypeError, ValueError, IndexError):
+		return None
+
+
+def _rect_matches(a, b):
+	if a is None or b is None:
+		return False
+	try:
+		return (
+			int(a.left()) == int(b.left())
+			and int(a.top()) == int(b.top())
+			and int(a.width()) == int(b.width())
+			and int(a.height()) == int(b.height())
+		)
+	except (TypeError, ValueError, AttributeError):
+		return False
+
+
+def _select_plausible_yunet_face(faces, gray, select_largest):
+	"""Largest plausible YuNet row as (dlib.rectangle, keypoints dict)."""
+	if faces is None:
+		return None, None
+	try:
+		rows = list(faces)
+	except TypeError:
+		return None, None
+	if not rows:
+		return None, None
+	if gray is None or gray.size == 0:
+		height, width = 480, 640
+	else:
+		height, width = gray.shape[:2]
+	candidates = []
+	for row in rows:
+		rect = yunet_row_to_rect(row, width, height)
+		if rect is None:
+			continue
+		if gray is not None and gray.size > 0:
+			if not face_bbox_plausible(rect, width, height):
+				continue
+		kps = yunet_row_to_keypoints(row)
+		candidates.append((rect, kps))
+	if not candidates:
+		return None, None
+	rects = [rect for rect, _kps in candidates]
+	best_rect = select_largest(rects)
+	if best_rect is None:
+		return None, None
+	for rect, kps in candidates:
+		if _rect_matches(rect, best_rect):
+			return rect, kps
+	return candidates[0]
 
 
 def fit_processing_size(native_wh, preset_wh):
@@ -771,8 +836,12 @@ def run_yunet_face_detect(yunet, bgr, select_largest, buffers=None):
 		_retval, faces = yunet.detect(bgr)
 	except Exception:
 		return None, size
-	rects = yunet_faces_to_hits(faces, width, height)
-	face = _select_plausible_face(rects, bgr, select_largest)
+	face, keypoints = _select_plausible_yunet_face(faces, bgr, select_largest)
+	if buffers is not None:
+		if face is not None:
+			buffers.last_yunet_keypoints = keypoints
+		else:
+			buffers.last_yunet_keypoints = None
 	return face, size
 
 
@@ -836,20 +905,33 @@ def run_face_detect(
 				buffers,
 			)
 			if hog_face is not None:
-				_remember_yunet(buffers, yunet_face, hog_kind or "hog")
+				_remember_yunet(
+					buffers,
+					yunet_face,
+					hog_kind or "hog",
+					getattr(buffers, "last_yunet_keypoints", None),
+				)
 				return hog_face, hog_kind or "hog"
 			_bump_detect_stat(buffers, "hog_refine_miss")
 			_bump_detect_stat(buffers, "yunet_crop")
-			_remember_yunet(buffers, yunet_face, "yunet")
+			_remember_yunet(
+				buffers,
+				yunet_face,
+				"yunet",
+				getattr(buffers, "last_yunet_keypoints", None),
+			)
 			return yunet_face, "yunet"
 		if buffers is not None:
 			buffers.last_yunet_rect = None
+			buffers.last_yunet_keypoints = None
 			buffers.last_refine_kind = None
 		if not heavy_retries:
 			return None, None
 	face, kind = run_hog_face_detect(detector, gray, select_largest, buffers)
 	if face is not None:
 		_bump_detect_stat(buffers, "hog_full_hit")
+		if buffers is not None:
+			buffers.last_yunet_keypoints = None
 	if face is not None and kind is None:
 		return face, "hog"
 	return face, kind

@@ -366,6 +366,7 @@ def main() -> int:
 		"reject_ocec",
 		"skip_face_lost",
 		"skip_face_quality",
+		"skip_landmark_quality",
 	):
 		bucket = [b for b in rejected if b.get("phase") == phase]
 		if not bucket:
@@ -382,6 +383,10 @@ def main() -> int:
 		if phase == "skip_face_quality":
 			stats(phase, bucket, "face_area")
 			stats(phase, bucket, "interocular")
+		if phase == "skip_landmark_quality":
+			stats(phase, bucket, "face_area")
+			stats(phase, bucket, "interocular")
+			stats(phase, bucket, "area_frac")
 		if phase == "reject_ocec":
 			stats(phase, bucket, "ocec_drop")
 

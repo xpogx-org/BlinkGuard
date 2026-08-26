@@ -12,9 +12,14 @@ from blink_detector_package.domain import (
 	MIN_FACE_AREA_PX,
 	MIN_INTEROCULAR_PX,
 	BlinkDetectionState,
+	LandmarkTrustDebouncer,
 	face_bbox_area,
 	face_bbox_plausible,
+	face_area_fraction,
+	evaluate_landmark_trust,
 	interocular_distance_px,
+	is_face_too_close,
+	landmark_fail_face_status,
 	select_largest_face,
 )
 from blink_detector_package.infrastructure.head_pose import estimate_head_pose
@@ -253,6 +258,7 @@ class BlinkDetectorApplication:
 		self._frames_since_face_detect = 0
 		self._face_miss_streak = 0
 		self._quality_miss_streak = 0
+		self._landmark_trust_debouncer = LandmarkTrustDebouncer()
 		self._face_reacquire_frames = 0
 		self._last_no_face_emit = 0.0
 		self._last_emitted_face_status = None
@@ -972,6 +978,7 @@ class BlinkDetectorApplication:
 		self._clear_landmark_track()
 		self._face_miss_streak = 0
 		self._quality_miss_streak = 0
+		self._landmark_trust_debouncer.reset()
 		self._begin_face_reacquire()
 		self._last_clahe_roi_count = 0
 		had_candidate = False
@@ -1043,6 +1050,79 @@ class BlinkDetectorApplication:
 					"cooldown_remaining": 0.0,
 					"absolute_drop": 0.0,
 				},
+				face=face,
+				credited=False,
+			)
+
+	def _emit_track_quality_fail(
+		self,
+		face_data,
+		face,
+		frame_width,
+		frame_height,
+		current_time,
+		face_area,
+		interocular,
+		status,
+		reason,
+		trust_metrics=None,
+	):
+		"""Landmark / close-up gate — honest status, no eye dots."""
+		self._quality_miss_streak += 1
+		face_data["faceRect"] = {
+			"x": float(face.left() / frame_width),
+			"y": float(face.top() / frame_height),
+			"width": float(face.width() / frame_width),
+			"height": float(face.height() / frame_height),
+		}
+		face_data["eyeLandmarks"] = []
+		face_data["faceDetected"] = False
+		face_data["faceStatus"] = status
+		had_candidate = False
+		if self._quality_miss_streak > FACE_QUALITY_HOLD_FRAMES:
+			if self.detection.blink_in_progress:
+				had_candidate = self.detection.cancel_on_face_lost(current_time)
+			else:
+				self.detection.mark_face_absent(current_time)
+		if had_candidate or self._should_emit_skip(
+			"skip_landmark_quality",
+			current_time,
+		):
+			if had_candidate:
+				self._last_skip_debug_phase = "skip_landmark_quality"
+				self._last_skip_debug_time = current_time
+			payload = {
+				"phase": "skip_landmark_quality",
+				"baseline": self.detection.current_baseline_ear,
+				"drop": 0.0,
+				"ear": 0.0,
+				"face_area": face_area,
+				"interocular": interocular,
+				"area_frac": face_area_fraction(
+					face, frame_width, frame_height
+				),
+				"quality_miss_streak": self._quality_miss_streak,
+				"soft_hold": self._quality_miss_streak <= FACE_QUALITY_HOLD_FRAMES,
+				"landmark_reason": reason,
+				"trust_reason": reason,
+				"face_status": status,
+				"look_down": False,
+				"ear_depressed": self.detection.ear_depressed,
+				"live_open_ear": self.detection.live_open_ear,
+				"pose_strictness": self.pose_strictness,
+				"resting_pitch": self.detection.resting_pitch,
+				"min_velocity": 0.0,
+				"duration": 0.0,
+				"cooldown_remaining": 0.0,
+				"absolute_drop": 0.0,
+			}
+			if trust_metrics:
+				if trust_metrics.get("yunet_eye_offset") is not None:
+					payload["yunet_eye_offset"] = trust_metrics["yunet_eye_offset"]
+				if trust_metrics.get("reproj_err_iod") is not None:
+					payload["reproj_err_iod"] = trust_metrics["reproj_err_iod"]
+			self._emit_blink_outcome(
+				payload,
 				face=face,
 				credited=False,
 			)
@@ -1245,6 +1325,12 @@ class BlinkDetectorApplication:
 			"face_detect": self._last_face_detect,
 			"clahe": self._last_clahe_roi_count > 0,
 			"clahe_roi_count": int(self._last_clahe_roi_count),
+			"landmark_reason": blink_info.get("landmark_reason")
+			or blink_info.get("trust_reason"),
+			"trust_reason": blink_info.get("trust_reason")
+			or blink_info.get("landmark_reason"),
+			"yunet_eye_offset": _opt_float("yunet_eye_offset"),
+			"reproj_err_iod": _opt_float("reproj_err_iod"),
 		}
 
 		phase = payload["phase"] or "?"
@@ -1758,59 +1844,112 @@ class BlinkDetectorApplication:
 								interocular,
 							)
 					else:
-						self._quality_miss_streak = 0
-						left_ear = calculate_ear_fast(left_eye, buffers)
-						right_ear = calculate_ear_fast(right_eye, buffers)
-						avg_ear = (left_ear + right_ear) * 0.5
-						left_aperture = eye_intensity_aperture(gray, left_eye)
-						right_aperture = eye_intensity_aperture(
-							gray, right_eye
+						too_close = is_face_too_close(
+							face, frame_width, frame_height
 						)
+						yunet_kps = None
+						# YuNet keypoints only apply when this frame's locate came
+						# from YuNet→HOG refine, not stale kps vs a hog/clahe box.
+						if self._last_face_detect in ("hog", "yunet"):
+							if buffers is not None and int(
+								getattr(buffers, "stat_yunet_hit", 0) or 0
+							) > 0:
+								yunet_kps = getattr(
+									buffers, "last_yunet_keypoints", None
+								)
 						pose = estimate_head_pose(
 							landmarks,
 							image_size=(frame_width, frame_height),
 						)
-						left_ocec, right_ocec = self._score_ocec_eyes(
-							frame, left_eye, right_eye, pose
+						frame_trusted, trust_reason, trust_metrics = (
+							evaluate_landmark_trust(
+								face,
+								landmarks,
+								pose,
+								yunet_kps=yunet_kps,
+							)
 						)
-						trace_left = left_ear
-						trace_right = right_ear
-						trace_avg = avg_ear
-						trace_pose = pose
-						trace_left_ap = left_aperture
-						trace_right_ap = right_aperture
-						trace_left_ocec = left_ocec
-						trace_right_ocec = right_ocec
-						face_data["faceDetected"] = True
-						face_data["faceStatus"] = "ok"
-						face_data["ear"] = float(avg_ear)
-						face_data["faceRect"] = {
-							"x": float(face.left() / frame_width),
-							"y": float(face.top() / frame_height),
-							"width": float(face.width() / frame_width),
-							"height": float(face.height() / frame_height),
-						}
-						self._fill_eye_landmarks_ui(
-							face_data,
-							left_eye,
-							right_eye,
-							buffers,
-							frame_width,
-							frame_height,
+						emit_trusted = (
+							self._landmark_trust_debouncer.should_emit_trusted(
+								frame_trusted
+							)
 						)
-						self._handle_detection(
-							face_data,
-							avg_ear,
-							current_time,
-							left_ear,
-							right_ear,
-							pose,
-							face,
-							left_aperture=left_aperture,
-							right_aperture=right_aperture,
-							left_ocec=left_ocec,
-							right_ocec=right_ocec,
-						)
+						if too_close:
+							self._landmark_trust_debouncer.reset()
+							self._emit_track_quality_fail(
+								face_data,
+								face,
+								frame_width,
+								frame_height,
+								current_time,
+								face_area,
+								interocular,
+								"too_close",
+								"area_frac",
+							)
+						elif not emit_trusted:
+							self._emit_track_quality_fail(
+								face_data,
+								face,
+								frame_width,
+								frame_height,
+								current_time,
+								face_area,
+								interocular,
+								landmark_fail_face_status(trust_reason),
+								trust_reason,
+								trust_metrics=trust_metrics,
+							)
+						else:
+							self._quality_miss_streak = 0
+							left_ear = calculate_ear_fast(left_eye, buffers)
+							right_ear = calculate_ear_fast(right_eye, buffers)
+							avg_ear = (left_ear + right_ear) * 0.5
+							left_aperture = eye_intensity_aperture(gray, left_eye)
+							right_aperture = eye_intensity_aperture(
+								gray, right_eye
+							)
+							left_ocec, right_ocec = self._score_ocec_eyes(
+								frame, left_eye, right_eye, pose
+							)
+							trace_left = left_ear
+							trace_right = right_ear
+							trace_avg = avg_ear
+							trace_pose = pose
+							trace_left_ap = left_aperture
+							trace_right_ap = right_aperture
+							trace_left_ocec = left_ocec
+							trace_right_ocec = right_ocec
+							face_data["faceDetected"] = True
+							face_data["faceStatus"] = "ok"
+							face_data["ear"] = float(avg_ear)
+							face_data["faceRect"] = {
+								"x": float(face.left() / frame_width),
+								"y": float(face.top() / frame_height),
+								"width": float(face.width() / frame_width),
+								"height": float(face.height() / frame_height),
+							}
+							self._fill_eye_landmarks_ui(
+								face_data,
+								left_eye,
+								right_eye,
+								buffers,
+								frame_width,
+								frame_height,
+							)
+							self._handle_detection(
+								face_data,
+								avg_ear,
+								current_time,
+								left_ear,
+								right_ear,
+								pose,
+								face,
+								left_aperture=left_aperture,
+								right_aperture=right_aperture,
+								left_ocec=left_ocec,
+								right_ocec=right_ocec,
+							)
 				else:
 					if face is not None:
 						if not face_bbox_plausible(

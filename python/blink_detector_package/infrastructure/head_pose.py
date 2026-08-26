@@ -8,7 +8,11 @@ from typing import Any
 import cv2
 import numpy as np
 
-from blink_detector_package.domain.pose import estimate_head_pose_heuristic
+from blink_detector_package.domain.landmark_trust import MAX_PNP_REPROJ_ERR_IOD
+from blink_detector_package.domain.pose import (
+	estimate_head_pose_heuristic,
+	interocular_distance_px,
+)
 
 # dlib indices for the 6-point canonical face used with solvePnP.
 _PNP_INDICES = (30, 8, 36, 45, 48, 54)
@@ -59,6 +63,25 @@ def _camera_matrix(
 		[[focal, 0.0, cx], [0.0, focal, cy], [0.0, 0.0, 1.0]],
 		dtype=np.float64,
 	)
+
+
+def _reprojection_error_iod(
+	image_pts: np.ndarray,
+	rvec: np.ndarray,
+	tvec: np.ndarray,
+	camera: np.ndarray,
+	dist: np.ndarray,
+	iod_px: float,
+) -> float:
+	projected, _ = cv2.projectPoints(
+		_MODEL_POINTS_MM, rvec, tvec, camera, dist
+	)
+	projected = projected.reshape(-1, 2)
+	errors = np.linalg.norm(projected - image_pts, axis=1)
+	mean_err = float(np.mean(errors))
+	if iod_px < 1e-3:
+		return float("inf")
+	return mean_err / iod_px
 
 
 def _image_points(landmarks) -> np.ndarray | None:
@@ -193,6 +216,10 @@ def estimate_head_pose(
 			method="heuristic",
 		)
 
+	iod_px = interocular_distance_px(landmarks)
+	reproj_err_iod = _reprojection_error_iod(
+		image_pts, rvec, tvec, camera, dist, iod_px
+	)
 	yaw, pitch = _normalize_gate_units(yaw_deg, pitch_deg)
 	return {
 		"yaw": float(yaw),
@@ -202,6 +229,8 @@ def estimate_head_pose(
 		"pitch_deg": float(pitch_deg),
 		"roll_deg": float(roll_deg),
 		"method": "solvepnp",
+		"reproj_err_iod": float(reproj_err_iod),
+		"landmark_fit_ok": reproj_err_iod <= MAX_PNP_REPROJ_ERR_IOD,
 	}
 
 

@@ -241,6 +241,30 @@ FACE_EDGE_MIN_AREA_FRAC = 0.12
 # short lean-back (working boxes were ~19% of frame; chair ≈14–16%).
 # 0.12 of 480 ≈ 58px still rejects 44px / 53px eyes; 90px zip-8190 passes.
 MIN_FACE_WIDTH_FRAC = 0.12
+# Close-up clip: bbox fills most of the frame — landmarks drift to hair/forehead.
+MAX_FACE_AREA_FRAC = 0.55
+
+
+def landmark_fail_face_status(reason):
+	"""Map landmark gate reason → wire faceStatus for UI hints."""
+	if reason == "pitch_up":
+		return "head_too_high"
+	return "unreliable_landmarks"
+
+
+def face_area_fraction(face, frame_w, frame_h):
+	"""Face bbox area as a fraction of the frame (0 if invalid)."""
+	if face is None or frame_w <= 0 or frame_h <= 0:
+		return 0.0
+	frame_area = int(frame_w) * int(frame_h)
+	if frame_area <= 0:
+		return 0.0
+	return face_bbox_area(face) / float(frame_area)
+
+
+def is_face_too_close(face, frame_w, frame_h):
+	"""True when the user is so close the face box dominates the frame."""
+	return face_area_fraction(face, frame_w, frame_h) > MAX_FACE_AREA_FRAC
 
 
 def face_bbox_plausible(face, frame_w, frame_h):

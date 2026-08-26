@@ -28,6 +28,24 @@ class HeadPoseSolvePnPTests(unittest.TestCase):
 		self.assertAlmostEqual(pose["pitch"], 0.0, delta=0.05)
 		self.assertAlmostEqual(pose["roll_deg"], 0.0, delta=1.0)
 
+	def test_frontal_low_reprojection_error(self):
+		pose = estimate_head_pose(
+			project_model_landmarks(),
+			image_size=(640, 480),
+		)
+		self.assertEqual(pose["method"], "solvepnp")
+		self.assertIn("reproj_err_iod", pose)
+		self.assertTrue(pose["landmark_fit_ok"])
+		self.assertLess(pose["reproj_err_iod"], 0.05)
+
+	def test_corrupted_landmarks_high_reprojection(self):
+		points = list(project_model_landmarks())
+		points[8] = (points[8][0], points[8][1] + 300.0)
+		pose = estimate_head_pose(points, image_size=(640, 480))
+		self.assertEqual(pose["method"], "solvepnp")
+		self.assertGreater(pose["reproj_err_iod"], 0.42)
+		self.assertFalse(pose["landmark_fit_ok"])
+
 	def test_yaw_scales_into_gate_units(self):
 		pose = estimate_head_pose(
 			project_model_landmarks(yaw_deg=56.0),
