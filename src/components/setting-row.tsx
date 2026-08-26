@@ -20,7 +20,7 @@ export function SettingRow({
 		<div className={cn("min-w-0", className)}>
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0 space-y-1">
-					<div className="min-w-0 text-sm font-medium text-wrap text-foreground">
+					<div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-medium text-foreground">
 						{title}
 					</div>
 					{description ? (
