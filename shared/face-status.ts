@@ -4,6 +4,7 @@ export type FaceStatus =
 	| "too_far"
 	| "too_close"
 	| "head_too_high"
+	| "head_too_low"
 	| "unreliable_landmarks";
 
 const RELIABLE_FACE_STATUSES: ReadonlySet<FaceStatus> = new Set(["ok"]);
@@ -15,6 +16,7 @@ export function isFaceStatus(value: unknown): value is FaceStatus {
 		value === "too_far" ||
 		value === "too_close" ||
 		value === "head_too_high" ||
+		value === "head_too_low" ||
 		value === "unreliable_landmarks"
 	);
 }

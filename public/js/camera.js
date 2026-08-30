@@ -8,6 +8,7 @@ let thresholdUpdateTimer = null;
 /** EMA for face box only — HOG boxes jitter; keep light tracking lag. */
 let smoothedFaceRect = null;
 let lastReliableTracking = false;
+let lastWeakHintStatus = false;
 const FACE_OVERLAY_SMOOTH = 0.55;
 /** Normalized jump above this snaps (re-acquire / large head move). */
 const FACE_OVERLAY_SNAP = 0.08;
@@ -90,6 +91,7 @@ function hasWeakFaceBBoxHint(faceStatus) {
 		faceStatus === "too_far" ||
 		faceStatus === "too_close" ||
 		faceStatus === "head_too_high" ||
+		faceStatus === "head_too_low" ||
 		faceStatus === "unreliable_landmarks"
 	);
 }
@@ -98,6 +100,7 @@ function faceHintKey(faceStatus) {
 	if (faceStatus === "too_far") return "popup.camera.hintTooFar";
 	if (faceStatus === "too_close") return "popup.camera.hintTooClose";
 	if (faceStatus === "head_too_high") return "popup.camera.hintTooHigh";
+	if (faceStatus === "head_too_low") return "popup.camera.hintTooLow";
 	if (faceStatus === "unreliable_landmarks") {
 		return "popup.camera.hintUnreliable";
 	}
@@ -114,6 +117,14 @@ function syncTrackingRecovery(faceData) {
 		resetSmoothedOverlay();
 	}
 	lastReliableTracking = reliable;
+}
+
+function syncWeakHintOverlay(faceStatus) {
+	const weak = hasWeakFaceBBoxHint(faceStatus);
+	if (weak !== lastWeakHintStatus) {
+		resetSmoothedOverlay();
+	}
+	lastWeakHintStatus = weak;
 }
 
 function setFaceMissingOverlay(visible, faceStatus) {
@@ -198,6 +209,7 @@ function drawOverlays(faceData) {
 	if (!canvas || !faceData) return;
 
 	syncTrackingRecovery(faceData);
+	syncWeakHintOverlay(faceData.faceStatus);
 	const reliable = isReliableFaceTracking(faceData);
 	const ctx = canvas.getContext("2d");
 	if (reliable) {
@@ -233,8 +245,14 @@ function drawOverlays(faceData) {
 		updateInfoDisplay(eyeSize, isBlinking);
 		setFaceMissingOverlay(false);
 	} else {
-		const rect = smoothFaceRect(faceData.faceRect, { smooth: false });
-		if (hasWeakFaceBBoxHint(faceData.faceStatus)) {
+		const showWeakBBox =
+			hasWeakFaceBBoxHint(faceData.faceStatus) &&
+			faceData.faceDetected === true &&
+			faceData.faceRect &&
+			faceData.faceRect.width &&
+			faceData.faceRect.height;
+		if (showWeakBBox) {
+			const rect = smoothFaceRect(faceData.faceRect, { smooth: false });
 			drawFaceRect(ctx, canvas, rect, "#FACC15");
 		} else {
 			resetSmoothedOverlay();
@@ -252,6 +270,7 @@ function drawOverlays(faceData) {
 
 function applyFaceTrackingUi(data) {
 	syncTrackingRecovery(data);
+	syncWeakHintOverlay(data.faceStatus);
 	const timeSinceLastBlink = Date.now() - lastBlinkTime;
 	const shouldShowBlink = timeSinceLastBlink < 350;
 

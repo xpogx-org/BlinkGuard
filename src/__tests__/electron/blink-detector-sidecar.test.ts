@@ -260,6 +260,25 @@ describe("BlinkDetectorSidecar EAR calibration samples", () => {
 
 		expect(internal.calibrationSamples).toEqual([0.26]);
 	});
+
+	it("ignores head_too_low like other weak statuses", () => {
+		const { sidecar, child } = createSidecar();
+		expect(sidecar.startEarCalibration()).toBe(true);
+		const internal = sidecar as unknown as { calibrationSamples: number[] };
+
+		emitFaceData(child, {
+			faceDetected: false,
+			faceStatus: "head_too_low",
+			ear: 0.29,
+		});
+		emitFaceData(child, {
+			faceDetected: true,
+			faceStatus: "ok",
+			ear: 0.25,
+		});
+
+		expect(internal.calibrationSamples).toEqual([0.25]);
+	});
 });
 
 describe("isBenignSidecarStderr", () => {

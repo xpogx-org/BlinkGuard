@@ -936,6 +936,8 @@ export const en: MessageCatalog = {
 		"Move back so your full face stays in view.",
 	"popup.camera.hintTooHigh":
 		"Lower your head and look at the camera.",
+	"popup.camera.hintTooLow":
+		"Raise your head and look at the camera.",
 	"popup.camera.hintUnreliable":
 		"Face the camera squarely and center your face. Tracking pauses until your eyes are clearly visible.",
 	"popup.camera.streamError": "Camera stream unavailable",
