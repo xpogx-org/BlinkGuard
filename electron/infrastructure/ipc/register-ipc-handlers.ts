@@ -23,6 +23,7 @@ import {
 	sanitizeMicroBreakIntervalMs,
 	sanitizePauseAppPickerPayload,
 	sanitizeQuietHoursByWeekday,
+	sanitizeSessionRecapEnabled,
 	emptyPauseAppPicker,
 } from "../../../shared/preferences";
 import type { ReminderService } from "../../application/reminder-service";
@@ -393,6 +394,10 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	on(IPC_CHANNELS.updateNotificationStyle, (_event, style: unknown) => {
 		preferences.set("notificationStyle", sanitizeNotificationStyle(style));
 	});
+	on(IPC_CHANNELS.updateSessionRecapEnabled, (_event, enabled: unknown) => {
+		if (typeof enabled !== "boolean") return;
+		preferences.set("sessionRecapEnabled", sanitizeSessionRecapEnabled(enabled));
+	});
 	on(IPC_CHANNELS.updateLaunchAtLogin, (_event, enabled: unknown) => {
 		preferences.set("launchAtLogin", enabled as boolean);
 		applyLaunchAtLogin(enabled as boolean);
@@ -471,6 +476,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		windows.closeExercise();
 		windows.closeLookAway();
 		windows.hideCheerToast();
+		windows.hideSessionRecap();
 		sound.stop();
 	});
 	on(IPC_CHANNELS.debugPreviewSound, (_event, kind: unknown, volume?: unknown) => {

@@ -66,7 +66,7 @@ export interface NotificationSoundPort {
 	stop(): void;
 }
 
-export type OsToastKind = "blink" | "exercise" | "lookAway";
+export type OsToastKind = "blink" | "exercise" | "lookAway" | "sessionRecap";
 
 export type OsToastShowResult = { shown: boolean };
 
@@ -83,6 +83,7 @@ export interface OsNotificationPort {
 		payload: OsToastPayload,
 		hooks?: { onFailed?: () => void },
 	): OsToastShowResult;
+	showSessionRecap?(payload: { title: string; body: string }): OsToastShowResult;
 	dismiss(kind: OsToastKind): void;
 	dismissAll(): void;
 	setActivationHandlers(handlers: {
@@ -95,6 +96,7 @@ export interface OsNotificationPort {
 export const NO_OP_OS_NOTIFICATIONS: OsNotificationPort = {
 	isSupported: () => false,
 	show: () => ({ shown: false }),
+	showSessionRecap: () => ({ shown: false }),
 	dismiss: () => {},
 	dismissAll: () => {},
 	setActivationHandlers: () => {},

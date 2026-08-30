@@ -18,6 +18,12 @@ import { PreferencesService } from "./application/preferences-service";
 import { DeferredTrackingRestore } from "./application/deferred-tracking-restore";
 import { ReminderService } from "./application/reminder-service";
 import { SessionPauseService } from "./application/session-pause-service";
+import { SessionRecapService } from "./application/session-recap-service";
+import {
+	IDLE_POLL_INTERVAL_MS,
+	SESSION_RECAP_IDLE_MS,
+} from "./domain/session-recap-policy";
+import { IdleMonitor } from "./infrastructure/idle/idle-monitor";
 import {
 	startTrackingSession,
 	stopTrackingSession,
@@ -317,6 +323,7 @@ function bootstrap(): void {
 	osNotifications.setActivationHandlers({
 		onClick: () => windows.showMain(),
 		onSnooze: (kind) => {
+			if (kind === "sessionRecap") return;
 			if (kind === "blink") reminders.snooze();
 			else if (kind === "exercise") exercises.snooze();
 			else lookAway.snooze();
@@ -326,6 +333,38 @@ function bootstrap(): void {
 		blink: () => reminders.dismissVisibleBlink(),
 		exercise: () => exercises.dismissVisible(),
 		lookAway: () => lookAway.dismissVisible(),
+	});
+	const sessionRecap = new SessionRecapService(
+		preferences,
+		blinkStats,
+		notificationGate,
+		{
+			showOverlay: (payload) => windows.showSessionRecap(payload),
+			showNative: (payload) =>
+				osNotifications.showSessionRecap?.({
+					title: payload.title,
+					body: payload.body,
+				}),
+			logInteraction: (event, data) =>
+				interactionLogger.append({
+					source: "ipc",
+					action: event,
+					detail: data,
+				}),
+		},
+	);
+	reminders.bindSessionRecap(sessionRecap);
+	const idleMonitor = new IdleMonitor({
+		enabled: process.platform === "win32" || process.platform === "darwin",
+		idleThresholdMs: SESSION_RECAP_IDLE_MS,
+		pollIntervalMs: IDLE_POLL_INTERVAL_MS,
+		isTracking: () => preferences.isTracking,
+		isSuppressed: () => !notificationGate.notificationsAllowed(),
+		onIdleExceeded: () =>
+			stopTrackingSession(
+				{ reminders, exercises, lookAway, preferences },
+				true,
+			),
 	});
 	reminders.bindTrackingSessionStop((showStatus) =>
 		stopTrackingSession(
@@ -352,6 +391,9 @@ function bootstrap(): void {
 		exercises,
 		lookAway,
 		focusPause,
+		{
+			onEnterInactive: () => sessionRecap.handleSessionInactive(),
+		},
 	);
 	const sessionActivity = createSessionActivity((snapshot) => {
 		sessionPause.setEnvironment(snapshot);
@@ -385,6 +427,7 @@ function bootstrap(): void {
 		processCleanup,
 		blinkStats,
 		() => {
+			sessionRecap.handleQuit();
 			sound.dispose();
 			osNotifications.dismissAll();
 			shortcuts.unregisterAll();
@@ -393,10 +436,12 @@ function bootstrap(): void {
 			focusEnvironment.dispose?.();
 			sessionActivity.dispose();
 			sessionPause.dispose();
+			idleMonitor.stop();
 			calibrationNudge.dispose();
 			autoUpdates.dispose();
 		},
 		() => autoUpdates.resolveQuitWithStagedUpdate(),
+		() => sessionRecap.handleUnlock(),
 	);
 	let settingsProfiles!: SettingsProfilesService;
 	const tray = new TrayController(
@@ -453,7 +498,11 @@ function bootstrap(): void {
 	reminders.setOnTrackingChange((isTracking) => {
 		captureStatus.notifyTracking(isTracking);
 		tray.setTrackingState(isTracking);
-		if (!isTracking) {
+		if (isTracking) {
+			sessionRecap.armBaseline(blinkStats.getSnapshot());
+			idleMonitor.start();
+		} else {
+			idleMonitor.stop();
 			focusPause.pushState();
 		}
 	});

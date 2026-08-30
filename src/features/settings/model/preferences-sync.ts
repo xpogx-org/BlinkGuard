@@ -76,6 +76,7 @@ export function sameRendererPrefs(
 		a.popupMessage === b.popupMessage &&
 		a.blinkPopupClickThrough === b.blinkPopupClickThrough &&
 		a.notificationStyle === b.notificationStyle &&
+		a.sessionRecapEnabled === b.sessionRecapEnabled &&
 		samePopupColors(a.popupColors, b.popupColors) &&
 		samePoint(a.popupPosition, b.popupPosition) &&
 		samePopupPositionsByDisplayId(
@@ -213,6 +214,9 @@ export function pushPreferenceDiff(
 	}
 	if (!previous || previous.notificationStyle !== next.notificationStyle) {
 		rendererIpc.updateNotificationStyle(next.notificationStyle);
+	}
+	if (!previous || previous.sessionRecapEnabled !== next.sessionRecapEnabled) {
+		rendererIpc.updateSessionRecapEnabled(next.sessionRecapEnabled);
 	}
 	if (
 		!previous ||

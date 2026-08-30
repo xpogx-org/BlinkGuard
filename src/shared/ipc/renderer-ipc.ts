@@ -201,6 +201,8 @@ export const rendererIpc = {
 		send(IPC_CHANNELS.updateSoundVolume, volume),
 	updateNotificationStyle: (style: NotificationStyle) =>
 		send(IPC_CHANNELS.updateNotificationStyle, style),
+	updateSessionRecapEnabled: (enabled: boolean) =>
+		send(IPC_CHANNELS.updateSessionRecapEnabled, enabled),
 	updateLaunchAtLogin: (enabled: boolean) =>
 		send(IPC_CHANNELS.updateLaunchAtLogin, enabled),
 	updateHasCompletedOnboarding: (completed: boolean) =>

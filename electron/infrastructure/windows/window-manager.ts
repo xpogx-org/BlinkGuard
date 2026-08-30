@@ -30,8 +30,11 @@ import {
 	type Size,
 } from "../../../shared/preferences";
 import { IPC_CHANNELS } from "../../../shared/ipc-channels";
+import { buildOverlayPayload } from "../../../shared/session-recap";
+import type { SessionRecapOverlayPayload } from "../../../shared/session-recap";
 import { buildPopupAppearancePayload } from "../../../shared/popup-presets";
 import { BLINK_RATE_COACH_DISMISS_MS } from "../../domain/blink-rate-coaching";
+import { RECAP_OVERLAY_DISMISS_MS } from "../../domain/session-recap-policy";
 import {
 	EXERCISE_POPUP_VISIBLE_MS,
 	REMINDER_POPUP_VISIBLE_MS,
@@ -87,9 +90,11 @@ export class WindowManager {
 	private ambientChrome: BrowserWindow[] = [];
 	calibrationNudge: BrowserWindow | null = null;
 	cheerToast: BrowserWindow | null = null;
+	recapToast: BrowserWindow | null = null;
 	private calibrationNudgeDismissTimer: ReturnType<typeof setTimeout> | null =
 		null;
 	private cheerToastDismissTimer: ReturnType<typeof setTimeout> | null = null;
+	private recapDismissTimer: ReturnType<typeof setTimeout> | null = null;
 	private ambientPreviewDismissTimer: ReturnType<typeof setTimeout> | null =
 		null;
 	private onMainLoaded: (() => void) | null = null;
@@ -523,6 +528,84 @@ export class WindowManager {
 		this.closeWindow("cheerToast");
 	}
 
+	/** Desk session recap overlay on qualified stop / idle auto-stop. */
+	showSessionRecap(payload: SessionRecapOverlayPayload): void {
+		if (this.recapToast && !this.recapToast.isDestroyed()) {
+			this.hideSessionRecap();
+		}
+		const width = 400;
+		const height = 160;
+		const { x, y } = getTopCenterPopupPosition(width);
+		const popup = createPanelWindow(
+			{
+				width,
+				height,
+				x,
+				y,
+				focusable: false,
+			},
+			this.paths.preload,
+		);
+		this.recapToast = popup;
+		void popup.loadFile(path.join(this.paths.publicDir, "recap.html"));
+		popup.webContents.on("did-finish-load", () => {
+			this.sendI18n(popup);
+			void popup.webContents.executeJavaScript(
+				`(() => {
+					const title = document.getElementById("recap-title");
+					const session = document.getElementById("recap-session");
+					const today = document.getElementById("recap-today");
+					const streak = document.getElementById("recap-streak");
+					const lines = ${JSON.stringify(payload.sessionLines)};
+					if (title) title.textContent = ${JSON.stringify(payload.title)};
+					if (session) {
+						session.replaceChildren();
+						for (const line of lines) {
+							const row = document.createElement("div");
+							row.textContent = line;
+							session.appendChild(row);
+						}
+					}
+					if (today) today.textContent = ${JSON.stringify(payload.todaySubtitle)};
+					if (streak) {
+						const streakLine = ${JSON.stringify(payload.streakLine ?? "")};
+						if (streakLine) {
+							streak.hidden = false;
+							streak.textContent = streakLine;
+						} else {
+							streak.hidden = true;
+							streak.textContent = "";
+						}
+					}
+				})();`,
+			);
+			popup.setIgnoreMouseEvents(true);
+		});
+		popup.once("ready-to-show", () => popup.showInactive());
+		popup.on("closed", () => {
+			if (this.recapToast === popup) this.recapToast = null;
+			if (this.recapDismissTimer) {
+				clearTimeout(this.recapDismissTimer);
+				this.recapDismissTimer = null;
+			}
+		});
+		if (this.recapDismissTimer) {
+			clearTimeout(this.recapDismissTimer);
+		}
+		this.recapDismissTimer = setTimeout(() => {
+			this.recapDismissTimer = null;
+			if (this.recapToast === popup) this.hideSessionRecap();
+		}, RECAP_OVERLAY_DISMISS_MS);
+	}
+
+	hideSessionRecap(): void {
+		if (this.recapDismissTimer) {
+			clearTimeout(this.recapDismissTimer);
+			this.recapDismissTimer = null;
+		}
+		this.closeWindow("recapToast");
+	}
+
 	showExercise(prompt: string, onClosed: () => void): BrowserWindow | null {
 		if (this.exercise && !this.exercise.isDestroyed()) return null;
 		const interactive = !this.preferences.blinkPopupClickThrough;
@@ -624,6 +707,40 @@ export class WindowManager {
 					);
 				}
 				return;
+			}
+			case "recap": {
+				const locale =
+					this.preferences.locale === "uk" ? "uk" : "en";
+				this.showSessionRecap(
+					buildOverlayPayload(
+						{
+							blinks: 1240,
+							trackingMs: 6_120_000,
+							lookAwayCompleted: 8,
+							exerciseCompleted: 3,
+							eyeCareCompleted: 11,
+						},
+						{
+							date: "2026-08-30",
+							blinks: 1240,
+							trackingMs: 15_120_000,
+							sessions: 2,
+							lookAwayCompleted: 8,
+							lookAwaySkipped: 0,
+							lookAwaySnoozed: 0,
+							exerciseCompleted: 3,
+							exerciseSkipped: 0,
+							exerciseSnoozed: 0,
+						},
+						{ current: 3, shieldCharges: 0 },
+						locale,
+					),
+				);
+				return;
+			}
+			default: {
+				const _exhaustive: never = kind;
+				return _exhaustive;
 			}
 		}
 	}
@@ -1021,6 +1138,7 @@ export class WindowManager {
 		this.ambientChrome = [];
 		this.calibrationNudge = null;
 		this.cheerToast = null;
+		this.recapToast = null;
 	}
 
 	private scheduleDisplayRecovery(): void {
@@ -1312,7 +1430,8 @@ export class WindowManager {
 			| "noFace"
 			| "ambient"
 			| "calibrationNudge"
-			| "cheerToast",
+			| "cheerToast"
+			| "recapToast",
 	): void {
 		const window = this[key];
 		if (window && !window.isDestroyed()) window.close();

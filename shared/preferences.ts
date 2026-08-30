@@ -440,6 +440,12 @@ export function sanitizeReminderIntervalMs(input: unknown): number {
  * Coerce stored/IPC micro-break interval to 15_000…120_000 ms.
  * Missing/invalid → 30s; never copies reminderInterval.
  */
+export function sanitizeSessionRecapEnabled(value: unknown): boolean {
+	return typeof value === "boolean"
+		? value
+		: DEFAULT_PREFERENCES.sessionRecapEnabled;
+}
+
 export function sanitizeMicroBreakIntervalMs(input: unknown): number {
 	if (input === null || input === undefined || input === "") {
 		return MICRO_BREAK_INTERVAL_MS_DEFAULT;
@@ -519,6 +525,8 @@ export interface PersistedPreferences {
 	blinkPopupClickThrough: boolean;
 	/** How blink / exercise / look-away prompts appear. Default overlay (current). */
 	notificationStyle: NotificationStyle;
+	/** Desk session recap overlay / native summaries on stop, lock, quit. */
+	sessionRecapEnabled: boolean;
 	/** Minutes to suppress/re-show prompts after Snooze (1…30). */
 	snoozeMinutes: number;
 	/** Per-action global accelerators; empty string = unbound. */
@@ -655,6 +663,7 @@ export const DEFAULT_PREFERENCES: Readonly<PersistedPreferences> = {
 	popupMessage: defaultPopupMessage("en"),
 	blinkPopupClickThrough: true,
 	notificationStyle: DEFAULT_NOTIFICATION_STYLE,
+	sessionRecapEnabled: true,
 	snoozeMinutes: SNOOZE_MINUTES_DEFAULT,
 	keyboardShortcuts: { ...DEFAULT_KEYBOARD_SHORTCUTS },
 	mgdMode: false,
@@ -1175,6 +1184,9 @@ export function sanitizePersistedPreferences(
 			defaults.blinkPopupClickThrough,
 		),
 		notificationStyle: sanitizeNotificationStyle(record.notificationStyle),
+		sessionRecapEnabled: sanitizeSessionRecapEnabled(
+			record.sessionRecapEnabled,
+		),
 		snoozeMinutes: sanitizeSnoozeMinutes(record.snoozeMinutes),
 		keyboardShortcuts: sanitizeKeyboardShortcuts(
 			record.keyboardShortcuts,

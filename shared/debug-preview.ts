@@ -6,6 +6,7 @@ export const DEBUG_OVERLAY_KINDS = [
 	"exercise",
 	"ambient",
 	"noFace",
+	"recap",
 ] as const;
 
 export type DebugOverlayKind = (typeof DEBUG_OVERLAY_KINDS)[number];

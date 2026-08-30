@@ -1,0 +1,64 @@
+/* Desk session recap overlay (stop / idle auto-stop) */
+html.recap-root,
+body.recap-body {
+	background: transparent !important;
+}
+
+body.recap-body {
+	justify-content: center;
+	align-items: center;
+	padding: 0;
+	overflow: hidden;
+}
+
+.recap-stage {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.recap-card {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	max-width: 100%;
+	font-family: var(--popup-font);
+	border: 1px solid color-mix(in srgb, var(--popup-accent) 35%, transparent);
+	border-radius: var(--popup-radius-sm);
+	padding: 12px 18px;
+	box-shadow:
+		0 4px 18px var(--popup-shadow),
+		0 0 20px color-mix(in srgb, var(--popup-accent) 14%, transparent);
+	text-align: center;
+}
+
+.recap-title {
+	font-size: var(--popup-font-size-md);
+	font-weight: 600;
+	color: var(--popup-text);
+}
+
+.recap-session {
+	font-size: var(--popup-font-size-sm);
+	color: var(--popup-text);
+	line-height: 1.35;
+}
+
+.recap-today {
+	font-size: var(--popup-font-size-xs);
+	color: color-mix(in srgb, var(--popup-text) 78%, transparent);
+	line-height: 1.35;
+}
+
+.recap-streak {
+	font-size: var(--popup-font-size-xs);
+	color: var(--popup-warning);
+	font-weight: 600;
+}

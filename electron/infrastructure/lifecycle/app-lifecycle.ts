@@ -20,6 +20,7 @@ export class AppLifecycle {
 		private readonly blinkStats: BlinkStatsService,
 		private readonly onShutdown?: () => void,
 		private readonly onBeforeQuit?: () => Promise<QuitResolution>,
+		private readonly onUnlock?: () => void,
 	) {}
 
 	attachTray(tray: { destroy(): void }): void {
@@ -48,6 +49,7 @@ export class AppLifecycle {
 		});
 		powerMonitor.on("unlock-screen", () => {
 			this.sessionPause.setPowerFlags({ locked: false });
+			this.onUnlock?.();
 		});
 		this.registerProcessSignals();
 	}

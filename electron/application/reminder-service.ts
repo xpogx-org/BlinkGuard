@@ -66,6 +66,8 @@ export class ReminderService {
 	private lastDetectedBlinkAt = 0;
 	private readonly cameraPauseReasons = new Set<CameraPauseReason>();
 	private trackingSessionStop: ((showStatus: boolean) => void) | null = null;
+	private sessionRecap: { handleStop(options: { showStatus: boolean }): boolean } | null =
+		null;
 	private onTrackingChange: ((isTracking: boolean) => void) | null = null;
 	private blinkSession: BlinkPromptSession | null = null;
 	private backoff: BlinkBackoffState;
@@ -102,6 +104,12 @@ export class ReminderService {
 		this.trackingSessionStop = handler;
 	}
 
+	bindSessionRecap(
+		recap: { handleStop(options: { showStatus: boolean }): boolean } | null,
+	): void {
+		this.sessionRecap = recap;
+	}
+
 	/**
 	 * Late-bind capture-status / tray listeners when persisted tracking flips.
 	 * Soft pause does not clear isTracking and must not fire this.
@@ -129,7 +137,11 @@ export class ReminderService {
 		this.windows.closeCamera();
 		if (showStatus) {
 			this.sound.play("stopped");
-			this.windows.showReminder("stopped");
+			const recapShown =
+				this.sessionRecap?.handleStop({ showStatus: true }) ?? false;
+			if (!recapShown) {
+				this.windows.showReminder("stopped");
+			}
 		}
 	}
 

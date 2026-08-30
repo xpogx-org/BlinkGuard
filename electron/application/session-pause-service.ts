@@ -28,6 +28,7 @@ type SessionPauseServiceOptions = {
 	resumeDelayMs?: number;
 	schedule?: typeof setTimeout;
 	clearSchedule?: typeof clearTimeout;
+	onEnterInactive?: () => void;
 };
 
 type SessionReminders = Pick<
@@ -53,6 +54,7 @@ export class SessionPauseService {
 	private readonly resumeDelayMs: number;
 	private readonly schedule: typeof setTimeout;
 	private readonly clearSchedule: typeof clearTimeout;
+	private readonly onEnterInactive?: () => void;
 
 	constructor(
 		private readonly preferences: AppPreferences,
@@ -75,6 +77,7 @@ export class SessionPauseService {
 		this.resumeDelayMs = options.resumeDelayMs ?? SESSION_RESUME_DELAY_MS;
 		this.schedule = options.schedule ?? setTimeout;
 		this.clearSchedule = options.clearSchedule ?? clearTimeout;
+		this.onEnterInactive = options.onEnterInactive;
 	}
 
 	setPowerFlags(flags: { suspended?: boolean; locked?: boolean }): void {
@@ -180,6 +183,7 @@ export class SessionPauseService {
 		}
 		this.exercises.stop();
 		this.lookAway.stop();
+		this.onEnterInactive?.();
 	}
 
 	private leaveInactive(next: SessionPauseMode): void {

@@ -16,6 +16,7 @@ export function osToastKindFromId(id: string | undefined): OsToastKind | null {
 	if (id === osToastId("blink")) return "blink";
 	if (id === osToastId("exercise")) return "exercise";
 	if (id === osToastId("lookAway")) return "lookAway";
+	if (id === osToastId("sessionRecap")) return "sessionRecap";
 	return null;
 }
 
@@ -137,6 +138,51 @@ export class OsNotificationPlayer implements OsNotificationPort {
 		}
 	}
 
+	showSessionRecap(payload: { title: string; body: string }): OsToastShowResult {
+		if (!this.isSupported()) return { shown: false };
+		this.dismiss("sessionRecap");
+		const body =
+			payload.body.length > 240
+				? `${payload.body.slice(0, 239)}…`
+				: payload.body;
+		let notification: Notification;
+		try {
+			notification = new Notification({
+				id: osToastId("sessionRecap"),
+				title: payload.title,
+				body,
+				silent: true,
+			});
+		} catch {
+			return { shown: false };
+		}
+
+		this.instances.set("sessionRecap", notification);
+		this.lastShownKind = "sessionRecap";
+
+		notification.on("failed", () => {
+			this.instances.delete("sessionRecap");
+		});
+
+		const useInstanceActions =
+			this.platform !== "win32" ||
+			typeof (Notification as NotificationStatic).handleActivation !==
+				"function";
+		if (useInstanceActions) {
+			notification.on("click", () => {
+				this.emitClick("sessionRecap");
+			});
+		}
+
+		try {
+			notification.show();
+			return { shown: true };
+		} catch {
+			this.instances.delete("sessionRecap");
+			return { shown: false };
+		}
+	}
+
 	dismiss(kind: OsToastKind): void {
 		const notification = this.instances.get(kind);
 		this.instances.delete(kind);
@@ -175,6 +221,7 @@ export class OsNotificationPlayer implements OsNotificationPort {
 		if (raw.includes(osToastId("lookAway"))) return "lookAway";
 		if (raw.includes(osToastId("exercise"))) return "exercise";
 		if (raw.includes(osToastId("blink"))) return "blink";
+		if (raw.includes(osToastId("sessionRecap"))) return "sessionRecap";
 		return osToastKindFromId(raw);
 	}
 

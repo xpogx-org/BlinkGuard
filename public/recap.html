@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" class="recap-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self';">
+  <title data-i18n="popup.recap.title">Session recap</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/recap.css">
+</head>
+<body class="recap-body">
+  <div id="recap-stage" class="recap-stage">
+    <div id="recap-card" class="recap-card popup-glass popup-enter" role="status" aria-live="polite" aria-atomic="true">
+      <div id="recap-title" class="recap-title"></div>
+      <div id="recap-session" class="recap-session"></div>
+      <div id="recap-today" class="recap-today"></div>
+      <div id="recap-streak" class="recap-streak" hidden></div>
+    </div>
+  </div>
+  <script src="js/shared/i18n.js"></script>
+  <script src="js/recap.js"></script>
+</body>
+</html>
