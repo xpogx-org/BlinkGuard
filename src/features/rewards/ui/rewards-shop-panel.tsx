@@ -1,20 +1,14 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Button } from "@/components/button";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useBlinkStats } from "@/features/statistics/model/use-blink-stats";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
-import type { BlinkRewardId } from "../../../../shared/blink-rewards";
-import type { RewardCategory } from "../../../../shared/blink-rewards";
-import {
-	FREE_EQUIP_CHEER_THEME_IDS,
-	type CheerThemeId,
-} from "../../../../shared/cheer-themes";
-import {
-	POPUP_PRESETS,
-	POPUP_PRESET_IDS,
-} from "../../../../shared/popup-presets";
+import type {
+	BlinkRewardId,
+	RewardCategory,
+} from "../../../../shared/blink-rewards";
 import type { RewardOffer } from "../../../../shared/blink-stats";
 
 const CATEGORY_LABEL: Record<RewardCategory, string> = {
@@ -66,9 +60,7 @@ function RewardRow({
 			: t(reward.descriptionKey);
 	const counter = rewardCounterLabel(reward, t);
 	const showMax =
-		reward.atMax &&
-		reward.id !== "streakShield" &&
-		reward.id !== "snoozeToken";
+		reward.atMax && reward.id !== "streakShield" && reward.id !== "snoozeToken";
 
 	let action: ReactNode;
 	if (showMax) {
@@ -94,11 +86,7 @@ function RewardRow({
 				{t("rewards.equip")}
 			</Button>
 		);
-	} else if (
-		reward.owned &&
-		!reward.equipKind &&
-		reward.id !== "snoozeToken"
-	) {
+	} else if (reward.owned && !reward.equipKind && reward.id !== "snoozeToken") {
 		action = (
 			<span className="text-xs font-medium text-muted-foreground">
 				{reward.id === "streakShield" && reward.charges > 0
@@ -163,29 +151,10 @@ function RewardRow({
 
 export function RewardsShopPanel() {
 	const { t } = useI18n();
-	const {
-		snapshot,
-		purchaseReward,
-		equipCheerTheme,
-		equipPopupPreset,
-		clearPopupPreset,
-	} = useBlinkStats();
-	const {
-		totals,
-		rewards,
-		equippedCheerTheme,
-		equippedPopupPresetId,
-		unlockedCheerThemeIds,
-		unlockedPopupPresetIds,
-	} = snapshot;
+	const { snapshot, purchaseReward, equipCheerTheme, equipPopupPreset } =
+		useBlinkStats();
+	const { totals, rewards } = snapshot;
 	const [flashId, setFlashId] = useState<BlinkRewardId | null>(null);
-
-	const equippableCheerThemes = useMemo(() => {
-		const shop = unlockedCheerThemeIds.filter(
-			(id) => !(FREE_EQUIP_CHEER_THEME_IDS as readonly string[]).includes(id),
-		);
-		return [...FREE_EQUIP_CHEER_THEME_IDS, ...shop];
-	}, [unlockedCheerThemeIds]);
 
 	useEffect(() => {
 		if (!flashId) return;
@@ -242,88 +211,6 @@ export function RewardsShopPanel() {
 								{totals.total}
 							</p>
 						</div>
-					</div>
-				</SettingRow>
-			</SettingPanel>
-
-			<SettingPanel>
-				<SettingRow
-					title={t("rewards.cheerSound")}
-					description={t("rewards.cheerSoundDesc")}
-				>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							type="button"
-							variant={equippedCheerTheme === "random" ? "default" : "secondary"}
-							size="sm"
-							onClick={() => equipCheerTheme("random")}
-						>
-							{t("rewards.cheerTheme.random")}
-						</Button>
-						{equippableCheerThemes.map((themeId) => (
-							<Button
-								key={themeId}
-								type="button"
-								variant={
-									equippedCheerTheme === themeId ? "default" : "secondary"
-								}
-								size="sm"
-								onClick={() => equipCheerTheme(themeId)}
-							>
-								{t(`rewards.cheerTheme.${themeId as CheerThemeId}`)}
-							</Button>
-						))}
-					</div>
-				</SettingRow>
-			</SettingPanel>
-
-			<SettingPanel>
-				<SettingRow
-					title={t("rewards.popupColors")}
-					description={t("rewards.popupColorsDesc")}
-				>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							type="button"
-							variant={equippedPopupPresetId == null ? "default" : "secondary"}
-							size="sm"
-							onClick={() => clearPopupPreset()}
-						>
-							{t("rewards.popupPreset.custom")}
-						</Button>
-						{POPUP_PRESET_IDS.map((presetId) => {
-							const preset = POPUP_PRESETS[presetId];
-							const unlocked = unlockedPopupPresetIds.includes(presetId);
-							const isActive = equippedPopupPresetId === presetId;
-							const titleKey =
-								presetId === "aurora"
-									? "rewards.popupPresetAurora"
-									: "rewards.popupPresetSunset";
-
-							return (
-								<Button
-									key={presetId}
-									type="button"
-									variant={isActive ? "default" : "secondary"}
-									size="sm"
-									disabled={!unlocked}
-									title={
-										unlocked ? undefined : t("rewards.popupPreset.lockedHint")
-									}
-									className="gap-2"
-									onClick={() => {
-										if (unlocked) equipPopupPreset(presetId);
-									}}
-								>
-									<span
-										className="inline-block h-3 w-3 shrink-0 rounded-full border border-border"
-										style={{ backgroundColor: preset.colors.background }}
-										aria-hidden
-									/>
-									{t(titleKey)}
-								</Button>
-							);
-						})}
 					</div>
 				</SettingRow>
 			</SettingPanel>

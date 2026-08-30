@@ -29,12 +29,14 @@ import { EyeCareIndependenceSettings } from "@/features/exercises/ui/eye-care-in
 import { EyePromptsDisabledNotice } from "@/features/exercises/ui/eye-prompts-disabled-notice";
 import { LookAwaySettings } from "@/features/look-away/ui/look-away-settings";
 import { OnboardingWizard } from "@/features/onboarding/ui/onboarding-wizard";
+import { PopupPresetSettings } from "@/features/popup-appearance/ui/popup-preset-settings";
 import { PopupSettings } from "@/features/popup-appearance/ui/popup-settings";
 import { ProfilePanel } from "@/features/profile/ui/profile-panel";
 import { ReminderControls } from "@/features/reminders/ui/reminder-controls";
 import { RewardsShopPanel } from "@/features/rewards/ui/rewards-shop-panel";
 import type { usePreferences } from "@/features/settings/model/use-preferences";
 import { BackupSettings } from "@/features/settings/ui/backup-settings";
+import { CheerSoundSettings } from "@/features/settings/ui/cheer-sound-settings";
 import { DarkModeToggle } from "@/features/settings/ui/dark-mode-toggle";
 import { GoalsSettings } from "@/features/settings/ui/goals-settings";
 import { LanguageSettings } from "@/features/settings/ui/language-settings";
@@ -42,6 +44,7 @@ import { LaunchAtLoginSettings } from "@/features/settings/ui/launch-at-login-se
 import { NotificationStyleSettings } from "@/features/settings/ui/notification-style-settings";
 import { QuietHoursFocusSettings } from "@/features/settings/ui/quiet-hours-focus-settings";
 import { ResetPreferencesButton } from "@/features/settings/ui/reset-preferences-button";
+import { SessionRecapSettings } from "@/features/settings/ui/session-recap-settings";
 import { SettingsProfilesPanel } from "@/features/settings/ui/settings-profiles-panel";
 import { SoundSettings } from "@/features/settings/ui/sound-settings";
 import { TrackingEyeButton } from "@/features/settings/ui/tracking-eye-button";
@@ -457,6 +460,10 @@ export function SettingsShell({
 												setPreferences={setPreferences}
 											/>
 										</SettingGrid>
+										<SessionRecapSettings
+											preferences={preferences}
+											setPreferences={setPreferences}
+										/>
 									</>
 								) : (
 									<>
@@ -500,6 +507,7 @@ export function SettingsShell({
 												preferences={preferences}
 												setPreferences={setPreferences}
 											/>
+											<PopupPresetSettings />
 											<NotificationStyleSettings
 												preferences={preferences}
 												setPreferences={setPreferences}
@@ -508,6 +516,7 @@ export function SettingsShell({
 												preferences={preferences}
 												setPreferences={setPreferences}
 											/>
+											<CheerSoundSettings />
 										</>
 									)}
 								</div>
