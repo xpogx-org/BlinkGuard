@@ -16,10 +16,11 @@ MAX_YUNET_DLIB_EYE_OFFSET_IOD = 0.32
 # landmarks is looser than synthetic project_model_landmarks() fits.
 MAX_PNP_REPROJ_ERR_IOD = 0.42
 
-# Honest look-up (valid PnP) — UI hint, not lying landmarks.
+# Honest look-up / look-down (valid PnP) — UI hints, not lying landmarks.
 HEAD_TOO_HIGH_PITCH_DEG = -28.0
+HEAD_TOO_LOW_PITCH_DEG = 28.0
 
-LANDMARK_TRUST_FAIL_STREAK = 2
+LANDMARK_TRUST_FAIL_STREAK = 5
 
 
 def _mean_xy(landmarks, start, end):
@@ -138,6 +139,8 @@ def evaluate_landmark_trust(face, landmarks, pose, yunet_kps=None):
 			pitch_deg = 0.0
 		if pitch_deg < HEAD_TOO_HIGH_PITCH_DEG:
 			return False, "pitch_up", metrics
+		if pitch_deg > HEAD_TOO_LOW_PITCH_DEG:
+			return False, "pitch_down", metrics
 
 	return True, "ok", metrics
 

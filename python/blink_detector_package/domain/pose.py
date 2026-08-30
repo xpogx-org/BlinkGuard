@@ -249,6 +249,8 @@ def landmark_fail_face_status(reason):
 	"""Map landmark gate reason → wire faceStatus for UI hints."""
 	if reason == "pitch_up":
 		return "head_too_high"
+	if reason == "pitch_down":
+		return "head_too_low"
 	return "unreliable_landmarks"
 
 

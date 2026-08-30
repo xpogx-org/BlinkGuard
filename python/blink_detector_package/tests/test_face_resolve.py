@@ -177,6 +177,49 @@ class FaceResolveBackoffTests(unittest.TestCase):
 		self.assertEqual(len(app.transport.events), 4)
 
 
+class ReacquireHintSuppressTests(unittest.TestCase):
+	def test_track_quality_fail_suppresses_during_reacquire(self):
+		app = BlinkDetectorApplication(transport=_Transport())
+		app._face_reacquire_frames = FACE_REACQUIRE_FRAMES
+		face = _FakeFace()
+		face_data = {}
+		app._emit_track_quality_fail(
+			face_data,
+			face,
+			480,
+			360,
+			1000.0,
+			0.2,
+			80.0,
+			"unreliable_landmarks",
+			"pnp_high_error",
+		)
+		self.assertTrue(face_data["faceDetected"])
+		self.assertEqual(face_data["faceStatus"], "ok")
+		self.assertEqual(face_data["eyeLandmarks"], [])
+		self.assertIn("faceRect", face_data)
+		self.assertEqual(app._quality_miss_streak, 0)
+
+	def test_soft_quality_skip_suppresses_too_far_during_reacquire(self):
+		app = BlinkDetectorApplication(transport=_Transport())
+		app._face_reacquire_frames = FACE_REACQUIRE_FRAMES
+		app._quality_miss_streak = 99
+		face = _FakeFace()
+		face_data = {}
+		app._emit_soft_face_quality_skip(
+			face_data,
+			face,
+			480,
+			360,
+			1000.0,
+			0.05,
+			40.0,
+		)
+		self.assertTrue(face_data["faceDetected"])
+		self.assertEqual(face_data["faceStatus"], "ok")
+		self.assertEqual(app._quality_miss_streak, 99)
+
+
 class PaceWaitTests(unittest.TestCase):
 	def test_due_frame_does_not_sleep(self):
 		self.assertEqual(pace_wait_s(1.10, 1.00, 0.05), 0.0)

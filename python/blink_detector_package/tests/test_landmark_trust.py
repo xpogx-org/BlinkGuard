@@ -180,6 +180,24 @@ class LandmarkTrustTests(unittest.TestCase):
 		self.assertEqual(reason, "pitch_up")
 		self.assertEqual(landmark_fail_face_status("pitch_up"), "head_too_high")
 
+	def test_extreme_look_down_maps_to_head_too_low(self):
+		landmarks = project_model_landmarks(
+			pitch_deg=32.0,
+			image_size=(640, 480),
+		)
+		face = _face_from_landmarks(landmarks)
+		pose = estimate_head_pose(landmarks, image_size=(640, 480))
+		self.assertGreater(pose["pitch_deg"], 28.0)
+		trusted, reason, _metrics = evaluate_landmark_trust(
+			face,
+			landmarks,
+			pose,
+			yunet_kps=_yunet_kps_matching(landmarks),
+		)
+		self.assertFalse(trusted)
+		self.assertEqual(reason, "pitch_down")
+		self.assertEqual(landmark_fail_face_status("pitch_down"), "head_too_low")
+
 	def test_collapsed_geometry_rejected(self):
 		landmarks = list(project_model_landmarks(image_size=(640, 480)))
 		for i in range(36, 48):
@@ -198,15 +216,16 @@ class LandmarkTrustTests(unittest.TestCase):
 
 
 class LandmarkTrustDebouncerTests(unittest.TestCase):
-	def test_requires_two_fails_before_untrusted(self):
-		debouncer = LandmarkTrustDebouncer(fail_streak_threshold=2)
-		self.assertTrue(debouncer.should_emit_trusted(False))
+	def test_requires_five_fails_before_untrusted(self):
+		debouncer = LandmarkTrustDebouncer(fail_streak_threshold=5)
+		for _ in range(4):
+			self.assertTrue(debouncer.should_emit_trusted(False))
 		self.assertFalse(debouncer.should_emit_trusted(False))
 
 	def test_recovers_in_one_good_frame(self):
-		debouncer = LandmarkTrustDebouncer(fail_streak_threshold=2)
-		debouncer.should_emit_trusted(False)
-		debouncer.should_emit_trusted(False)
+		debouncer = LandmarkTrustDebouncer(fail_streak_threshold=5)
+		for _ in range(5):
+			debouncer.should_emit_trusted(False)
 		self.assertTrue(debouncer.should_emit_trusted(True))
 
 

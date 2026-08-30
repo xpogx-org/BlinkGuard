@@ -990,6 +990,18 @@ class BlinkDetectorApplication:
 		face_data["faceDetected"] = False
 		face_data["faceStatus"] = "none"
 
+	def _suppress_actionable_hints(self, face_data, face, frame_width, frame_height):
+		"""During re-acquire burst: keep bbox, emit ok, skip EAR/blink."""
+		face_data["faceRect"] = {
+			"x": float(face.left() / frame_width),
+			"y": float(face.top() / frame_height),
+			"width": float(face.width() / frame_width),
+			"height": float(face.height() / frame_height),
+		}
+		face_data["faceDetected"] = True
+		face_data["faceStatus"] = "ok"
+		face_data["eyeLandmarks"] = []
+
 	def _emit_soft_face_quality_skip(
 		self,
 		face_data,
@@ -1001,6 +1013,11 @@ class BlinkDetectorApplication:
 		interocular,
 	):
 		"""Skip EAR on quality blip; hold face; cancel only after hold expires."""
+		if self._face_reacquire_frames > 0:
+			self._suppress_actionable_hints(
+				face_data, face, frame_width, frame_height
+			)
+			return
 		self._quality_miss_streak += 1
 		soft_hold = self._quality_miss_streak <= FACE_QUALITY_HOLD_FRAMES
 		face_data["faceRect"] = {
@@ -1068,6 +1085,11 @@ class BlinkDetectorApplication:
 		trust_metrics=None,
 	):
 		"""Landmark / close-up gate — honest status, no eye dots."""
+		if self._face_reacquire_frames > 0:
+			self._suppress_actionable_hints(
+				face_data, face, frame_width, frame_height
+			)
+			return
 		self._quality_miss_streak += 1
 		face_data["faceRect"] = {
 			"x": float(face.left() / frame_width),
