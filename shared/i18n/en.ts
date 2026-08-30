@@ -550,7 +550,7 @@ export const en: MessageCatalog = {
 		"Toggle blink reminder tracking (same as Start / Stop).",
 	"shortcut.action.snoozeAll": "Snooze prompts",
 	"shortcut.action.snoozeAllDesc":
-		"Snooze blink reminders (and close exercise / look-away if open). Works even when the blink popup ignores clicks.",
+		"Hush all prompts (blink, exercise, look-away) for the snooze duration. Available from the tray and this shortcut.",
 	"shortcut.action.openSettings": "Open settings",
 	"shortcut.action.openSettingsDesc": "Show and focus the BlinkGuard settings window.",
 	"shortcut.action.openCameraPreview": "Camera preview",
@@ -774,6 +774,11 @@ export const en: MessageCatalog = {
 	// Tray / window titles
 	"tray.show": "Show BlinkGuard",
 	"tray.snooze": "Snooze",
+	"tray.hush": "Hush prompts ({n} min)",
+	"tray.hush_few": "Hush prompts ({n} min)",
+	"tray.hush_plural": "Hush prompts ({n} min)",
+	"tray.endHush": "End hush",
+	"hush.active": "Prompts hushed",
 	"tray.snoozeBlink": "Snooze blink ({n} min)",
 	"tray.snoozeBlink_few": "Snooze blink ({n} min)",
 	"tray.snoozeBlink_plural": "Snooze blink ({n} min)",

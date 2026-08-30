@@ -218,6 +218,35 @@ describe("ExerciseService", () => {
 		expect(windows.showExercise).toHaveBeenCalledTimes(2);
 	});
 
+	it("suppressPrompts dismisses without scheduling a deferred show", () => {
+		const preferences = createPreferences({
+			lookAwayEnabled: false,
+			exerciseInterval: 20,
+		});
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastExerciseTime", Date.now() - 21 * 60 * 1000);
+		const windows = createWindows();
+		const service = new ExerciseService(
+			preferences,
+			state,
+			store,
+			windows,
+			createSound(),
+		);
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+		expect(windows.showExercise).toHaveBeenCalledTimes(1);
+
+		service.suppressPrompts();
+		expect(windows.closeExercise).toHaveBeenCalled();
+		expect(state.isExerciseShowing).toBe(false);
+
+		vi.advanceTimersByTime(10 * 60 * 1000 - 1);
+		expect(windows.showExercise).toHaveBeenCalledTimes(1);
+	});
+
 	it("stop closes the popup and clears timers", () => {
 		const preferences = createPreferences({ lookAwayEnabled: false });
 		const state = new AppRuntimeState();
@@ -442,6 +471,38 @@ describe("ExerciseService", () => {
 		expect(sound.play).not.toHaveBeenCalled();
 	});
 
+	it("does not show while manual prompt hush is active", () => {
+		const preferences = createPreferences({
+			lookAwayEnabled: false,
+			notificationStyle: "both",
+		});
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastExerciseTime", Date.now() - 61_000);
+		const windows = createWindows();
+		const sound = createSound();
+		const os = createOs();
+		const service = new ExerciseService(
+			preferences,
+			state,
+			store,
+			windows,
+			sound,
+			{
+				notificationsAllowed: () => false,
+				pauseReason: () => "manual-hush",
+			},
+			os,
+		);
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+
+		expect(os.show).not.toHaveBeenCalled();
+		expect(windows.showExercise).not.toHaveBeenCalled();
+		expect(sound.play).not.toHaveBeenCalled();
+	});
+
 	it("does not show a native toast while look-away is due", () => {
 		const preferences = createPreferences({ notificationStyle: "native" });
 		const state = new AppRuntimeState();
@@ -496,8 +557,13 @@ describe("ExerciseService", () => {
 		snoozeAllPrompts({
 			reminders: { snooze: vi.fn() },
 			exercises: service,
-			lookAway: { snooze: vi.fn() },
+			lookAway: { suppressPrompts: vi.fn() },
 			state,
+			preferences: { snoozeMinutes: 5 },
+			focusPause: {
+				closeInterruptiveUi: vi.fn(),
+				pushState: vi.fn(),
+			},
 		});
 
 		expect(os.dismiss).toHaveBeenCalledWith("exercise");

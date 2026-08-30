@@ -1,25 +1,96 @@
+import type { AppPreferences } from "../../shared/preferences";
+import { isPromptHushed } from "../../shared/session-pause-status";
+import { promptSnoozeMs } from "../domain/reminder-policy";
 import type { AppRuntimeState } from "./app-runtime-state";
 import type { ExerciseService } from "./exercise-service";
+import type { FocusPauseService } from "./focus-pause-service";
 import type { LookAwayService } from "./look-away-service";
 import type { ReminderService } from "./reminder-service";
 
-export type SnoozeAllDeps = {
+export type PromptHushDeps = {
 	reminders: Pick<ReminderService, "snooze">;
-	exercises: Pick<ExerciseService, "snooze">;
-	lookAway: Pick<LookAwayService, "snooze">;
-	state: Pick<AppRuntimeState, "isExerciseShowing" | "isLookAwayShowing">;
+	exercises: Pick<ExerciseService, "suppressPrompts">;
+	lookAway: Pick<LookAwayService, "suppressPrompts">;
+	state: Pick<
+		AppRuntimeState,
+		| "promptSuppressUntil"
+		| "promptSuppressTimeout"
+		| "blinkSnoozeUntil"
+		| "blinkSnoozeTimeout"
+		| "exerciseSnoozeTimeout"
+		| "lookAwaySnoozeTimeout"
+	>;
+	preferences: Pick<AppPreferences, "snoozeMinutes">;
+	focusPause: Pick<FocusPauseService, "closeInterruptiveUi" | "pushState">;
+	onHushStateChange?: () => void;
 };
 
+function clearHushSuppressState(
+	state: Pick<
+		PromptHushDeps["state"],
+		| "promptSuppressUntil"
+		| "promptSuppressTimeout"
+		| "blinkSnoozeUntil"
+		| "blinkSnoozeTimeout"
+	>,
+): void {
+	state.promptSuppressUntil = 0;
+	if (state.promptSuppressTimeout) {
+		clearTimeout(state.promptSuppressTimeout);
+		state.promptSuppressTimeout = null;
+	}
+	state.blinkSnoozeUntil = 0;
+	if (state.blinkSnoozeTimeout) {
+		clearTimeout(state.blinkSnoozeTimeout);
+		state.blinkSnoozeTimeout = null;
+	}
+}
+
+function schedulePromptHushExpiry(
+	deps: Pick<
+		PromptHushDeps,
+		"state" | "focusPause" | "onHushStateChange"
+	>,
+	ms: number,
+): void {
+	if (deps.state.promptSuppressTimeout) {
+		clearTimeout(deps.state.promptSuppressTimeout);
+	}
+	deps.state.promptSuppressTimeout = setTimeout(() => {
+		clearHushSuppressState(deps.state);
+		deps.focusPause.pushState();
+		deps.onHushStateChange?.();
+	}, ms);
+}
+
 /**
- * Snooze blink prompts always; exercise / look-away only when their popup is up
- * (those services schedule a delayed show on snooze).
+ * Hush all interruptive prompts for {@link promptSnoozeMs}(`snoozeMinutes`).
+ * Tracking stays armed; camera keeps running.
  */
-export function snoozeAllPrompts(deps: SnoozeAllDeps): void {
+export function snoozeAllPrompts(deps: PromptHushDeps): void {
+	const ms = promptSnoozeMs(deps.preferences.snoozeMinutes);
+	deps.focusPause.closeInterruptiveUi();
+	deps.state.promptSuppressUntil = Date.now() + ms;
 	deps.reminders.snooze();
-	if (deps.state.isExerciseShowing) {
-		deps.exercises.snooze();
+	deps.exercises.suppressPrompts();
+	deps.lookAway.suppressPrompts();
+	schedulePromptHushExpiry(deps, ms);
+	deps.focusPause.pushState();
+	deps.onHushStateChange?.();
+}
+
+/** End manual prompt hush early and resume normal cadence. */
+export function endPromptHush(deps: PromptHushDeps): void {
+	if (!isPromptHushed(deps.state.promptSuppressUntil)) return;
+	clearHushSuppressState(deps.state);
+	if (deps.state.exerciseSnoozeTimeout) {
+		clearTimeout(deps.state.exerciseSnoozeTimeout);
+		deps.state.exerciseSnoozeTimeout = null;
 	}
-	if (deps.state.isLookAwayShowing) {
-		deps.lookAway.snooze();
+	if (deps.state.lookAwaySnoozeTimeout) {
+		clearTimeout(deps.state.lookAwaySnoozeTimeout);
+		deps.state.lookAwaySnoozeTimeout = null;
 	}
+	deps.focusPause.pushState();
+	deps.onHushStateChange?.();
 }

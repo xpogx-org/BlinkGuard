@@ -29,6 +29,7 @@ export type TraySetupItemSpec = {
 export type TrayMenuItemSpec =
 	| { id: "show"; label: string; accelerator?: string }
 	| { id: "tracking"; label: string; isTracking: boolean; accelerator?: string }
+	| { id: "hush"; label: string; active: boolean; accelerator?: string }
 	| { id: "camera"; label: string; enabled: false }
 	| { id: "pause"; label: string; enabled: false }
 	| { id: "snooze"; label: string; submenu: TraySnoozeItemSpec[] }
@@ -59,6 +60,9 @@ export type BuildTrayMenuSpecInput = {
 	includeCheckForUpdates: boolean;
 	showAccelerator: string;
 	trackingAccelerator: string;
+	includeHush?: boolean;
+	isPromptHushed?: boolean;
+	hushAccelerator?: string;
 	setups?: TraySetupSummary[];
 	activeSetupId?: string | null;
 };
@@ -103,13 +107,27 @@ export function buildTrayMenuSpec(
 			isTracking,
 			...optionalAccelerator(trackingAccelerator),
 		},
-		{ id: "separator" },
-		{
-			id: "camera",
-			label: t(locale, cameraCaptureStatusMessageKey(capture)),
-			enabled: false,
-		},
 	];
+	if (input.includeHush) {
+		items.push({
+			id: "hush",
+			label: input.isPromptHushed
+				? t(locale, "tray.endHush")
+				: t(locale, pluralKey("tray.hush", locale, snoozeMinutes), {
+						n: snoozeMinutes,
+					}),
+			active: Boolean(input.isPromptHushed),
+			...optionalAccelerator(
+				input.isPromptHushed ? "" : (input.hushAccelerator ?? ""),
+			),
+		});
+	}
+	items.push({ id: "separator" });
+	items.push({
+		id: "camera",
+		label: t(locale, cameraCaptureStatusMessageKey(capture)),
+		enabled: false,
+	});
 	const pauseKey = pause ? pauseStatusMessageKey(pause) : null;
 	if (pauseKey) {
 		items.push({

@@ -4,6 +4,7 @@ import type {
 	SessionIdleCause,
 	SessionPauseMode,
 } from "../../shared/session-pause-status";
+import { overlayManualHush } from "../../shared/session-pause-status";
 import {
 	foregroundMatchesAppRules,
 	isInQuietHoursForSchedule,
@@ -43,6 +44,7 @@ export class FocusPauseService implements NotificationGate {
 	private lastExternal: PauseAppRule | null = null;
 	private quietHoursTimer: ReturnType<typeof setInterval> | null = null;
 	private onState: ((payload: FocusPauseStatePayload) => void) | null = null;
+	private getPromptSuppressUntil: () => number = () => 0;
 
 	private promptDismissers: {
 		blink: () => void;
@@ -61,6 +63,10 @@ export class FocusPauseService implements NotificationGate {
 
 	setOnState(listener: (payload: FocusPauseStatePayload) => void): void {
 		this.onState = listener;
+	}
+
+	setPromptSuppressUntil(getter: () => number): void {
+		this.getPromptSuppressUntil = getter;
 	}
 
 	/**
@@ -186,17 +192,20 @@ export class FocusPauseService implements NotificationGate {
 	}
 
 	pushState(): void {
-		const payload: FocusPauseStatePayload = {
-			reason: this.pauseReason(),
-			fullscreenDetectionSupported: this.fullscreenDetectionSupported,
-			sessionPauseMode: this.sessionPauseMode,
-			sessionIdleCause: this.sessionIdleCause,
-		};
+		const payload = overlayManualHush(
+			{
+				reason: this.pauseReason(),
+				fullscreenDetectionSupported: this.fullscreenDetectionSupported,
+				sessionPauseMode: this.sessionPauseMode,
+				sessionIdleCause: this.sessionIdleCause,
+			},
+			this.getPromptSuppressUntil(),
+		);
 		this.windows.sendToMain(this.focusPauseChannel, payload);
 		this.onState?.(payload);
 	}
 
-	private closeInterruptiveUi(): void {
+	closeInterruptiveUi(): void {
 		this.windows.closeReminder();
 		this.windows.closeExercise();
 		this.windows.closeLookAway();

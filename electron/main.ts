@@ -45,11 +45,13 @@ import { OsNotificationPlayer } from "./infrastructure/notifications/os-notifica
 import { ElectronPreferenceStore } from "./infrastructure/store/electron-preference-store";
 import { TrayController } from "./infrastructure/tray/tray-controller";
 import { traySwitchPayload } from "./infrastructure/tray/tray-menu-model";
+import { endPromptHush, snoozeAllPrompts } from "./application/snooze-all";
 import { AutoUpdateService } from "./infrastructure/updates/auto-update-service";
 import { WindowManager } from "./infrastructure/windows/window-manager";
 import { IPC_CHANNELS } from "../shared/ipc-channels";
 import { sameCameraDevice } from "../shared/camera-devices";
 import { isReliableFaceStatus } from "../shared/face-status";
+import { isPromptHushed } from "../shared/session-pause-status";
 import { goalsConfigFromPreferences } from "../shared/preferences";
 
 if (process.platform === "darwin") {
@@ -146,8 +148,15 @@ function bootstrap(): void {
 		},
 	};
 	const notificationGate: NotificationGate = {
-		notificationsAllowed: () => gateHolder.current.notificationsAllowed(),
-		pauseReason: () => gateHolder.current.pauseReason(),
+		notificationsAllowed: () =>
+			gateHolder.current.notificationsAllowed() &&
+			!isPromptHushed(state.promptSuppressUntil),
+		pauseReason: () => {
+			const base = gateHolder.current.pauseReason();
+			if (base === "session-idle") return base;
+			if (isPromptHushed(state.promptSuppressUntil)) return "manual-hush";
+			return base;
+		},
 	};
 
 	let reminders: ReminderService;
@@ -277,6 +286,7 @@ function bootstrap(): void {
 		osNotifications,
 	);
 	gateHolder.current = focusPause;
+	focusPause.setPromptSuppressUntil(() => state.promptSuppressUntil);
 	const focusMonitor = new FocusEnvironmentMonitor(
 		focusEnvironment,
 		(snapshot) => {
@@ -323,6 +333,18 @@ function bootstrap(): void {
 			showStatus,
 		),
 	);
+	const trayRef: { current: TrayController | null } = { current: null };
+	const promptHushDeps = () => ({
+		reminders,
+		exercises,
+		lookAway,
+		state,
+		preferences,
+		focusPause,
+		onHushStateChange: () => trayRef.current?.rebuildMenu(),
+	});
+	const hushAllPrompts = () => snoozeAllPrompts(promptHushDeps());
+	const endHush = () => endPromptHush(promptHushDeps());
 	const sessionPause = new SessionPauseService(
 		preferences,
 		state,
@@ -342,6 +364,7 @@ function bootstrap(): void {
 		lookAway,
 		windows,
 		interactionLogger,
+		hushAllPrompts,
 	);
 	const processCleanup = new ProcessCleanup(processes);
 	const autoUpdates = new AutoUpdateService(
@@ -422,10 +445,17 @@ function bootstrap(): void {
 		(id) => {
 			settingsProfiles.switch(traySwitchPayload(id));
 		},
+		() => isPromptHushed(state.promptSuppressUntil),
+		hushAllPrompts,
+		endHush,
 	);
+	trayRef.current = tray;
 	reminders.setOnTrackingChange((isTracking) => {
 		captureStatus.notifyTracking(isTracking);
 		tray.setTrackingState(isTracking);
+		if (!isTracking) {
+			focusPause.pushState();
+		}
 	});
 	lifecycle.attachTray(tray);
 
@@ -470,7 +500,6 @@ function bootstrap(): void {
 		reminders,
 		exercises,
 		lookAway,
-		state,
 		sidecar,
 		shortcuts,
 		windows,
@@ -495,6 +524,8 @@ function bootstrap(): void {
 		},
 		onSnoozeMinutesChanged: () => tray.rebuildMenu(),
 		onKeyboardShortcutsChanged: () => tray.rebuildMenu(),
+		hushAllPrompts,
+		endPromptHush: endHush,
 	});
 
 	app.on("second-instance", () => {

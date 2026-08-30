@@ -434,7 +434,7 @@ describe("auto-stop on no-face preference defaults", () => {
 });
 
 describe("keyboardShortcuts sanitize", () => {
-	it("defaults trackingToggle to Ctrl+I and leaves others unbound", () => {
+	it("defaults trackingToggle to Ctrl+I and snoozeAll to Ctrl+Shift+S", () => {
 		expect(sanitizeKeyboardShortcuts(undefined)).toEqual({
 			...DEFAULT_KEYBOARD_SHORTCUTS,
 		});
@@ -459,7 +459,7 @@ describe("keyboardShortcuts sanitize", () => {
 			keyboardShortcut: "Ctrl+B",
 		});
 		expect(prefs.keyboardShortcuts.trackingToggle).toBe("Ctrl+B");
-		expect(prefs.keyboardShortcuts.snoozeAll).toBe("");
+		expect(prefs.keyboardShortcuts.snoozeAll).toBe("Ctrl+Shift+S");
 	});
 
 	it("finds duplicate accelerators across actions", () => {

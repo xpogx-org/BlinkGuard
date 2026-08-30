@@ -563,7 +563,7 @@ export const uk: MessageCatalog = {
 		"Увімкнути або вимкнути відстеження нагадувань (як кнопки Старт / Стоп).",
 	"shortcut.action.snoozeAll": "Відкласти підказки",
 	"shortcut.action.snoozeAllDesc":
-		"Відкласти нагадування про моргання (і закрити вправу / погляд у далечінь, якщо відкриті). Працює навіть коли спливаюче вікно ігнорує кліки.",
+		"Приглушити всі підказки (моргання, вправи, погляд у далечінь) на час відкладення. Доступно в треї та цією комбінацією.",
 	"shortcut.action.openSettings": "Відкрити налаштування",
 	"shortcut.action.openSettingsDesc":
 		"Показати й сфокусувати вікно налаштувань BlinkGuard.",
@@ -788,6 +788,11 @@ export const uk: MessageCatalog = {
 	// Tray / window titles
 	"tray.show": "Показати BlinkGuard",
 	"tray.snooze": "Відкласти",
+	"tray.hush": "Приглушити підказки ({n} хв)",
+	"tray.hush_few": "Приглушити підказки ({n} хв)",
+	"tray.hush_plural": "Приглушити підказки ({n} хв)",
+	"tray.endHush": "Зняти приглушення",
+	"hush.active": "Підказки приглушено",
 	"tray.snoozeBlink": "Відкласти моргання ({n} хв)",
 	"tray.snoozeBlink_few": "Відкласти моргання ({n} хв)",
 	"tray.snoozeBlink_plural": "Відкласти моргання ({n} хв)",

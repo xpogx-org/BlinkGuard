@@ -214,7 +214,7 @@ export type ShortcutErrorPayload = {
 
 export const DEFAULT_KEYBOARD_SHORTCUTS: Readonly<KeyboardShortcuts> = {
 	trackingToggle: "Ctrl+I",
-	snoozeAll: "",
+	snoozeAll: "Ctrl+Shift+S",
 	openSettings: "",
 	openCameraPreview: "",
 };

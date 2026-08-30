@@ -194,6 +194,7 @@ export const rendererIpc = {
 	setShortcutCaptureMode: (capturing: boolean) =>
 		send(IPC_CHANNELS.setShortcutCaptureMode, capturing),
 	snoozeAll: () => send(IPC_CHANNELS.snoozeAll),
+	endPromptHush: () => send(IPC_CHANNELS.endPromptHush),
 	updateSoundEnabled: (enabled: boolean) =>
 		send(IPC_CHANNELS.updateSoundEnabled, enabled),
 	updateSoundVolume: (volume: number) =>

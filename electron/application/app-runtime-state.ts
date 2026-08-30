@@ -23,6 +23,17 @@ export class AppRuntimeState {
 	lastReminderShownAt = Date.now();
 	/** Epoch ms until which blink popups are suppressed (0 = not snoozed). */
 	blinkSnoozeUntil = 0;
+	/** Epoch ms until which all interruptive prompts are hushed (0 = not hushed). */
+	promptSuppressUntil = 0;
+	promptSuppressTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	clearPromptHush(): void {
+		this.promptSuppressUntil = 0;
+		if (this.promptSuppressTimeout) {
+			clearTimeout(this.promptSuppressTimeout);
+			this.promptSuppressTimeout = null;
+		}
+	}
 
 	clearReminderTimers(): void {
 		if (this.blinkInterval) clearInterval(this.blinkInterval);
@@ -36,6 +47,7 @@ export class AppRuntimeState {
 		this.cameraThresholdUpdateTimeout = null;
 		this.blinkSnoozeTimeout = null;
 		this.blinkSnoozeUntil = 0;
+		this.clearPromptHush();
 		this.blinkReminderActive = false;
 		this.mgdReminderLoopActive = false;
 	}

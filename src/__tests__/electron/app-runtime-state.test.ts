@@ -22,6 +22,8 @@ describe("AppRuntimeState", () => {
 		state.blinkReminderActive = true;
 		state.mgdReminderLoopActive = true;
 		state.blinkSnoozeUntil = Date.now() + 60_000;
+		state.promptSuppressUntil = Date.now() + 60_000;
+		state.promptSuppressTimeout = setTimeout(() => {}, 5_000);
 		state.blinkInterval = setInterval(() => {}, 1000);
 		state.cameraMonitoringInterval = setInterval(() => {}, 100);
 		state.cameraThresholdUpdateTimeout = setTimeout(() => {}, 500);
@@ -34,6 +36,8 @@ describe("AppRuntimeState", () => {
 		expect(state.cameraThresholdUpdateTimeout).toBeNull();
 		expect(state.blinkSnoozeTimeout).toBeNull();
 		expect(state.blinkSnoozeUntil).toBe(0);
+		expect(state.promptSuppressUntil).toBe(0);
+		expect(state.promptSuppressTimeout).toBeNull();
 		expect(state.blinkReminderActive).toBe(false);
 		expect(state.mgdReminderLoopActive).toBe(false);
 	});

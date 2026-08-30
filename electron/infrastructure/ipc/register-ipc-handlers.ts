@@ -25,7 +25,7 @@ import {
 	sanitizeQuietHoursByWeekday,
 	emptyPauseAppPicker,
 } from "../../../shared/preferences";
-import type { AppRuntimeState } from "../../application/app-runtime-state";
+import type { ReminderService } from "../../application/reminder-service";
 import type { BlinkStatsService } from "../../application/blink-stats-service";
 import type { CalibrationNudgeService } from "../../application/calibration-nudge-service";
 import type { ExerciseService } from "../../application/exercise-service";
@@ -34,9 +34,7 @@ import type { FocusEnvironmentPort } from "../../application/ports/focus-environ
 import type { LookAwayService } from "../../application/look-away-service";
 import type { PreferenceActions } from "../../application/preference-actions";
 import type { PreferencesService } from "../../application/preferences-service";
-import type { ReminderService } from "../../application/reminder-service";
 import type { SettingsProfilesService } from "../../application/settings-profiles-service";
-import { snoozeAllPrompts } from "../../application/snooze-all";
 import {
 	startTrackingSession,
 	stopTrackingSession,
@@ -72,7 +70,6 @@ interface IpcDependencies {
 	reminders: ReminderService;
 	exercises: ExerciseService;
 	lookAway: LookAwayService;
-	state: AppRuntimeState;
 	sidecar: BlinkDetectorSidecar;
 	shortcuts: ShortcutController;
 	windows: WindowManager;
@@ -92,6 +89,8 @@ interface IpcDependencies {
 	onSnoozeMinutesChanged?: () => void;
 	/** Tray accelerator refresh after Settings remaps global shortcuts. */
 	onKeyboardShortcutsChanged?: () => void;
+	hushAllPrompts: () => void;
+	endPromptHush: () => void;
 	settingsProfiles: SettingsProfilesService;
 }
 
@@ -102,7 +101,6 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		reminders,
 		exercises,
 		lookAway,
-		state,
 		sidecar,
 		shortcuts,
 		windows,
@@ -118,6 +116,8 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		pushCameraCaptureStatus,
 		onSnoozeMinutesChanged,
 		onKeyboardShortcutsChanged,
+		hushAllPrompts,
+		endPromptHush,
 		settingsProfiles,
 	} = deps;
 	const current = preferences.current;
@@ -378,9 +378,8 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	on(IPC_CHANNELS.skipLookAway, () => lookAway.skip());
 	on(IPC_CHANNELS.snoozeLookAway, () => lookAway.snooze());
 	on(IPC_CHANNELS.snoozeBlink, () => reminders.snooze());
-	on(IPC_CHANNELS.snoozeAll, () =>
-		snoozeAllPrompts({ reminders, exercises, lookAway, state }),
-	);
+	on(IPC_CHANNELS.snoozeAll, () => hushAllPrompts());
+	on(IPC_CHANNELS.endPromptHush, () => endPromptHush());
 	on(IPC_CHANNELS.updateMgdMode, (_event, enabled: unknown) => {
 		preferences.set("mgdMode", enabled as boolean);
 		reminders.syncCameraLoopForMgdMode();

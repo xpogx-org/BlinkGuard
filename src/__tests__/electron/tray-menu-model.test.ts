@@ -116,6 +116,36 @@ describe("buildTrayMenuSpec", () => {
 		).toBe(t("en", "tracking.start"));
 	});
 
+	it("inserts hush before camera when includeHush is set", () => {
+		const idleHush = spec({ includeHush: true, isPromptHushed: false });
+		expect(itemIds(idleHush)).toEqual([
+			"show",
+			"tracking",
+			"hush",
+			"separator",
+			"camera",
+			"separator",
+			"snooze",
+			"check-for-updates",
+			"separator",
+			"quit",
+		]);
+		expect(idleHush.find((item) => item.id === "hush")).toEqual({
+			id: "hush",
+			label: t("en", "tray.hush", { n: 5 }),
+			active: false,
+		});
+		expect(
+			spec({ includeHush: true, isPromptHushed: true }).find(
+				(item) => item.id === "hush",
+			),
+		).toEqual({
+			id: "hush",
+			label: t("en", "tray.endHush"),
+			active: true,
+		});
+	});
+
 	it("inserts a disabled pause row only when pauseStatusMessageKey is set", () => {
 		const pauseKey = pauseStatusMessageKey(quietHoursPause);
 		expect(pauseKey).toBe("quietHours.paused");

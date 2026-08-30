@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	type FocusPauseStatePayload,
+	isPromptHushed,
+	overlayManualHush,
 	pauseStatusMessageKey,
 	sanitizeFocusPauseStatePayload,
 	trayTooltipLabel,
@@ -70,6 +72,9 @@ describe("pauseStatusMessageKey", () => {
 		expect(pauseStatusMessageKey({ ...active, reason: "app-rule" })).toBe(
 			"appRules.paused",
 		);
+		expect(pauseStatusMessageKey({ ...active, reason: "manual-hush" })).toBe(
+			"hush.active",
+		);
 	});
 
 	it("maps camera-only lid after focus reasons", () => {
@@ -124,6 +129,17 @@ describe("sanitizeFocusPauseStatePayload", () => {
 			sessionPauseMode: "inactive",
 			sessionIdleCause: "lock",
 		});
+		expect(
+			sanitizeFocusPauseStatePayload({
+				reason: "manual-hush",
+				fullscreenDetectionSupported: true,
+			}),
+		).toEqual({
+			reason: "manual-hush",
+			fullscreenDetectionSupported: true,
+			sessionPauseMode: "active",
+			sessionIdleCause: null,
+		});
 		expect(sanitizeFocusPauseStatePayload(null).reason).toBeNull();
 		expect(
 			sanitizeFocusPauseStatePayload({
@@ -161,5 +177,42 @@ describe("trayTooltipLabel", () => {
 				sessionIdleCause: "lid",
 			}),
 		).toBe("BlinkGuard — Камера на паузі: кришка закрита");
+		expect(
+			trayTooltipLabel("en", {
+				...active,
+				reason: "manual-hush",
+			}),
+		).toBe("BlinkGuard — Prompts hushed");
+	});
+});
+
+describe("overlayManualHush", () => {
+	it("overlays manual hush unless session idle wins", () => {
+		const until = Date.now() + 60_000;
+		expect(
+			overlayManualHush({ ...active, reason: "quiet-hours" }, until),
+		).toEqual({
+			...active,
+			reason: "manual-hush",
+		});
+		expect(
+			overlayManualHush(
+				{
+					...active,
+					sessionPauseMode: "inactive",
+					sessionIdleCause: "lock",
+				},
+				until,
+			),
+		).toEqual({
+			...active,
+			sessionPauseMode: "inactive",
+			sessionIdleCause: "lock",
+		});
+	});
+
+	it("isPromptHushed reflects suppress-until epoch", () => {
+		expect(isPromptHushed(Date.now() + 1)).toBe(true);
+		expect(isPromptHushed(Date.now() - 1)).toBe(false);
 	});
 });

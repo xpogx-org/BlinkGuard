@@ -400,7 +400,7 @@ describe("settings shell", () => {
 
 		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateKeyboardShortcuts, {
 			trackingToggle: "Ctrl+K",
-			snoozeAll: "",
+			snoozeAll: "Ctrl+Shift+S",
 			openSettings: "",
 			openCameraPreview: "",
 		});

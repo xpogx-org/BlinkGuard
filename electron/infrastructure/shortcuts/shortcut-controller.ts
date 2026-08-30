@@ -13,7 +13,6 @@ import type { AppRuntimeState } from "../../application/app-runtime-state";
 import type { ExerciseService } from "../../application/exercise-service";
 import type { LookAwayService } from "../../application/look-away-service";
 import type { ReminderService } from "../../application/reminder-service";
-import { snoozeAllPrompts } from "../../application/snooze-all";
 import {
 	startTrackingSession,
 	stopTrackingSession,
@@ -33,6 +32,7 @@ export class ShortcutController {
 		private readonly lookAway: LookAwayService,
 		private readonly windows: WindowManager,
 		private readonly interactions: InteractionLogger | null = null,
+		private readonly onSnoozeAll: () => void = () => {},
 	) {}
 
 	/** Late-bind after PreferenceActions exists (avoids ctor cycle). */
@@ -115,12 +115,7 @@ export class ShortcutController {
 				this.toggleTracking(shortcut);
 				return;
 			case "snoozeAll":
-				snoozeAllPrompts({
-					reminders: this.reminders,
-					exercises: this.exercises,
-					lookAway: this.lookAway,
-					state: this.state,
-				});
+				this.onSnoozeAll();
 				this.interactions?.append({
 					source: "shortcut",
 					action: "snooze-all",

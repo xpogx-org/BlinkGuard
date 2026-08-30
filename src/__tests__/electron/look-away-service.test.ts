@@ -223,6 +223,32 @@ describe("LookAwayService", () => {
 		expect(windows.showLookAway).toHaveBeenCalledTimes(2);
 	});
 
+	it("suppressPrompts dismisses without scheduling a deferred show", () => {
+		const preferences = createPreferences({ lookAwayInterval: 20 });
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastLookAwayTime", Date.now() - 21 * 60 * 1000);
+		const windows = createWindows();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			store,
+			windows,
+			createSound(),
+		);
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+		expect(windows.showLookAway).toHaveBeenCalledTimes(1);
+
+		service.suppressPrompts();
+		expect(windows.closeLookAway).toHaveBeenCalled();
+		expect(state.isLookAwayShowing).toBe(false);
+
+		vi.advanceTimersByTime(10 * 60 * 1000 - 1);
+		expect(windows.showLookAway).toHaveBeenCalledTimes(1);
+	});
+
 	it("does not show while an exercise popup is open", () => {
 		const preferences = createPreferences({ lookAwayInterval: 1 });
 		const state = new AppRuntimeState();
@@ -465,9 +491,14 @@ describe("LookAwayService", () => {
 
 		snoozeAllPrompts({
 			reminders: { snooze: vi.fn() },
-			exercises: { snooze: vi.fn() },
+			exercises: { suppressPrompts: vi.fn() },
 			lookAway: service,
 			state,
+			preferences: { snoozeMinutes: 5 },
+			focusPause: {
+				closeInterruptiveUi: vi.fn(),
+				pushState: vi.fn(),
+			},
 		});
 
 		expect(os.dismiss).toHaveBeenCalledWith("lookAway");

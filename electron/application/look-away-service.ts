@@ -91,6 +91,16 @@ export class LookAwayService {
 		if (wasShowing) this.stats.recordEyeCare("lookAway", "snoozed");
 	}
 
+	/** Suppress look-away prompts without scheduling a deferred show. */
+	suppressPrompts(): void {
+		this.dismissVisible();
+		this.store.set("lastLookAwayTime", Date.now());
+		if (this.state.lookAwaySnoozeTimeout) {
+			clearTimeout(this.state.lookAwaySnoozeTimeout);
+			this.state.lookAwaySnoozeTimeout = null;
+		}
+	}
+
 	resetTimer(): void {
 		this.store.set("lastLookAwayTime", Date.now());
 	}

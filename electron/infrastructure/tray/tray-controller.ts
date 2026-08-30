@@ -58,6 +58,9 @@ export class TrayController {
 			DEFAULT_KEYBOARD_SHORTCUTS,
 		private readonly getSetups: () => TraySetupsSnapshot = () => EMPTY_SETUPS,
 		private readonly onSwitchSetup: ((id: string) => void) | null = null,
+		private readonly getIsPromptHushed: () => boolean = () => false,
+		private readonly onHush: (() => void) | null = null,
+		private readonly onEndHush: (() => void) | null = null,
 	) {}
 
 	create(): void {
@@ -96,6 +99,9 @@ export class TrayController {
 			includeCheckForUpdates: this.onCheckForUpdates != null,
 			showAccelerator: shortcuts.openSettings,
 			trackingAccelerator: shortcuts.trackingToggle,
+			includeHush: this.onHush != null,
+			isPromptHushed: this.getIsPromptHushed(),
+			hushAccelerator: shortcuts.snoozeAll,
 			setups: setups.profiles,
 			activeSetupId: setups.activeSetupId,
 		});
@@ -175,6 +181,26 @@ export class TrayController {
 								: "menu-start-tracking",
 						});
 						this.onToggleTracking?.();
+					},
+				};
+			case "hush":
+				return {
+					label: item.label,
+					...optionalAccelerator(item.accelerator),
+					click: () => {
+						if (item.active) {
+							this.interactions?.append({
+								source: "tray",
+								action: "menu-end-hush",
+							});
+							this.onEndHush?.();
+							return;
+						}
+						this.interactions?.append({
+							source: "tray",
+							action: "menu-hush",
+						});
+						this.onHush?.();
 					},
 				};
 			case "camera":

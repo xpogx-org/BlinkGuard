@@ -86,6 +86,16 @@ export class ExerciseService {
 		if (wasShowing) this.stats.recordEyeCare("exercise", "snoozed");
 	}
 
+	/** Suppress exercise prompts without scheduling a deferred show. */
+	suppressPrompts(): void {
+		this.dismissVisible();
+		if (this.state.exerciseSnoozeTimeout) {
+			clearTimeout(this.state.exerciseSnoozeTimeout);
+			this.state.exerciseSnoozeTimeout = null;
+		}
+		this.store.set("lastExerciseTime", Date.now());
+	}
+
 	resetTimer(): void {
 		this.store.set("lastExerciseTime", Date.now());
 	}

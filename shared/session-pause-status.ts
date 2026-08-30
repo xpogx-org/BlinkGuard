@@ -14,6 +14,7 @@ export type FocusPauseUiReason =
 	| "fullscreen"
 	| "app-rule"
 	| "session-idle"
+	| "manual-hush"
 	| null;
 
 export type FocusPauseStatePayload = {
@@ -30,6 +31,7 @@ const PAUSE_REASONS: ReadonlySet<Exclude<FocusPauseUiReason, null>> = new Set([
 	"fullscreen",
 	"app-rule",
 	"session-idle",
+	"manual-hush",
 ]);
 
 const SESSION_PAUSE_MODES: ReadonlySet<SessionPauseMode> = new Set([
@@ -80,11 +82,38 @@ export function pauseStatusMessageKey(
 	) {
 		return sessionIdleCauseKey(input.sessionIdleCause);
 	}
+	if (input.reason === "manual-hush") return "hush.active";
 	if (input.reason === "quiet-hours") return "quietHours.paused";
 	if (input.reason === "fullscreen") return "fullscreen.paused";
 	if (input.reason === "app-rule") return "appRules.paused";
 	if (input.sessionPauseMode === "camera-only") return "session.paused.lid";
 	return null;
+}
+
+/** True while manual prompt hush is active. */
+export function isPromptHushed(
+	promptSuppressUntil: number,
+	now = Date.now(),
+): boolean {
+	return promptSuppressUntil > now;
+}
+
+/** Overlay manual hush on focus pause UI when session idle does not win. */
+export function overlayManualHush(
+	payload: FocusPauseStatePayload,
+	promptSuppressUntil: number,
+	now = Date.now(),
+): FocusPauseStatePayload {
+	if (
+		payload.sessionPauseMode === "inactive" ||
+		payload.reason === "session-idle"
+	) {
+		return payload;
+	}
+	if (isPromptHushed(promptSuppressUntil, now)) {
+		return { ...payload, reason: "manual-hush" };
+	}
+	return payload;
 }
 
 export function sanitizeFocusPauseStatePayload(

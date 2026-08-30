@@ -175,7 +175,7 @@ describe("sameRendererPrefs", () => {
 				...base,
 				keyboardShortcuts: {
 					...base.keyboardShortcuts,
-					snoozeAll: "Ctrl+Shift+S",
+					snoozeAll: "",
 				},
 			}),
 		).toBe(false);
@@ -300,7 +300,7 @@ describe("pushPreferenceDiff", () => {
 			...previous,
 			keyboardShortcuts: {
 				...previous.keyboardShortcuts,
-				snoozeAll: "Ctrl+Shift+S",
+				snoozeAll: "",
 			},
 		};
 
