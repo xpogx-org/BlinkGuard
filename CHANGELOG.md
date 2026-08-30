@@ -4,6 +4,27 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-08-30
+
+### Added
+
+- Session recap: overlay on qualified stop/idle; native summary on lock/quit; toggle in Settings General
+- Tray: Hush all prompts (End hush row) plus shortcut; IPC `snooze-all` / `end-prompt-hush`
+- Rewards: expanded shop (cheer themes, popup presets, snooze tokens); equip cheer and glow from Appearance
+- Camera: `faceStatus` through sidecar and popup overlay; blink tracking gated on honest landmark trust
+- Camera: `head_too_low` hint and motion-stable overlay hints during movement
+- Onboarding: timer-first finish arms the first session with launch-at-login opt-out on Ready
+
+### Changed
+
+- Camera: calibration on Setup tab; simplified camera enable toggle
+- Reminders: resync reminder loops when camera mode toggles during active tracking
+
+### Fixed
+
+- Updater: require consent before installing a staged update on quit
+- Settings: restore inline icon and title layout in SettingRow
+
 ## [2.16.0] - 2026-08-24
 
 ### Added
