@@ -35,7 +35,7 @@ Cursor rules under `.cursor/rules/` and project skills under `.cursor/skills/` d
 - `ui-reuse` — read `.cursor/skills/ui-reuse/catalog.json` before creating/changing UI; reuse atoms/molecules/organisms
 - `ui-theme` — `shared/theme.ts` is the token source; settings use semantic Tailwind, popups use `--popup-*`; sync CSS marker blocks after editing numbers
 - `keep-agent-docs-current` — after meaningful changes, fix drifted rules/skills/`AGENTS.md`
-- `deploy` — `/deploy` / Ship: pick patch vs minor, changelog, GitHub Release, Ko-fi draft
+- `deploy` — `/deploy` / Ship: SemVer 2.0.0 bump (patch/minor/major), changelog, GitHub Release, Ko-fi draft
 
 ### Required service: the Electron desktop app
 
