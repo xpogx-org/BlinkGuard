@@ -2,6 +2,7 @@ import { app, dialog, shell, type BrowserWindow } from "electron";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
+	backupScopeIncludesPreferences,
 	buildBackupDocument,
 	isBackupScope,
 	parseBackupDocument,
@@ -13,17 +14,22 @@ import {
 } from "../../../shared/backup";
 import type { BlinkStatsState } from "../../../shared/blink-stats";
 import type { PersistedPreferences } from "../../../shared/preferences";
+import type { SettingsProfilesState } from "../../../shared/settings-profiles";
 
 export interface BackupExportOptions {
 	scope: BackupScope;
 	preferences: PersistedPreferences;
 	blinkStats: BlinkStatsState;
+	settingsProfiles?: SettingsProfilesState;
 	parentWindow?: BrowserWindow | null;
 }
 
 export interface BackupImportOptions {
 	scope: BackupScope;
 	parentWindow?: BrowserWindow | null;
+	filePath?: string;
+	profilesOverwriteConfirmed?: boolean;
+	getLocalProfiles: () => SettingsProfilesState;
 	apply: (parsed: ParsedBackup) => void;
 }
 
@@ -41,6 +47,7 @@ export async function exportBackupBundle(
 			appVersion: app.getVersion(),
 			preferences: options.preferences,
 			blinkStats: options.blinkStats,
+			settingsProfiles: options.settingsProfiles,
 		});
 	} catch (error) {
 		return {
@@ -92,26 +99,30 @@ export async function importBackupBundle(
 		return { status: "error", message: "Invalid backup scope" };
 	}
 
-	const dialogOptions = {
-		title: "Import BlinkGuard backup",
-		filters: [{ name: "JSON", extensions: ["json"] }],
-		properties: ["openFile"] as const,
-	};
-	const open = options.parentWindow
-		? await dialog.showOpenDialog(options.parentWindow, {
-				...dialogOptions,
-				properties: ["openFile"],
-			})
-		: await dialog.showOpenDialog({
-				...dialogOptions,
-				properties: ["openFile"],
-			});
+	let filePath = options.filePath;
+	if (!filePath) {
+		const dialogOptions = {
+			title: "Import BlinkGuard backup",
+			filters: [{ name: "JSON", extensions: ["json"] }],
+			properties: ["openFile"] as const,
+		};
+		const open = options.parentWindow
+			? await dialog.showOpenDialog(options.parentWindow, {
+					...dialogOptions,
+					properties: ["openFile"],
+				})
+			: await dialog.showOpenDialog({
+					...dialogOptions,
+					properties: ["openFile"],
+				});
 
-	if (open.canceled || open.filePaths.length === 0) {
-		return { status: "cancelled" };
+		if (open.canceled || open.filePaths.length === 0) {
+			return { status: "cancelled" };
+		}
+
+		filePath = open.filePaths[0];
 	}
 
-	const filePath = open.filePaths[0];
 	let raw: unknown;
 	try {
 		const text = readFileSync(filePath, "utf8");
@@ -131,6 +142,28 @@ export async function importBackupBundle(
 	const parsed = parseBackupDocument(raw, options.scope);
 	if (!parsed.ok) {
 		return { status: "error", message: parsed.message };
+	}
+
+	const localProfiles = options.getLocalProfiles();
+	const backupHasProfiles =
+		backupScopeIncludesPreferences(options.scope) &&
+		parsed.value.settingsProfiles !== undefined;
+	const localHasProfiles = localProfiles.profiles.length > 0;
+
+	if (
+		backupHasProfiles &&
+		localHasProfiles &&
+		!options.profilesOverwriteConfirmed
+	) {
+		const backupProfileNames =
+			parsed.value.settingsProfiles?.profiles.map((p) => p.name) ?? [];
+		const localProfileNames = localProfiles.profiles.map((p) => p.name);
+		return {
+			status: "needs-profiles-confirm",
+			path: filePath,
+			backupProfileNames,
+			localProfileNames,
+		};
 	}
 
 	try {

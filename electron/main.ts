@@ -560,6 +560,7 @@ function bootstrap(): void {
 		undefined,
 		() => tray.rebuildMenu(),
 	);
+	preferenceActions.attachSettingsProfiles(settingsProfiles);
 	shortcuts.setOpenCameraPreview(() => preferenceActions.showCameraWindow());
 
 	const trackingRestore = new DeferredTrackingRestore({

@@ -1,3 +1,17 @@
+/**
+ * Backup envelope scope matrix (v1):
+ *
+ * Scope          | preferences | blinkStats | settingsProfiles (when any saved)
+ * ---------------|-------------|------------|----------------------------------
+ * preferences    | yes         | no         | yes
+ * statistics     | no          | yes        | no
+ * both           | yes         | yes        | yes
+ *
+ * Import subset: requesting `preferences` from a `both`-scoped file still
+ * restores `settingsProfiles` when the field is present. Missing field = skip
+ * (local Setups unchanged). Named Setups stay in the third store — not merged
+ * into preferences or stats.
+ */
 import {
 	normalizeBlinkStatsState,
 	type BlinkStatsState,
@@ -6,6 +20,10 @@ import {
 	sanitizePersistedPreferences,
 	type PersistedPreferences,
 } from "./preferences";
+import {
+	sanitizeSettingsProfilesState,
+	type SettingsProfilesState,
+} from "./settings-profiles";
 
 export const BACKUP_SCHEMA = "blinkguard-backup" as const;
 export const BACKUP_VERSION = 1 as const;
@@ -20,6 +38,8 @@ export type BackupDocument = {
 	scope: BackupScope;
 	preferences?: PersistedPreferences;
 	blinkStats?: BlinkStatsState;
+	/** Named Setups from blinkguard-settings-profiles.json; omitted when empty. */
+	settingsProfiles?: SettingsProfilesState;
 };
 
 export type ExportBackupStatus = "saved" | "cancelled" | "error";
@@ -30,17 +50,24 @@ export interface ExportBackupResult {
 	message?: string;
 }
 
-export type ImportBackupStatus = "imported" | "cancelled" | "error";
+export type ImportBackupStatus =
+	| "imported"
+	| "cancelled"
+	| "error"
+	| "needs-profiles-confirm";
 
 export interface ImportBackupResult {
 	status: ImportBackupStatus;
 	path?: string;
 	message?: string;
+	backupProfileNames?: string[];
+	localProfileNames?: string[];
 }
 
 export type ParsedBackup = {
 	preferences?: PersistedPreferences;
 	blinkStats?: BlinkStatsState;
+	settingsProfiles?: SettingsProfilesState;
 };
 
 export type ParseBackupError = {
@@ -75,6 +102,7 @@ export function buildBackupDocument(options: {
 	exportedAt?: Date;
 	preferences?: PersistedPreferences;
 	blinkStats?: BlinkStatsState;
+	settingsProfiles?: SettingsProfilesState;
 }): BackupDocument {
 	const exportedAt = (options.exportedAt ?? new Date()).toISOString();
 	const document: BackupDocument = {
@@ -89,6 +117,10 @@ export function buildBackupDocument(options: {
 			throw new Error("preferences required for preferences backup scope");
 		}
 		document.preferences = options.preferences;
+		const profiles = options.settingsProfiles;
+		if (profiles && profiles.profiles.length > 0) {
+			document.settingsProfiles = profiles;
+		}
 	}
 	if (backupScopeIncludesStatistics(options.scope)) {
 		if (!options.blinkStats) {
@@ -133,6 +165,11 @@ export function parseBackupDocument(
 		result.preferences = sanitizePersistedPreferences(record.preferences, {
 			forceIsTrackingFalse: true,
 		});
+		if (record.settingsProfiles !== undefined) {
+			result.settingsProfiles = sanitizeSettingsProfilesState(
+				record.settingsProfiles,
+			);
+		}
 	}
 
 	if (backupScopeIncludesStatistics(requestedScope)) {

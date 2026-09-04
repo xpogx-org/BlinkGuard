@@ -3,6 +3,7 @@ import type { PreferenceStore } from "../../../electron/application/ports/prefer
 import { PreferenceActions } from "../../../electron/application/preference-actions";
 import { PreferencesService } from "../../../electron/application/preferences-service";
 import { IPC_CHANNELS } from "../../../shared/ipc-channels";
+import { captureSettingsProfilePrefs } from "../../../shared/settings-profiles";
 
 function createStore(): PreferenceStore {
 	const data = new Map<string, unknown>();
@@ -408,6 +409,117 @@ describe("PreferenceActions", () => {
 
 		expect(preferences.current.popupPositionsByDisplayId).toEqual(existing);
 		expect(preferences.current.popupSizesByDisplayId).toEqual(existingSizes);
+	});
+
+	it("applyBackup restores settingsProfiles when present without auto-switching live prefs", () => {
+		const preferences = new PreferencesService(createStore());
+		preferences.set("reminderInterval", 3000);
+		preferences.set("goalsEnabled", true);
+		preferences.set("dailyBlinkGoal", 999);
+		const replaceFromBackup = vi.fn();
+		const actions = createActions(preferences, {
+			reminders: { stop: vi.fn() },
+			exercises: { stop: vi.fn() },
+			lookAway: { stop: vi.fn() },
+			focusPause: { recompute: vi.fn() },
+			blinkStats: {
+				invalidateCharts: vi.fn(),
+				isLivePushEnabled: () => false,
+				getSnapshot: vi.fn(),
+				reconcileAchievements: vi.fn(),
+				replaceState: vi.fn(),
+			},
+			windows: {
+				sendPreferences: vi.fn(),
+				sendToMain: vi.fn(),
+				showCamera: vi.fn(),
+				getPopupPositionSeedDisplayId: () => "1",
+			},
+			sidecar: {
+				cancelEarCalibration: vi.fn(),
+				applyCameraQuality: vi.fn(),
+				applyCameraDevice: vi.fn(),
+				applyEarCalibration: vi.fn(),
+				applyClassifierCalibration: vi.fn(),
+			},
+			shortcuts: { registerAll: vi.fn() },
+			applyLaunchAtLogin: vi.fn(),
+		});
+		actions.attachSettingsProfiles({ replaceFromBackup } as never);
+
+		const profilePrefs = captureSettingsProfilePrefs({
+			...preferences.current,
+			reminderInterval: 7000,
+			cameraEnabled: true,
+		});
+		const settingsProfiles = {
+			version: 1 as const,
+			activeProfileId: "profile-desk",
+			profiles: [
+				{
+					id: "profile-desk",
+					name: "Desk",
+					createdAt: "2026-08-01T00:00:00.000Z",
+					updatedAt: "2026-08-01T00:00:00.000Z",
+					prefs: profilePrefs,
+				},
+			],
+		};
+
+		actions.applyBackup("preferences", {
+			preferences: {
+				...preferences.current,
+				reminderInterval: 5000,
+				hasCompletedOnboarding: true,
+			},
+			settingsProfiles,
+		});
+
+		expect(preferences.current.reminderInterval).toBe(5000);
+		expect(preferences.current.dailyBlinkGoal).toBe(999);
+		expect(replaceFromBackup).toHaveBeenCalledWith(settingsProfiles);
+	});
+
+	it("applyBackup skips settingsProfiles when field is absent", () => {
+		const preferences = new PreferencesService(createStore());
+		const replaceFromBackup = vi.fn();
+		const actions = createActions(preferences, {
+			reminders: { stop: vi.fn() },
+			exercises: { stop: vi.fn() },
+			lookAway: { stop: vi.fn() },
+			focusPause: { recompute: vi.fn() },
+			blinkStats: {
+				invalidateCharts: vi.fn(),
+				isLivePushEnabled: () => false,
+				getSnapshot: vi.fn(),
+				reconcileAchievements: vi.fn(),
+			},
+			windows: {
+				sendPreferences: vi.fn(),
+				sendToMain: vi.fn(),
+				showCamera: vi.fn(),
+				getPopupPositionSeedDisplayId: () => "1",
+			},
+			sidecar: {
+				cancelEarCalibration: vi.fn(),
+				applyCameraQuality: vi.fn(),
+				applyCameraDevice: vi.fn(),
+				applyEarCalibration: vi.fn(),
+				applyClassifierCalibration: vi.fn(),
+			},
+			shortcuts: { registerAll: vi.fn() },
+			applyLaunchAtLogin: vi.fn(),
+		});
+		actions.attachSettingsProfiles({ replaceFromBackup } as never);
+
+		actions.applyBackup("preferences", {
+			preferences: {
+				...preferences.current,
+				hasCompletedOnboarding: true,
+			},
+		});
+
+		expect(replaceFromBackup).not.toHaveBeenCalled();
 	});
 
 	it("resetPreferences stops tracking and restores defaults without replaying onboarding", () => {

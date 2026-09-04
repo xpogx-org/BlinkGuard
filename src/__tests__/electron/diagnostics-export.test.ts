@@ -66,4 +66,9 @@ describe("buildMeta", () => {
 		expect(meta.packaged).toBe(false);
 		expect(meta.appVersion).toBe("2.4.0");
 	});
+
+	it("includes settingsProfilesCount when provided", () => {
+		const meta = buildMeta(DEFAULT_PREFERENCES, 3);
+		expect(meta.settingsProfilesCount).toBe(3);
+	});
 });

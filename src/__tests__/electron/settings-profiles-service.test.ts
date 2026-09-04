@@ -265,4 +265,46 @@ describe("SettingsProfilesService", () => {
 		expect(service.switch({ id: "missing" }).ok).toBe(false);
 		expect(onChanged).toHaveBeenCalledTimes(4);
 	});
+
+	it("replaceFromBackup writes sanitized state and fires onChanged without apply", () => {
+		const onChanged = vi.fn();
+		const apply = vi.fn();
+		const { service, store } = createService({ onChanged, apply });
+		const prefs = captureSettingsProfilePrefs({
+			...DEFAULT_PREFERENCES,
+			reminderInterval: 4500,
+		});
+		service.replaceFromBackup({
+			version: 1,
+			activeProfileId: "imported-1",
+			profiles: [
+				{
+					id: "imported-1",
+					name: "Imported",
+					createdAt: "2026-09-01T00:00:00.000Z",
+					updatedAt: "2026-09-01T00:00:00.000Z",
+					prefs,
+				},
+			],
+		});
+		expect(apply).not.toHaveBeenCalled();
+		expect(onChanged).toHaveBeenCalledOnce();
+		const listed = service.list();
+		expect(listed.ok).toBe(true);
+		if (!listed.ok) return;
+		expect(listed.profiles).toHaveLength(1);
+		expect(listed.profiles[0]?.name).toBe("Imported");
+		expect(listed.activeProfileId).toBe("imported-1");
+		expect(
+			(store.raw as SettingsProfilesState).profiles[0]?.prefs.reminderInterval,
+		).toBe(4500);
+	});
+
+	it("getPersistedState returns the sanitized store snapshot", () => {
+		const { service } = createService();
+		expect(service.save({ name: "Desk" }).ok).toBe(true);
+		const state = service.getPersistedState();
+		expect(state.profiles).toHaveLength(1);
+		expect(state.activeProfileId).toBe("id-1");
+	});
 });

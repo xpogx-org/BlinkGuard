@@ -23,6 +23,7 @@ const execFileAsync = promisify(execFile);
 
 export interface DiagnosticsExportOptions {
 	preferences: AppPreferences;
+	settingsProfilesCount?: number;
 	parentWindow?: BrowserWindow | null;
 }
 
@@ -59,7 +60,11 @@ export async function exportDiagnosticsBundle(
 
 		writeFileSync(
 			path.join(stageDir, "meta.json"),
-			`${JSON.stringify(buildMeta(options.preferences), null, 2)}\n`,
+			`${JSON.stringify(
+				buildMeta(options.preferences, options.settingsProfilesCount),
+				null,
+				2,
+			)}\n`,
 			"utf8",
 		);
 		writeFileSync(
@@ -131,9 +136,12 @@ export async function exportDiagnosticsBundle(
 	}
 }
 
-function buildMeta(preferences: AppPreferences): Record<string, unknown> {
+function buildMeta(
+	preferences: AppPreferences,
+	settingsProfilesCount?: number,
+): Record<string, unknown> {
 	const root = process.env.APP_ROOT ?? app.getAppPath();
-	return {
+	const meta: Record<string, unknown> = {
 		exportedAt: new Date().toISOString(),
 		appVersion: app.getVersion(),
 		electronVersion: process.versions.electron,
@@ -148,6 +156,10 @@ function buildMeta(preferences: AppPreferences): Record<string, unknown> {
 		hasCompletedOnboarding: preferences.hasCompletedOnboarding,
 		sidecarBinaryPresent: isBlinkDetectorBinaryPresent(root, app.isPackaged),
 	};
+	if (settingsProfilesCount !== undefined) {
+		meta.settingsProfilesCount = settingsProfilesCount;
+	}
+	return meta;
 }
 
 export { buildMeta };

@@ -77,6 +77,14 @@ export class SettingsProfilesService {
 		return this.okResult(state);
 	}
 
+	getPersistedState(): SettingsProfilesState {
+		return this.readState();
+	}
+
+	replaceFromBackup(raw: unknown): void {
+		this.writeState(sanitizeSettingsProfilesState(raw));
+	}
+
 	save(raw: unknown): SettingsProfilesResult {
 		const record =
 			raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};

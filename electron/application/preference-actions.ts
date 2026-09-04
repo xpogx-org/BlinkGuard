@@ -19,6 +19,7 @@ import type { FocusPauseService } from "./focus-pause-service";
 import type { LookAwayService } from "./look-away-service";
 import type { PreferencesService } from "./preferences-service";
 import type { ReminderService } from "./reminder-service";
+import type { SettingsProfilesService } from "./settings-profiles-service";
 
 /** Sidecar subset used by preference multi-step flows (avoids infra import). */
 export interface PreferenceActionSidecar {
@@ -56,6 +57,8 @@ export interface PreferenceActionTray {
  * Keeps register-ipc-handlers as thin dispatch.
  */
 export class PreferenceActions {
+	private settingsProfiles: SettingsProfilesService | null = null;
+
 	constructor(
 		private readonly preferences: PreferencesService,
 		private readonly reminders: ReminderService,
@@ -69,6 +72,10 @@ export class PreferenceActions {
 		private readonly applyLaunchAtLogin: (enabled: boolean) => void,
 		private readonly tray?: PreferenceActionTray,
 	) {}
+
+	attachSettingsProfiles(service: SettingsProfilesService): void {
+		this.settingsProfiles = service;
+	}
 
 	startEarCalibration(): void {
 		if (!this.preferences.current.cameraEnabled) {
@@ -170,6 +177,9 @@ export class PreferenceActions {
 			this.blinkStats.invalidateCharts();
 			this.windows.sendPreferences();
 			this.focusPause.recompute();
+			if (parsed.settingsProfiles !== undefined) {
+				this.settingsProfiles?.replaceFromBackup(parsed.settingsProfiles);
+			}
 		}
 
 		if (applyStats && parsed.blinkStats) {

@@ -664,6 +664,8 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 			interactions.logIpc(IPC_CHANNELS.exportDiagnostics, []);
 			return exportDiagnosticsBundle({
 				preferences: current,
+				settingsProfilesCount:
+					settingsProfiles.getPersistedState().profiles.length,
 				parentWindow: windows.main && !windows.main.isDestroyed()
 					? windows.main
 					: null,
@@ -714,6 +716,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 				scope,
 				preferences: preferences.current,
 				blinkStats: blinkStats.getPersistedState(),
+				settingsProfiles: settingsProfiles.getPersistedState(),
 				parentWindow: windows.main && !windows.main.isDestroyed()
 					? windows.main
 					: null,
@@ -723,14 +726,27 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 
 	ipcMain.handle(
 		IPC_CHANNELS.importBackup,
-		async (_event: IpcMainInvokeEvent, scopeRaw: unknown) => {
-			interactions.logIpc(IPC_CHANNELS.importBackup, [scopeRaw]);
+		async (_event: IpcMainInvokeEvent, scopeRaw: unknown, optionsRaw?: unknown) => {
+			interactions.logIpc(IPC_CHANNELS.importBackup, [scopeRaw, optionsRaw]);
 			const scope = isBackupScope(scopeRaw) ? scopeRaw : null;
 			if (!scope) {
 				return { status: "error", message: "Invalid backup scope" };
 			}
+			const options =
+				optionsRaw && typeof optionsRaw === "object"
+					? (optionsRaw as Record<string, unknown>)
+					: {};
+			const profilesOverwriteConfirmed =
+				options.profilesOverwriteConfirmed === true;
+			const filePath =
+				typeof options.filePath === "string" && options.filePath.trim()
+					? options.filePath.trim()
+					: undefined;
 			return importBackupBundle({
 				scope,
+				filePath,
+				profilesOverwriteConfirmed,
+				getLocalProfiles: () => settingsProfiles.getPersistedState(),
 				parentWindow: windows.main && !windows.main.isDestroyed()
 					? windows.main
 					: null,

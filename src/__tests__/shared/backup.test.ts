@@ -10,6 +10,41 @@ import {
 	DEFAULT_PREFERENCES,
 	type PersistedPreferences,
 } from "../../../shared/preferences";
+import {
+	captureSettingsProfilePrefs,
+	type SettingsProfilesState,
+} from "../../../shared/settings-profiles";
+
+function sampleProfilesState(): SettingsProfilesState {
+	const prefs = captureSettingsProfilePrefs({
+		...DEFAULT_PREFERENCES,
+		reminderInterval: 4000,
+		cameraEnabled: true,
+	});
+	return {
+		version: 1,
+		activeProfileId: "profile-desk",
+		profiles: [
+			{
+				id: "profile-desk",
+				name: "Desk",
+				createdAt: "2026-08-01T00:00:00.000Z",
+				updatedAt: "2026-08-01T00:00:00.000Z",
+				prefs,
+			},
+			{
+				id: "profile-sofa",
+				name: "Sofa",
+				createdAt: "2026-08-02T00:00:00.000Z",
+				updatedAt: "2026-08-02T00:00:00.000Z",
+				prefs: captureSettingsProfilePrefs({
+					...DEFAULT_PREFERENCES,
+					reminderInterval: 5000,
+				}),
+			},
+		],
+	};
+}
 
 describe("backup document", () => {
 	it("round-trips preferences and statistics through build + parse", () => {
@@ -74,6 +109,94 @@ describe("backup document", () => {
 		expect(parsed.value.blinkStats?.unlockedAchievementIds).toContain(
 			"firstBlink",
 		);
+	});
+
+	it("round-trips settingsProfiles when setups exist", () => {
+		const settingsProfiles = sampleProfilesState();
+		const document = buildBackupDocument({
+			scope: "preferences",
+			appVersion: "2.17.0",
+			preferences: { ...DEFAULT_PREFERENCES },
+			settingsProfiles,
+		});
+		expect(document.settingsProfiles?.profiles).toHaveLength(2);
+		expect(document.settingsProfiles?.activeProfileId).toBe("profile-desk");
+
+		const parsed = parseBackupDocument(document, "preferences");
+		expect(parsed.ok).toBe(true);
+		if (!parsed.ok) return;
+		expect(parsed.value.settingsProfiles?.profiles).toHaveLength(2);
+		expect(parsed.value.settingsProfiles?.profiles[0]?.name).toBe("Desk");
+	});
+
+	it("omits settingsProfiles from export when empty", () => {
+		const document = buildBackupDocument({
+			scope: "both",
+			appVersion: "2.17.0",
+			preferences: { ...DEFAULT_PREFERENCES },
+			blinkStats: { ...DEFAULT_BLINK_STATS, days: [] },
+			settingsProfiles: {
+				version: 1,
+				activeProfileId: null,
+				profiles: [],
+			},
+		});
+		expect(document.settingsProfiles).toBeUndefined();
+	});
+
+	it("imports v1 backup without settingsProfiles field", () => {
+		const document = buildBackupDocument({
+			scope: "preferences",
+			appVersion: "1.0.0",
+			preferences: { ...DEFAULT_PREFERENCES, darkMode: false },
+		});
+		const parsed = parseBackupDocument(document, "preferences");
+		expect(parsed.ok).toBe(true);
+		if (!parsed.ok) return;
+		expect(parsed.value.settingsProfiles).toBeUndefined();
+		expect(parsed.value.preferences?.darkMode).toBe(false);
+	});
+
+	it("extracts settingsProfiles when importing preferences from a both-scoped file", () => {
+		const settingsProfiles = sampleProfilesState();
+		const document = buildBackupDocument({
+			scope: "both",
+			appVersion: "2.17.0",
+			preferences: { ...DEFAULT_PREFERENCES },
+			blinkStats: { ...DEFAULT_BLINK_STATS, days: [] },
+			settingsProfiles,
+		});
+		const parsed = parseBackupDocument(document, "preferences");
+		expect(parsed.ok).toBe(true);
+		if (!parsed.ok) return;
+		expect(parsed.value.settingsProfiles?.profiles).toHaveLength(2);
+		expect(parsed.value.blinkStats).toBeUndefined();
+	});
+
+	it("truncates more than five profiles on import sanitize", () => {
+		const prefs = captureSettingsProfilePrefs(DEFAULT_PREFERENCES);
+		const profiles = Array.from({ length: 6 }, (_, index) => ({
+			id: `profile-${index}`,
+			name: `Setup ${index}`,
+			createdAt: "2026-08-01T00:00:00.000Z",
+			updatedAt: "2026-08-01T00:00:00.000Z",
+			prefs,
+		}));
+		const document = buildBackupDocument({
+			scope: "preferences",
+			appVersion: "2.17.0",
+			preferences: { ...DEFAULT_PREFERENCES },
+			settingsProfiles: {
+				version: 1,
+				activeProfileId: "profile-5",
+				profiles,
+			},
+		});
+		const parsed = parseBackupDocument(document, "preferences");
+		expect(parsed.ok).toBe(true);
+		if (!parsed.ok) return;
+		expect(parsed.value.settingsProfiles?.profiles).toHaveLength(5);
+		expect(parsed.value.settingsProfiles?.activeProfileId).toBeNull();
 	});
 
 	it("rejects wrong schema or version without applying soft defaults", () => {
