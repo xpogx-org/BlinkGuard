@@ -5,7 +5,7 @@
 <h1 align="center">BlinkGuard</h1>
 
 <p align="center">
-  <strong>Windows and macOS</strong> desktop app that helps prevent dry eyes and eye strain — blink reminders, optional on-device camera detection, and 20-20-20 breaks. No account. No cloud.
+  <strong>Windows and macOS</strong> desktop app that helps prevent dry eyes and eye strain — timer-based blink reminders (no camera required), optional on-device camera detection, and 20-20-20 breaks. No account. No cloud.
 </p>
 
 <p align="center">
@@ -40,7 +40,8 @@
 
 ### For your eyes
 
-- **Blink reminders** — camera miss-gap (1–10s) or a timer micro-break (15–120s), with Standard / Gentle / Strong prompt profiles (ambient glow → overlay → escalate)
+- **Timer blink reminders** — micro-break cues every 15–120s with no camera; optional camera miss-gap (1–10s) when blink detection is on
+- **Blink prompt profiles** — Standard / Gentle / Strong (ambient glow → overlay → escalate)
 - **20-20-20 look-away** and **eye exercises** — independent timers; Skip / Snooze; exercises auto-close after 30 seconds
 - **Quiet hours, fullscreen, and per-app pause** — hide prompts during quiet time (optional per-weekday hours), fullscreen, or listed foreground apps
 - **Progress** — stats (blinks plus look-away/exercise), goals, levels, achievements, rewards shop (cheer themes, popup glow, snooze tokens), and a shareable card
@@ -56,7 +57,7 @@
 - **Sleep / lock / lid** — pauses with a distinct reason in Settings and the tray; resumes when the session is active again
 - **Tray** — Start/Stop tracking, Hush/End hush all prompts, snooze by kind, switch Setups, pause and capture status; idle vs tracking icon
 - **In-app updates** — GitHub Releases (Windows and macOS); About opens Release Notes
-- **Diagnostics export** — local logs for support
+- **Report a problem** — About exports local diagnostics and opens a structured GitHub bug report (attach the zip yourself; nothing uploads automatically)
 
 Full history: [CHANGELOG.md](CHANGELOG.md).
 
@@ -182,6 +183,8 @@ Tradeoff: less driver AA for that app profile; in-app glass may look slightly le
 [![Email](https://img.shields.io/badge/Email-pavel19.1078%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:pavel19.1078@gmail.com)
 
 BlinkGuard is a personal project by **Pavlo Dzhevaha** — built locally, from the heart, after enough dry eyes from long coding sessions. Issues, ideas, and PRs are welcome.
+
+**Bug reports:** In the app, **About → Report a problem** — export diagnostics, then **Open GitHub issue** and attach the zip. [Issue templates](https://github.com/xpogx-org/BlinkGuard/issues/new/choose) are also on GitHub. See [PRIVACY.md](PRIVACY.md).
 
 ---
 

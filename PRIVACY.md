@@ -13,7 +13,17 @@ There is **no** BlinkGuard account, cloud sync backend, or analytics pipeline th
 
 ## Export diagnostics
 
-About → **Export diagnostics** builds a local zip (or folder) with blink logs, the interaction trail, `app.log` when present, and algorithm-related settings. Nothing is uploaded. You choose whether to share that file (for example by attaching it to a GitHub issue).
+About → **Report a problem** lets you export a local zip (or folder) with blink logs, the interaction trail, `app.log` when present, and algorithm-related settings. Nothing is uploaded. Attach that file when you open the structured GitHub bug report from the same panel.
+
+## Reporting issues
+
+Prefer **About → Report a problem → Open GitHub issue** so reports use the repo issue templates. You can also browse [GitHub Issues](https://github.com/xpogx-org/BlinkGuard/issues). For security vulnerabilities, see [SECURITY.md](SECURITY.md).
+
+## Observability policy
+
+- No silent telemetry or usage analytics
+- Diagnostics export is the primary way to share operational context when you choose to
+- Any future opt-in network metrics would require an explicit preference and an update to this document
 
 ## Camera
 
@@ -25,4 +35,4 @@ Optional in-app update checks contact GitHub Releases for this repository (`xpog
 
 ## Questions
 
-Open an issue at https://github.com/xpogx-org/BlinkGuard/issues or see [SECURITY.md](SECURITY.md) for vulnerability reports.
+Open a structured issue via **About → Report a problem** in the app, or browse https://github.com/xpogx-org/BlinkGuard/issues. See [SECURITY.md](SECURITY.md) for vulnerability reports.
