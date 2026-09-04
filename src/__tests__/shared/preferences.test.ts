@@ -449,6 +449,7 @@ describe("keyboardShortcuts sanitize", () => {
 		).toEqual({
 			trackingToggle: "",
 			snoozeAll: "Ctrl+Shift+S",
+			snoozeWithToken: "",
 			openSettings: "",
 			openCameraPreview: "",
 		});
@@ -467,6 +468,7 @@ describe("keyboardShortcuts sanitize", () => {
 			findDuplicateShortcutActions({
 				trackingToggle: "Ctrl+I",
 				snoozeAll: "Ctrl+I",
+				snoozeWithToken: "",
 				openSettings: "",
 				openCameraPreview: "",
 			}).sort(),

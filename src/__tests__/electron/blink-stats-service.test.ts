@@ -548,4 +548,23 @@ describe("BlinkStatsService", () => {
 		expect(service.getSnapshot().today.exerciseSkipped).toBe(1);
 		service.dispose();
 	});
+
+	it("consumeSnoozeToken decrements banked charges and persists", () => {
+		const store = createStore();
+		store.set(BLINK_STATS_STORE_KEY, {
+			...DEFAULT_BLINK_STATS,
+			totalBlinks: 600,
+			spentBlinks: 0,
+			snoozeTokenCharges: 1,
+		});
+		const service = new BlinkStatsService(store);
+		expect(service.consumeSnoozeToken()).toBe(true);
+		expect(service.getSnoozeTokenCharges()).toBe(0);
+		expect(
+			(store.get(BLINK_STATS_STORE_KEY) as typeof DEFAULT_BLINK_STATS)
+				.snoozeTokenCharges,
+		).toBe(0);
+		expect(service.consumeSnoozeToken()).toBe(false);
+		service.dispose();
+	});
 });

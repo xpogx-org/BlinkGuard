@@ -158,4 +158,29 @@ describe("OsNotificationPlayer", () => {
 		callback({ type: "click", arguments: osToastId("blink") });
 		expect(onClick).toHaveBeenCalledWith("blink");
 	});
+
+	it("adds a second action for token hush and routes action index 1", () => {
+		const player = new OsNotificationPlayer({ platform: "darwin" });
+		const onSnooze = vi.fn();
+		const onSnoozeWithToken = vi.fn();
+		player.setActivationHandlers({
+			onClick: vi.fn(),
+			onSnooze,
+			onSnoozeWithToken,
+		});
+		player.show("blink", {
+			title: "Blink",
+			body: "x",
+			snoozeLabel: "Snooze",
+			tokenSnoozeLabel: "Hush all with token (10 min)",
+		});
+		expect(notificationInstances[0]?.options.actions).toEqual([
+			{ type: "button", text: "Snooze" },
+			{ type: "button", text: "Hush all with token (10 min)" },
+		]);
+		notificationInstances[0]?.emit("action", { actionIndex: 0 });
+		expect(onSnooze).toHaveBeenCalledWith("blink");
+		notificationInstances[0]?.emit("action", { actionIndex: 1 });
+		expect(onSnoozeWithToken).toHaveBeenCalledOnce();
+	});
 });

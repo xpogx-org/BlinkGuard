@@ -146,6 +146,45 @@ describe("buildTrayMenuSpec", () => {
 		});
 	});
 
+	it("shows extended hush with token when charges are banked", () => {
+		const withToken = spec({
+			includeHush: true,
+			isPromptHushed: false,
+			snoozeTokenCharges: 2,
+		});
+		expect(itemIds(withToken)).toEqual([
+			"show",
+			"tracking",
+			"hush",
+			"hush-token",
+			"separator",
+			"camera",
+			"separator",
+			"snooze",
+			"check-for-updates",
+			"separator",
+			"quit",
+		]);
+		expect(withToken.find((item) => item.id === "hush-token")).toEqual({
+			id: "hush-token",
+			label: t("en", "tray.hushWithToken", { n: 10, count: 2 }),
+		});
+		expect(
+			spec({
+				includeHush: true,
+				isPromptHushed: false,
+				snoozeTokenCharges: 0,
+			}).some((item) => item.id === "hush-token"),
+		).toBe(false);
+		expect(
+			spec({
+				includeHush: true,
+				isPromptHushed: true,
+				snoozeTokenCharges: 2,
+			}).some((item) => item.id === "hush-token"),
+		).toBe(false);
+	});
+
 	it("inserts a disabled pause row only when pauseStatusMessageKey is set", () => {
 		const pauseKey = pauseStatusMessageKey(quietHoursPause);
 		expect(pauseKey).toBe("quietHours.paused");

@@ -87,6 +87,20 @@ describe("snoozeAllPrompts", () => {
 		expect(deps.state.blinkSnoozeUntil).toBe(0);
 		expect(deps.state.blinkSnoozeTimeout).toBeNull();
 	});
+
+	it("honors a custom durationMs override for token hush", () => {
+		const deps = createDeps();
+		const now = Date.now();
+		const customMs = 10 * 60 * 1000;
+
+		snoozeAllPrompts(deps, { durationMs: customMs });
+
+		expect(deps.state.promptSuppressUntil).toBe(now + customMs);
+
+		vi.advanceTimersByTime(customMs);
+
+		expect(deps.state.promptSuppressUntil).toBe(0);
+	});
 });
 
 describe("endPromptHush", () => {

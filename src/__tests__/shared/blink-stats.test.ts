@@ -10,6 +10,7 @@ import {
 	applyRewardPurchase,
 	availableBlinks,
 	computeStreak,
+	consumeSnoozeToken,
 	equipCheerTheme,
 	equipPopupPreset,
 	DEFAULT_BLINK_STATS,
@@ -27,6 +28,7 @@ import {
 	rewardOffers,
 	shiftDateKey,
 	spendBlinks,
+	tokenSnoozeMinutes,
 	toBlinkStatsSnapshot,
 	toDayChart,
 	todaySummary,
@@ -527,5 +529,31 @@ describe("blink-stats helpers", () => {
 		const bounceOffer = offers.find((o) => o.id === "cheerThemeBounce");
 		expect(bounceOffer?.isEquipped).toBe(true);
 		expect(bounceOffer?.canEquip).toBe(false);
+	});
+
+	it("consumes snooze tokens and exposes canUse on reward offers", () => {
+		expect(tokenSnoozeMinutes(5)).toBe(10);
+		expect(tokenSnoozeMinutes(0)).toBe(2);
+
+		const budget = BLINK_REWARDS.snoozeToken.cost;
+		const purchased = applyRewardPurchase(
+			withDays([], { totalBlinks: budget }),
+			"snoozeToken",
+		);
+		expect(purchased?.snoozeTokenCharges).toBe(1);
+		expect(
+			rewardOffers(purchased ?? DEFAULT_BLINK_STATS).find(
+				(o) => o.id === "snoozeToken",
+			)?.canUse,
+		).toBe(true);
+
+		const spent = consumeSnoozeToken(purchased ?? DEFAULT_BLINK_STATS);
+		expect(spent?.snoozeTokenCharges).toBe(0);
+		expect(consumeSnoozeToken(spent ?? DEFAULT_BLINK_STATS)).toBeNull();
+		expect(
+			rewardOffers(spent ?? DEFAULT_BLINK_STATS).find(
+				(o) => o.id === "snoozeToken",
+			)?.canUse,
+		).toBe(false);
 	});
 });
