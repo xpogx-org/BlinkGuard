@@ -2449,6 +2449,44 @@ class BlinkDetectionTests(unittest.TestCase):
 		self.assertFalse(credited, msg=info)
 		self.assertEqual(info["phase"], "reject_opening")
 
+	def test_sub60_ld_strong_peak_ocec_credits(self):
+		"""34ms closed≥2 + ld_strong_peak + OCEC close must not reject_opening."""
+		credited, info, pose = _eval_ld_one_frame(
+			live_open_ear=0.28,
+			max_drop=0.22,
+			opening_velocity=0.0,
+			window_ear=0.235,
+			detect_ear=0.26,
+			left_ocec=0.05,
+			right_ocec=0.05,
+			closed_frames=2,
+			peak=2.5,
+			duration=0.034,
+		)
+		self.assertLess(abs(pose["yaw"]), 0.35)
+		self.assertTrue(credited, msg=info)
+		self.assertEqual(info["phase"], "complete")
+		self.assertIn("ocec_sub60_opening", info.get("waives") or [])
+
+	def test_sub60_one_frame_ocec_moderate_peak_credits(self):
+		"""34ms 1-frame + moderate peak + OCEC close credits via sub-60 carve-out."""
+		credited, info, pose = _eval_ld_one_frame(
+			live_open_ear=0.28,
+			max_drop=0.26,
+			opening_velocity=0.0,
+			window_ear=0.235,
+			detect_ear=0.26,
+			left_ocec=0.05,
+			right_ocec=0.05,
+			closed_frames=1,
+			peak=2.02,
+			duration=0.034,
+		)
+		self.assertLess(abs(pose["yaw"]), 0.35)
+		self.assertTrue(credited, msg=info)
+		self.assertEqual(info["phase"], "complete")
+		self.assertIn("ocec_sub60_opening", info.get("waives") or [])
+
 	def test_ocec_look_down_keeps_one_frame_confirm(self):
 		"""Look-down 1-frame + OCEC open stays reject_ocec (anti-jitter)."""
 		credited, info, _pose = _eval_ld_one_frame(

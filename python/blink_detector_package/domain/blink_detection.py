@@ -41,10 +41,13 @@ LOOK_DOWN_MIN_OPENING_VELOCITY = 0.15
 # One-frame LD: depth + (reopen or strong peak).
 # Post-1.05/0.040: still ~154 reject_opening (POG 2026-08-10 evening) —
 # real blinks at peak≈0.7–1.0, abs≈0.032–0.038, openV often missed.
-LOOK_DOWN_ONE_FRAME_MIN_OPENING = 0.22
+LOOK_DOWN_ONE_FRAME_MIN_OPENING = 0.19
 LOOK_DOWN_ONE_FRAME_MIN_DROP = 0.12
 LOOK_DOWN_ONE_FRAME_MIN_ABS = 0.035
 LOOK_DOWN_ONE_FRAME_STRONG_PEAK = 0.85
+# Sub-60ms OCEC opening carve-out: exclude gaze/synthetic storm peaks
+# (POG 2026-08-22 vertical saccade peak≈3.1; real LD micro-blinks ~0.9–2.4).
+SUB60_OCEC_OPENING_MAX_PEAK = 2.5
 # Wall-clock floor when LD peak clears short gate — gate_fps often < camera
 # preset, so frame_dt*0.95 still rejected real 33–35ms blinks (reject_duration).
 LOOK_DOWN_ONE_FRAME_DURATION_MIN = 0.028
@@ -2199,13 +2202,39 @@ class BlinkDetectionState:
 					self._confirm_ocec_ok = True
 					info_pose["ocec_ok"] = True
 					waives.append("ocec_look_down")
-				# Sub-60ms + no reopen is a saccade/crop glitch even when
-				# OCEC is high (POG 2026-08-22: 34ms openV=0 ocec≈0.9
-				# via ld_one_frame_peak / ld_strong_peak).
+				# Sub-60ms + no reopen is a saccade/crop glitch unless OCEC
+				# confirms a real lid close with a strong measured peak
+				# (POG 2026-08-22 gaze FP at peak≈3.1; 2026-09-04 ld_strong
+				# + ocec still reject_opening).
+				strong_sub60_opening_ok = False
 				if (
 					blink_duration < OCEC_VELOCITY_MIN_DURATION
 					and self.peak_opening_velocity < MIN_OPENING_VELOCITY
 					and abs(float(gate["yaw"])) < CLASSIFIER_SIDE_YAW_WAIVE
+					and strong_ocec_drop is not None
+					and strong_ocec_drop >= OCEC_CONFIRM_MIN_DROP
+					and absolute_drop >= LOOK_DOWN_ONE_FRAME_MIN_ABS
+					and not side_and_down
+				):
+					path_a = (
+						self.closed_frames >= LOOK_DOWN_SHORT_STRONG_CLOSED
+						and measured_peak >= LOOK_DOWN_SHORT_STRONG_PEAK
+					)
+					path_b = (
+						self.closed_frames < LOOK_DOWN_SHORT_STRONG_CLOSED
+						and measured_peak >= LOOK_DOWN_ONE_FRAME_STRONG_PEAK
+						and measured_peak < SUB60_OCEC_OPENING_MAX_PEAK
+					)
+					if path_a or path_b:
+						strong_sub60_opening_ok = True
+						if not opening_ok:
+							opening_ok = True
+						waives.append("ocec_sub60_opening")
+				if (
+					blink_duration < OCEC_VELOCITY_MIN_DURATION
+					and self.peak_opening_velocity < MIN_OPENING_VELOCITY
+					and abs(float(gate["yaw"])) < CLASSIFIER_SIDE_YAW_WAIVE
+					and not strong_sub60_opening_ok
 				):
 					opening_ok = False
 				gates_ok = (
