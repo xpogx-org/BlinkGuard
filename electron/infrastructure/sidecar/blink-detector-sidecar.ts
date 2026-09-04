@@ -1,7 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import path from "node:path";
 import {
 	CLASSIFIER_CALIBRATION_BLINK_DURATION_MS,
 	CLASSIFIER_SIDE_YAW_WAIVE,
@@ -43,6 +42,7 @@ import type {
 import type { BlinkDetectorDebugLogger } from "../logging/blink-detector-debug-logger";
 import type { AppPaths } from "../paths/app-paths";
 import type { ChildProcessRegistry } from "../process/child-process-registry";
+import { resolveBlinkDetectorExecutablePath } from "./blink-detector-path";
 import { NdjsonBuffer, SIDECAR_STATUS, encodeSidecarMessage, isBenignSidecarStderr, parseBaselineDriftNudge, type BaselineDriftNudgePayload } from "./protocol";
 
 interface SidecarCallbacks {
@@ -128,22 +128,10 @@ export class BlinkDetectorSidecar {
 			this.running = true;
 			return;
 		}
-		const basePath = this.isProd
-			? path.join(
-					process.resourcesPath,
-					"app.asar.unpacked",
-					"electron",
-					"resources",
-					"blink_detector",
-				)
-			: path.join(
-					this.paths.root,
-					"electron",
-					"resources",
-					"blink_detector",
-				);
-		const executablePath =
-			process.platform === "win32" ? `${basePath}.exe` : basePath;
+		const executablePath = resolveBlinkDetectorExecutablePath(
+			this.paths.root,
+			this.isProd,
+		);
 		if (!existsSync(executablePath)) {
 			console.error(
 				"Blink detector binary not found. Please run the build script first: cd python && ./build_and_install.sh",

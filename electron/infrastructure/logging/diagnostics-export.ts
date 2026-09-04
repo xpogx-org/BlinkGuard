@@ -17,6 +17,7 @@ import {
 	type AppPreferences,
 } from "../../../shared/preferences";
 import { getAppLogPath } from "./configure-file-logging";
+import { isBlinkDetectorBinaryPresent } from "../sidecar/blink-detector-path";
 
 const execFileAsync = promisify(execFile);
 
@@ -131,6 +132,7 @@ export async function exportDiagnosticsBundle(
 }
 
 function buildMeta(preferences: AppPreferences): Record<string, unknown> {
+	const root = process.env.APP_ROOT ?? app.getAppPath();
 	return {
 		exportedAt: new Date().toISOString(),
 		appVersion: app.getVersion(),
@@ -141,8 +143,14 @@ function buildMeta(preferences: AppPreferences): Record<string, unknown> {
 		arch: process.arch,
 		locale: preferences.locale,
 		packaged: app.isPackaged,
+		cameraEnabled: preferences.cameraEnabled,
+		isTracking: preferences.isTracking,
+		hasCompletedOnboarding: preferences.hasCompletedOnboarding,
+		sidecarBinaryPresent: isBlinkDetectorBinaryPresent(root, app.isPackaged),
 	};
 }
+
+export { buildMeta };
 
 export function buildAlgorithmPrefs(
 	preferences: AppPreferences,

@@ -1,6 +1,21 @@
-import { describe, expect, it } from "vitest";
-import { buildAlgorithmPrefs } from "../../../electron/infrastructure/logging/diagnostics-export";
+import { describe, expect, it, vi } from "vitest";
+import { buildAlgorithmPrefs, buildMeta } from "../../../electron/infrastructure/logging/diagnostics-export";
 import { DEFAULT_PREFERENCES } from "../../../shared/preferences";
+
+vi.mock("electron", () => ({
+	app: {
+		getVersion: () => "2.4.0",
+		getAppPath: () => "/app",
+		isPackaged: false,
+	},
+}));
+
+vi.mock(
+	"../../../electron/infrastructure/sidecar/blink-detector-path",
+	() => ({
+		isBlinkDetectorBinaryPresent: () => false,
+	}),
+);
 
 describe("buildAlgorithmPrefs", () => {
 	it("includes sanitized quietHoursByWeekday beside legacy quiet-hours fields", () => {
@@ -32,5 +47,23 @@ describe("buildAlgorithmPrefs", () => {
 		};
 		const dump = buildAlgorithmPrefs(prefs);
 		expect(dump.quietHoursByWeekday).toEqual({ mon: { mode: "off" } });
+	});
+});
+
+describe("buildMeta", () => {
+	it("includes operational flags for triage", () => {
+		const prefs = {
+			...DEFAULT_PREFERENCES,
+			cameraEnabled: true,
+			isTracking: true,
+			hasCompletedOnboarding: true,
+		};
+		const meta = buildMeta(prefs);
+		expect(meta.cameraEnabled).toBe(true);
+		expect(meta.isTracking).toBe(true);
+		expect(meta.hasCompletedOnboarding).toBe(true);
+		expect(meta.sidecarBinaryPresent).toBe(false);
+		expect(meta.packaged).toBe(false);
+		expect(meta.appVersion).toBe("2.4.0");
 	});
 });
