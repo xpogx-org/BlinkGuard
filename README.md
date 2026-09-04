@@ -115,14 +115,14 @@ Layout and IPC traps: [docs/architecture.md](docs/architecture.md), [docs/ipc-an
 
 | Area | Stack |
 |---|---|
-| UI | React 19, TypeScript, Vite 8, Tailwind CSS 4, Lucide |
-| Desktop | Electron 43, `electron-store`, `electron-updater` |
-| Computer vision (optional) | Python, OpenCV, dlib, NumPy, PyInstaller |
-| Tooling | Biome, Vitest, Electron Builder |
+| UI | React 19, TypeScript 7, Vite 8, Tailwind CSS 4, Lucide |
+| Desktop | Electron 44, `electron-store`, `electron-updater` |
+| Computer vision (optional) | Python, OpenCV 5, dlib 20, NumPy, PyInstaller |
+| Tooling | Biome, Vitest 5, Electron Builder |
 
 ### Core app
 
-Requires **Node.js 22+** (LTS is fine).
+Requires **Node.js 22.12+** (LTS is fine; Vitest 5 floor).
 
 ```bash
 npm install

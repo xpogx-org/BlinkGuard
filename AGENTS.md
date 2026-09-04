@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-BlinkGuard is a single desktop app (not a monorepo): an Electron 43 + React 19 + Vite 8 + TypeScript app, with an **optional** Python (OpenCV/dlib) computer-vision sidecar for camera-based blink detection. There is no web backend, database, or docker. State is local (`electron-store`). Standard commands live in `package.json` scripts; the notes below only cover non-obvious cloud caveats.
+BlinkGuard is a single desktop app (not a monorepo): an Electron 44 + React 19 + Vite 8 + TypeScript 7 app, with an **optional** Python (OpenCV 5 / dlib 20) computer-vision sidecar for camera-based blink detection. There is no web backend, database, or docker. State is local (`electron-store`). Standard commands live in `package.json` scripts; the notes below only cover non-obvious cloud caveats.
 
 **Communication:** English by default in chat and all agent docs. Use Ukrainian in chat only when the user writes in Ukrainian. Product Ukrainian strings live in `shared/i18n/uk.ts`.
 

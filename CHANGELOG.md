@@ -4,6 +4,15 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 
 ## [Unreleased]
 
+### Changed
+
+- Dependencies: Electron 44, TypeScript 7, Vitest 5, `@vitejs/plugin-react` 6, OpenCV 5, dlib 20; npm audit clean
+- Electron 44: remove deprecated `openAsHidden` from launch-at-login settings (`--hidden` args unchanged)
+- TypeScript 7: drop `baseUrl` from tsconfig; `@/*` paths unchanged
+- Vitest 5: set `clearMocks: false` to preserve existing mock semantics
+- CI: pin Node.js 22.12 for Vitest 5 compatibility
+- Python sidecar: add `build_and_install.bat` for Windows CI parity
+
 ## [2.17.0] - 2026-08-30
 
 ### Added
