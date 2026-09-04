@@ -4,6 +4,17 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [2.18.0] - 2026-09-04
+
+### Added
+
+- About: Report a problem — export diagnostics and open a structured GitHub bug report
+- Support: GitHub issue templates and allowlisted external URLs
+- Diagnostics: enriched export `meta.json` with operational flags
+- Rewards: spend banked snooze tokens for extended hush (tray, shortcut, native toast)
+- Tray: live BPM and today's blink goal in the tooltip
+- Backup: include named Setups in export; restore on import with overwrite confirmation
+
 ### Changed
 
 - Dependencies: Electron 44, TypeScript 7, Vitest 5, `@vitejs/plugin-react` 6, OpenCV 5, dlib 20; npm audit clean
@@ -11,7 +22,12 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 - TypeScript 7: drop `baseUrl` from tsconfig; `@/*` paths unchanged
 - Vitest 5: set `clearMocks: false` to preserve existing mock semantics
 - CI: pin Node.js 22.12 for Vitest 5 compatibility
-- Python sidecar: add `build_and_install.bat` for Windows CI parity
+- Python sidecar: add `build_and_install.bat` for Windows CI parity; slim PyInstaller bundle with headless OpenCV
+- Packaging: size measurement script and pruned Chromium locales
+
+### Fixed
+
+- Camera: credit OCEC-confirmed sub-60ms blinks rejected as opening-only saccades
 
 ## [2.17.0] - 2026-08-30
 

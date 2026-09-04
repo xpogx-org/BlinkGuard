@@ -4,6 +4,8 @@
 
 BlinkGuard is a single desktop app (not a monorepo): an Electron 44 + React 19 + Vite 8 + TypeScript 7 app, with an **optional** Python (OpenCV 5 / dlib 20) computer-vision sidecar for camera-based blink detection. There is no web backend, database, or docker. State is local (`electron-store`). Standard commands live in `package.json` scripts; the notes below only cover non-obvious cloud caveats.
 
+**Branches:** day-to-day commits land on `development`; `main` is updated only by `/deploy` (merge `development` → `main`, version bump, tag, GitHub Release). See skill `deploy`.
+
 **Communication:** English by default in chat and all agent docs. Use Ukrainian in chat only when the user writes in Ukrainian. Product Ukrainian strings live in `shared/i18n/uk.ts`.
 
 ### Layout (post-refactor)
@@ -35,7 +37,7 @@ Cursor rules under `.cursor/rules/` and project skills under `.cursor/skills/` d
 - `ui-reuse` — read `.cursor/skills/ui-reuse/catalog.json` before creating/changing UI; reuse atoms/molecules/organisms
 - `ui-theme` — `shared/theme.ts` is the token source; settings use semantic Tailwind, popups use `--popup-*`; sync CSS marker blocks after editing numbers
 - `keep-agent-docs-current` — after meaningful changes, fix drifted rules/skills/`AGENTS.md`
-- `deploy` — `/deploy` / Ship: SemVer 2.0.0 bump (patch/minor/major), changelog, GitHub Release, Ko-fi draft
+- `deploy` — `/deploy` / Ship: merge `development` → `main`, SemVer 2.0.0 bump (patch/minor/major), changelog, GitHub Release, sync `development`, Ko-fi draft
 
 ### Required service: the Electron desktop app
 
