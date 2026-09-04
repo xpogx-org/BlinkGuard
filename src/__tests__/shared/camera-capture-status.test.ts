@@ -129,4 +129,21 @@ describe("composeTrayTooltip", () => {
 			"BlinkGuard — Camera on — Paused: quiet hours",
 		);
 	});
+
+	it("appends glance after pause and camera", () => {
+		const paused: FocusPauseStatePayload = {
+			...active,
+			reason: "quiet-hours",
+		};
+		expect(
+			composeTrayTooltip(
+				"en",
+				paused,
+				monitoring,
+				"12/min · Low · Today 40 blinks",
+			),
+		).toBe(
+			"BlinkGuard — Camera on — Paused: quiet hours — 12/min · Low · Today 40 blinks",
+		);
+	});
 });

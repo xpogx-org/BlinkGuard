@@ -65,13 +65,15 @@ export function cameraCaptureChipMessageKey(
 }
 
 /**
- * Tray tooltip: product name, optional camera fragment, optional pause.
+ * Tray tooltip: product name, optional camera fragment, optional pause,
+ * optional session glance (live BPM / today / goal).
  * Idle capture omits the camera fragment. Pause copy is never replaced.
  */
 export function composeTrayTooltip(
 	locale: Locale,
 	pause: FocusPauseStatePayload | null,
 	capture: CameraCaptureStatusPayload | null,
+	glanceFragment?: string | null,
 ): string {
 	const parts: string[] = [TRAY_PRODUCT_NAME];
 	if (capture?.capturing) {
@@ -81,5 +83,7 @@ export function composeTrayTooltip(
 	}
 	const pauseKey = pause ? pauseStatusMessageKey(pause) : null;
 	if (pauseKey) parts.push(t(locale, pauseKey));
+	const glance = glanceFragment?.trim();
+	if (glance) parts.push(glance);
 	return parts.join(" — ");
 }

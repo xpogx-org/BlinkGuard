@@ -16,6 +16,11 @@ import {
 	type KeyboardShortcuts,
 } from "../../../shared/preferences";
 import type { FocusPauseStatePayload } from "../../../shared/session-pause-status";
+import {
+	formatTraySessionGlance,
+	traySessionGlanceEqual,
+	type TraySessionGlanceInput,
+} from "../../../shared/tray-session-glance";
 import type { InteractionLogger } from "../logging/interaction-logger";
 import type { AppPaths } from "../paths/app-paths";
 import type { WindowManager } from "../windows/window-manager";
@@ -38,6 +43,7 @@ export class TrayController {
 	private pauseState: FocusPauseStatePayload | null = null;
 	private captureState: CameraCaptureStatusPayload | null = null;
 	private isTracking = false;
+	private sessionGlance: TraySessionGlanceInput | null = null;
 	private colorIcon: NativeImage | null = null;
 	private idleIcon: NativeImage | null = null;
 
@@ -89,11 +95,13 @@ export class TrayController {
 		if (!this.tray) return;
 		const shortcuts = this.getKeyboardShortcuts();
 		const setups = this.getSetups();
+		const glanceLabel = formatTraySessionGlance(locale, this.sessionGlance);
 		const spec = buildTrayMenuSpec({
 			locale,
 			isTracking: this.isTracking,
 			capture: this.captureState,
 			pause: this.pauseState,
+			glanceLabel: glanceLabel || null,
 			snoozeMinutes: this.getSnoozeMinutes(),
 			includeSnoozeBlink: this.onSnoozeBlink != null,
 			includeSnoozeExercise: this.onSnoozeExercise != null,
@@ -138,6 +146,12 @@ export class TrayController {
 		this.rebuildMenu();
 	}
 
+	setSessionGlance(input: TraySessionGlanceInput): void {
+		if (traySessionGlanceEqual(this.sessionGlance, input)) return;
+		this.sessionGlance = input;
+		this.applyTooltip();
+	}
+
 	destroy(): void {
 		if (!this.tray) return;
 		this.tray.destroy();
@@ -155,8 +169,9 @@ export class TrayController {
 	}
 
 	private applyTooltip(locale: Locale = this.getLocale()): void {
+		const glance = formatTraySessionGlance(locale, this.sessionGlance);
 		this.tray?.setToolTip(
-			composeTrayTooltip(locale, this.pauseState, this.captureState),
+			composeTrayTooltip(locale, this.pauseState, this.captureState, glance),
 		);
 	}
 
@@ -221,6 +236,7 @@ export class TrayController {
 				};
 			case "camera":
 			case "pause":
+			case "glance":
 				return { label: item.label, enabled: false };
 			case "snooze":
 				return {

@@ -706,7 +706,7 @@ export const en: MessageCatalog = {
 	"rewards.useSnoozeToken": "Use now",
 	"stats.liveRate": "Live blink rate",
 	"stats.liveRateDesc":
-		"Credited blinks per minute of face-visible time in the last minute (camera). Needs ~24s with your face in view before the rate is ready.",
+		"Credited blinks per minute of face-visible time in the last minute (camera). Needs ~24s with your face in view before the rate is ready. The tray tooltip shows the same live rate while tracking with camera.",
 	"stats.today": "Today",
 	"stats.todayDesc":
 		"Credited blinks, tracking time, and start/stop sessions for the local day.",
@@ -819,6 +819,14 @@ export const en: MessageCatalog = {
 	"tray.cameraIdle": "Camera idle",
 	"tray.cameraPreview": "Camera preview",
 	"tray.cameraOn": "Camera on",
+	"tray.glance.bpm": "{rate}/min · {band}",
+	"tray.glance.warming": "— · Warming up",
+	"tray.glance.today": "Today {blinks} blink",
+	"tray.glance.today_few": "Today {blinks} blinks",
+	"tray.glance.today_plural": "Today {blinks} blinks",
+	"tray.glance.todayWithTracking": "Today {blinks} blinks · {duration}",
+	"tray.glance.goal": "{current} / {target}",
+	"tray.glance.percent": "{percent}%",
 	"window.cameraTitle": "Camera Visualization",
 
 	// Auto-update dialogs

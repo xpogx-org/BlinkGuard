@@ -33,6 +33,7 @@ export type TrayMenuItemSpec =
 	| { id: "hush"; label: string; active: boolean; accelerator?: string }
 	| { id: "hush-token"; label: string; accelerator?: string }
 	| { id: "camera"; label: string; enabled: false }
+	| { id: "glance"; label: string; enabled: false }
 	| { id: "pause"; label: string; enabled: false }
 	| { id: "snooze"; label: string; submenu: TraySnoozeItemSpec[] }
 	| { id: "setups"; label: string; submenu: TraySetupItemSpec[] }
@@ -55,6 +56,7 @@ export type BuildTrayMenuSpecInput = {
 	isTracking: boolean;
 	capture: CameraCaptureStatusPayload | null;
 	pause: FocusPauseStatePayload | null;
+	glanceLabel?: string | null;
 	snoozeMinutes: number;
 	includeSnoozeBlink: boolean;
 	includeSnoozeExercise: boolean;
@@ -144,6 +146,14 @@ export function buildTrayMenuSpec(
 		label: t(locale, cameraCaptureStatusMessageKey(capture)),
 		enabled: false,
 	});
+	const glanceLabel = input.glanceLabel?.trim();
+	if (glanceLabel) {
+		items.push({
+			id: "glance",
+			label: glanceLabel,
+			enabled: false,
+		});
+	}
 	const pauseKey = pause ? pauseStatusMessageKey(pause) : null;
 	if (pauseKey) {
 		items.push({

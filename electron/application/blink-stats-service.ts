@@ -65,6 +65,7 @@ import type { Locale } from "../../shared/i18n";
 import {
 	DEFAULT_GOALS_CONFIG,
 } from "../../shared/preferences";
+import type { TraySessionGlanceInput } from "../../shared/tray-session-glance";
 import type { PreferenceStore } from "./ports/preference-store";
 
 export type { CheerCelebration };
@@ -73,6 +74,7 @@ export type AchievementCelebrateMode = "none" | "live" | "summary";
 
 const TRACKING_FLUSH_MS = 15_000;
 const PUSH_THROTTLE_MS = 1_000;
+const TRAY_GLANCE_THROTTLE_MS = 10_000;
 const RATE_TICK_MS = 1_000;
 
 export type CheerRewardEffects = {
@@ -87,7 +89,9 @@ export class BlinkStatsService {
 	private flushTimer: ReturnType<typeof setInterval> | null = null;
 	private rateTickTimer: ReturnType<typeof setInterval> | null = null;
 	private pushTimer: ReturnType<typeof setTimeout> | null = null;
+	private trayGlanceTimer: ReturnType<typeof setTimeout> | null = null;
 	private onPush: ((snapshot: BlinkStatsSnapshot) => void) | null = null;
+	private onTrayGlance: (() => void) | null = null;
 	/** Ephemeral credited-blink timestamps for live BPM (not persisted). */
 	private blinkTimestamps: number[] = [];
 	/** Last BPM included in a pushed snapshot — skip redundant rate ticks. */
@@ -376,6 +380,46 @@ export class BlinkStatsService {
 		this.onPush = handler;
 	}
 
+	setTrayGlanceHandler(handler: (() => void) | null): void {
+		this.onTrayGlance = handler;
+		if (handler) {
+			this.syncRateTick();
+			this.scheduleTrayGlance(true);
+			return;
+		}
+		this.syncRateTick();
+		if (this.trayGlanceTimer) {
+			clearTimeout(this.trayGlanceTimer);
+			this.trayGlanceTimer = null;
+		}
+	}
+
+	/** Lightweight tray glance payload — no chart build. */
+	getTrayGlanceInput(showLiveBpm: boolean, now: Date = new Date()): TraySessionGlanceInput {
+		this.reconcileStreak(now);
+		const nowMs = now.getTime();
+		this.blinkTimestamps = pruneBlinkTimestamps(this.blinkTimestamps, nowMs);
+		this.pruneFaceSegments(nowMs);
+		const { ready } = this.rateWarmup(nowMs);
+		const blinksPerMinute = ready ? this.computeLiveBpm(nowMs) : 0;
+		const today = localDateKey(now);
+		const day = todaySummary(this.state, today);
+		const goals = goalProgress(this.state, this.getGoals(), now);
+		return {
+			isTracking: this.rateSessionStartedAt !== null,
+			showLiveBpm,
+			blinksPerMinute,
+			blinkRateReady: ready,
+			todayBlinks: day.blinks,
+			todayTrackingMs: day.trackingMs,
+			goals: {
+				enabled: goals.enabled,
+				dailyBlinks: goals.dailyBlinks,
+				dailyTrackingMinutes: goals.dailyTrackingMinutes,
+			},
+		};
+	}
+
 	/** Enable/disable IPC pushes + rate tick (Statistics panel visibility). */
 	setLivePushEnabled(enabled: boolean): void {
 		if (this.livePushEnabled === enabled) {
@@ -383,16 +427,19 @@ export class BlinkStatsService {
 			return;
 		}
 		this.livePushEnabled = enabled;
+		this.syncRateTick();
 		if (enabled) {
-			if (this.rateSessionStartedAt !== null) this.startRateTick();
 			this.pushSnapshot();
 			return;
 		}
-		this.stopRateTick();
 		if (this.pushTimer) {
 			clearTimeout(this.pushTimer);
 			this.pushTimer = null;
 		}
+	}
+
+	refreshTrayGlance(): void {
+		this.scheduleTrayGlance(true);
 	}
 
 	isLivePushEnabled(): boolean {
@@ -519,6 +566,7 @@ export class BlinkStatsService {
 		this.state = recordEyeCareOutcome(this.state, kind, outcome, now);
 		this.persist();
 		this.schedulePush();
+		this.scheduleTrayGlance();
 	}
 
 	recordBlink(now: Date = new Date()): void {
@@ -539,6 +587,7 @@ export class BlinkStatsService {
 			this.cheerEffects.onCheer?.({ kind: "levelUp", level: nextLevel });
 		}
 		this.schedulePush();
+		this.scheduleTrayGlance();
 	}
 
 	/** Deduct from the spendable blink balance (low-level). */
@@ -596,9 +645,10 @@ export class BlinkStatsService {
 		this.markChartsDirty();
 		this.persist();
 		this.startFlushTimer();
-		if (this.livePushEnabled) this.startRateTick();
+		this.syncRateTick();
 		this.reconcileAchievements({ celebrate: "live" }, now);
 		this.schedulePush();
+		this.scheduleTrayGlance(true);
 	}
 
 	onTrackingStop(now: Date = new Date()): void {
@@ -612,6 +662,7 @@ export class BlinkStatsService {
 		this.resetFaceClock();
 		this.lastPushedBpm = null;
 		this.schedulePush(true);
+		this.scheduleTrayGlance(true);
 	}
 
 	reset(): void {
@@ -835,6 +886,7 @@ export class BlinkStatsService {
 		this.flushTimer = setInterval(() => {
 			this.flushTracking();
 			this.schedulePush();
+			this.scheduleTrayGlance();
 		}, TRACKING_FLUSH_MS);
 	}
 
@@ -859,32 +911,57 @@ export class BlinkStatsService {
 		}
 	}
 
+	private needsLiveRateTick(): boolean {
+		return (
+			(this.livePushEnabled || this.onTrayGlance !== null) &&
+			this.rateSessionStartedAt !== null
+		);
+	}
+
+	private syncRateTick(): void {
+		if (this.needsLiveRateTick()) {
+			this.startRateTick();
+			return;
+		}
+		this.stopRateTick();
+	}
+
 	/**
 	 * While warming up: push once per elapsed second for progress UI.
 	 * After ready: only push when BPM changes (decay / new blinks).
 	 */
 	private tickLiveRate(nowMs: number = Date.now()): void {
-		if (!this.livePushEnabled || this.rateSessionStartedAt === null) return;
+		if (this.rateSessionStartedAt === null) return;
 
 		this.pruneFaceSegments(nowMs);
 		const { ready, warmupMs } = this.rateWarmup(nowMs);
 		if (!ready) {
 			const sec = Math.floor(warmupMs / 1000);
-			if (sec === this.lastPushedWarmupSec) return;
-			this.lastPushedWarmupSec = sec;
-			this.schedulePush();
+			if (this.livePushEnabled) {
+				if (sec === this.lastPushedWarmupSec) {
+					this.scheduleTrayGlance();
+					return;
+				}
+				this.lastPushedWarmupSec = sec;
+				this.schedulePush();
+			}
+			this.scheduleTrayGlance();
 			return;
 		}
 
 		if (this.blinkTimestamps.length === 0) {
-			if (this.lastPushedBpm === 0) return;
-			this.schedulePush();
+			if (this.livePushEnabled && this.lastPushedBpm !== 0) {
+				this.schedulePush();
+			}
+			this.scheduleTrayGlance();
 			return;
 		}
 		this.blinkTimestamps = pruneBlinkTimestamps(this.blinkTimestamps, nowMs);
 		const bpm = this.computeLiveBpm(nowMs);
-		if (bpm === this.lastPushedBpm) return;
-		this.schedulePush();
+		if (this.livePushEnabled && bpm !== this.lastPushedBpm) {
+			this.schedulePush();
+		}
+		this.scheduleTrayGlance();
 	}
 
 	private persist(): void {
@@ -916,5 +993,26 @@ export class BlinkStatsService {
 			this.pushTimer = null;
 			this.pushSnapshot();
 		}, PUSH_THROTTLE_MS);
+	}
+
+	private pushTrayGlance(): void {
+		this.onTrayGlance?.();
+	}
+
+	private scheduleTrayGlance(immediate = false): void {
+		if (!this.onTrayGlance) return;
+		if (immediate) {
+			if (this.trayGlanceTimer) {
+				clearTimeout(this.trayGlanceTimer);
+				this.trayGlanceTimer = null;
+			}
+			this.pushTrayGlance();
+			return;
+		}
+		if (this.trayGlanceTimer) return;
+		this.trayGlanceTimer = setTimeout(() => {
+			this.trayGlanceTimer = null;
+			this.pushTrayGlance();
+		}, TRAY_GLANCE_THROTTLE_MS);
 	}
 }

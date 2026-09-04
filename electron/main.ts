@@ -517,9 +517,18 @@ function bootstrap(): void {
 		hushAllWithSnoozeToken,
 	);
 	trayRef.current = tray;
+	const pushTrayGlance = () => {
+		tray.setSessionGlance(
+			blinkStats.getTrayGlanceInput(
+				preferences.isTracking && preferences.cameraEnabled,
+			),
+		);
+	};
+	blinkStats.setTrayGlanceHandler(pushTrayGlance);
 	reminders.setOnTrackingChange((isTracking) => {
 		captureStatus.notifyTracking(isTracking);
 		tray.setTrackingState(isTracking);
+		pushTrayGlance();
 		if (isTracking) {
 			sessionRecap.armBaseline(blinkStats.getSnapshot());
 			idleMonitor.start();
@@ -621,6 +630,7 @@ function bootstrap(): void {
 		});
 
 		tray.create();
+		pushTrayGlance();
 		focusPause.setOnState((payload) => tray.setPauseState(payload));
 		captureStatus.setOnState((payload) => tray.setCaptureState(payload));
 		autoUpdates.start();

@@ -720,7 +720,7 @@ export const uk: MessageCatalog = {
 	"rewards.useSnoozeToken": "Використати зараз",
 	"stats.liveRate": "Жива частота моргання",
 	"stats.liveRateDesc":
-		"Зараховані моргання за хвилину часу з видимим обличчям (камера). Потрібно ~24 с з обличчям у кадрі, перш ніж частота буде готова.",
+		"Зараховані моргання за хвилину часу з видимим обличчям за останню хвилину (камера). Потрібно ~24 с з обличчям у кадрі, перш ніж частота буде готова. Підказка в треї показує ту саму живу частоту під час відстеження з камерою.",
 	"stats.today": "Сьогодні",
 	"stats.todayDesc":
 		"Зараховані моргання, час відстеження та сесії за локальний день.",
@@ -833,6 +833,14 @@ export const uk: MessageCatalog = {
 	"tray.cameraIdle": "Камера неактивна",
 	"tray.cameraPreview": "Перегляд камери",
 	"tray.cameraOn": "Камера увімкнена",
+	"tray.glance.bpm": "{rate}/хв · {band}",
+	"tray.glance.warming": "— · Збір даних",
+	"tray.glance.today": "Сьогодні {blinks} моргання",
+	"tray.glance.today_few": "Сьогодні {blinks} моргання",
+	"tray.glance.today_plural": "Сьогодні {blinks} моргань",
+	"tray.glance.todayWithTracking": "Сьогодні {blinks} моргань · {duration}",
+	"tray.glance.goal": "{current} / {target}",
+	"tray.glance.percent": "{percent}%",
 	"window.cameraTitle": "Візуалізація камери",
 
 	// Auto-update dialogs

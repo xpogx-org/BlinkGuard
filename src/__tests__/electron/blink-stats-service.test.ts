@@ -567,4 +567,56 @@ describe("BlinkStatsService", () => {
 		expect(service.consumeSnoozeToken()).toBe(false);
 		service.dispose();
 	});
+
+	it("fires tray glance handler without live push enabled", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(store);
+		const trayGlance = vi.fn();
+		service.setTrayGlanceHandler(trayGlance);
+		trayGlance.mockClear();
+
+		service.onTrackingStart();
+		expect(trayGlance).toHaveBeenCalled();
+		trayGlance.mockClear();
+
+		service.recordBlink();
+		vi.advanceTimersByTime(10_000);
+		expect(trayGlance).toHaveBeenCalled();
+
+		const input = service.getTrayGlanceInput(true);
+		expect(input.isTracking).toBe(true);
+		expect(input.todayBlinks).toBe(1);
+		service.dispose();
+	});
+
+	it("coalesces rapid tray glance updates within the throttle window", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(store);
+		const trayGlance = vi.fn();
+		service.setTrayGlanceHandler(trayGlance);
+		service.onTrackingStart();
+		trayGlance.mockClear();
+
+		service.recordBlink();
+		service.recordBlink();
+		service.recordBlink();
+		vi.advanceTimersByTime(5_000);
+		expect(trayGlance).not.toHaveBeenCalled();
+		vi.advanceTimersByTime(5_000);
+		expect(trayGlance).toHaveBeenCalledTimes(1);
+		service.dispose();
+	});
+
+	it("starts rate tick when only tray glance handler is registered", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(store);
+		service.setTrayGlanceHandler(vi.fn());
+		service.onTrackingStart();
+		service.recordBlink();
+		const input = service.getTrayGlanceInput(true);
+		expect(input.isTracking).toBe(true);
+		expect(input.todayBlinks).toBe(1);
+		expect(input.blinkRateReady).toBe(false);
+		service.dispose();
+	});
 });

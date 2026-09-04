@@ -116,6 +116,25 @@ describe("buildTrayMenuSpec", () => {
 		).toBe(t("en", "tracking.start"));
 	});
 
+	it("inserts glance row between camera and pause when label is provided", () => {
+		const items = spec({
+			capture: monitoring,
+			pause: quietHoursPause,
+			glanceLabel: "12/min · Low · Today 40 blinks",
+		});
+		const ids = itemIds(items);
+		const cameraIdx = ids.indexOf("camera");
+		const glanceIdx = ids.indexOf("glance");
+		const pauseIdx = ids.indexOf("pause");
+		expect(glanceIdx).toBeGreaterThan(cameraIdx);
+		expect(pauseIdx).toBeGreaterThan(glanceIdx);
+		expect(items.find((item) => item.id === "glance")).toEqual({
+			id: "glance",
+			label: "12/min · Low · Today 40 blinks",
+			enabled: false,
+		});
+	});
+
 	it("inserts hush before camera when includeHush is set", () => {
 		const idleHush = spec({ includeHush: true, isPromptHushed: false });
 		expect(itemIds(idleHush)).toEqual([

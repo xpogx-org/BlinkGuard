@@ -647,6 +647,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		if (blinkStats.isLivePushEnabled()) {
 			windows.sendToMain(IPC_CHANNELS.loadBlinkStats, blinkStats.getSnapshot());
 		}
+		blinkStats.refreshTrayGlance();
 	});
 
 	ipcMain.handle(
