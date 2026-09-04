@@ -34,7 +34,8 @@
 		"preview": "vite preview",
 		"test": "vitest",
 		"test:ui": "vitest --ui",
-		"coverage": "vitest run --coverage"
+		"coverage": "vitest run --coverage",
+		"measure:size": "node scripts/measure-app-size.mjs"
 	},
 	"dependencies": {
 		"@radix-ui/react-icons": "^1.3.0",
@@ -80,6 +81,10 @@
 		"productName": "BlinkGuard",
 		"publish": null,
 		"artifactName": "${productName}-${arch}.${ext}",
+		"electronLanguages": [
+			"en-US",
+			"uk"
+		],
 		"files": [
 			"dist/**/*",
 			"!dist/win-unpacked/**/*",
