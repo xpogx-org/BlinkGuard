@@ -1,0 +1,87 @@
+name: Bug report
+description: Something is wrong with BlinkGuard
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve BlinkGuard.
+
+        **Before you submit:** In the app, go to **About → Report a problem**, tap **Export diagnostics**, then attach the zip to this issue. Nothing uploads automatically — see [PRIVACY.md](https://github.com/xpogx-org/BlinkGuard/blob/main/PRIVACY.md).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: e.g. Blink reminders stopped after I locked my laptop.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce it?
+      placeholder: |
+        1. Enable camera detection
+        2. Start tracking
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: BlinkGuard version
+      description: From About → Version, or the GitHub release you installed.
+      placeholder: e.g. 2.4.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux (dev / sidecar only)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: camera
+    attributes:
+      label: Camera blink detection
+      options:
+        - Off (timer-only)
+        - On
+        - Tried on, sidecar missing or failed
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      options:
+        - label: I attached the diagnostics zip from About → Report a problem (or will add it in a follow-up comment)
+          required: true

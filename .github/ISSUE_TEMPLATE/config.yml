@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a problem (in-app)
+    url: https://github.com/xpogx-org/BlinkGuard/blob/main/PRIVACY.md#export-diagnostics
+    about: Export diagnostics from About → Report a problem, then open a bug report and attach the zip. Nothing uploads automatically.
+  - name: Telegram (secondary)
+    url: https://t.me/PaOnGa
+    about: Chat with the maintainer — please prefer GitHub issues for bugs so others can search them.
