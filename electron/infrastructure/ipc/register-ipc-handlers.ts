@@ -64,6 +64,10 @@ import {
 	GITHUB_RELEASES_PAGE_URL,
 	isAllowedExternalUrl,
 } from "../../../shared/release-notes";
+import {
+	GITHUB_NEW_ISSUE_BUG_URL,
+	isAllowedSupportUrl,
+} from "../../../shared/support";
 
 interface IpcDependencies {
 	preferences: PreferencesService;
@@ -532,6 +536,13 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	});
 	on(IPC_CHANNELS.openGithubReleases, () => {
 		void shell.openExternal(GITHUB_RELEASES_PAGE_URL);
+	});
+	on(IPC_CHANNELS.openGithubReportIssue, () => {
+		if (!isAllowedSupportUrl(GITHUB_NEW_ISSUE_BUG_URL)) {
+			console.warn("Blocked unsupported GitHub report issue URL");
+			return;
+		}
+		void shell.openExternal(GITHUB_NEW_ISSUE_BUG_URL);
 	});
 	on(IPC_CHANNELS.openExternalUrl, (_event, urlRaw: unknown) => {
 		if (typeof urlRaw !== "string" || !isAllowedExternalUrl(urlRaw)) return;

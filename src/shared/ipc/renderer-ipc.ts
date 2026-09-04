@@ -295,6 +295,7 @@ export const rendererIpc = {
 		send(IPC_CHANNELS.debugSetShopDiscountLevel, level),
 	openGithubRepo: () => send(IPC_CHANNELS.openGithubRepo),
 	openGithubReleases: () => send(IPC_CHANNELS.openGithubReleases),
+	openGithubReportIssue: () => send(IPC_CHANNELS.openGithubReportIssue),
 	openExternalUrl: (url: string) => send(IPC_CHANNELS.openExternalUrl, url),
 	checkForUpdates: () => send(IPC_CHANNELS.checkForUpdates),
 	installUpdate: () => send(IPC_CHANNELS.installUpdate),
