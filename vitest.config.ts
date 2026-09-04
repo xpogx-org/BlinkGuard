@@ -6,6 +6,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	plugins: [react()],
 	test: {
+		clearMocks: false,
 		globals: true,
 		environment: "happy-dom",
 		coverage: {
