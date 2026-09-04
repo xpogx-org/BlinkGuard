@@ -7,14 +7,29 @@ import { SettingRow } from "@/components/setting-row";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { rendererIpc } from "@/shared/ipc/renderer-ipc";
-import type { BackupScope } from "../../../../shared/backup";
+import {
+	backupScopeIncludesPreferences,
+	type BackupScope,
+} from "../../../../shared/backup";
 
 const BACKUP_SCOPES: BackupScope[] = ["both", "preferences", "statistics"];
+
+type ProfilesConfirmState = {
+	filePath: string;
+	localProfileNames: string[];
+	backupProfileNames: string[];
+};
+
+function formatNameList(names: string[]): string {
+	return names.join(", ");
+}
 
 export function BackupSettings() {
 	const t = useT();
 	const [scope, setScope] = useState<BackupScope>("both");
 	const [confirmingImport, setConfirmingImport] = useState(false);
+	const [profilesConfirm, setProfilesConfirm] =
+		useState<ProfilesConfirmState | null>(null);
 	const [busy, setBusy] = useState<"export" | "import" | null>(null);
 	const [status, setStatus] = useState<string | null>(null);
 
@@ -46,22 +61,35 @@ export function BackupSettings() {
 		}
 	};
 
-	const handleImport = async () => {
+	const handleImport = async (options?: {
+		profilesOverwriteConfirmed?: boolean;
+		filePath?: string;
+	}) => {
 		if (busy) return;
 		setBusy("import");
 		setStatus(null);
 		try {
-			const result = await rendererIpc.importBackup(scope);
+			const result = await rendererIpc.importBackup(scope, options);
 			if (result.status === "cancelled") {
 				setStatus(t("backup.import.cancelled"));
+				setProfilesConfirm(null);
+			} else if (result.status === "needs-profiles-confirm") {
+				setProfilesConfirm({
+					filePath: result.path ?? "",
+					localProfileNames: result.localProfileNames ?? [],
+					backupProfileNames: result.backupProfileNames ?? [],
+				});
+				setConfirmingImport(false);
 			} else if (result.status === "imported") {
 				setStatus(t("backup.import.success"));
+				setProfilesConfirm(null);
 			} else {
 				setStatus(
 					t("backup.import.error", {
 						message: result.message ?? "unknown",
 					}),
 				);
+				setProfilesConfirm(null);
 			}
 		} catch (error) {
 			setStatus(
@@ -69,11 +97,51 @@ export function BackupSettings() {
 					message: error instanceof Error ? error.message : String(error),
 				}),
 			);
+			setProfilesConfirm(null);
 		} finally {
 			setBusy(null);
-			setConfirmingImport(false);
 		}
 	};
+
+	if (profilesConfirm) {
+		return (
+			<Reveal variant="fade" open>
+				<SettingPanel className="space-y-3">
+					<p className="text-sm text-foreground">
+						{t("backup.import.confirmProfiles", {
+							localNames: formatNameList(profilesConfirm.localProfileNames),
+							backupNames: formatNameList(profilesConfirm.backupProfileNames),
+						})}
+					</p>
+					<div className="flex flex-wrap gap-2">
+						<Button
+							type="button"
+							variant="secondary"
+							disabled={busy !== null}
+							onClick={() => setProfilesConfirm(null)}
+						>
+							{t("common.cancel")}
+						</Button>
+						<Button
+							type="button"
+							variant="destructive"
+							disabled={busy !== null}
+							onClick={() => {
+								void handleImport({
+									filePath: profilesConfirm.filePath,
+									profilesOverwriteConfirmed: true,
+								});
+							}}
+						>
+							{busy === "import"
+								? t("backup.import.busy")
+								: t("backup.import.button")}
+						</Button>
+					</div>
+				</SettingPanel>
+			</Reveal>
+		);
+	}
 
 	if (confirmingImport) {
 		return (
@@ -157,6 +225,11 @@ export function BackupSettings() {
 							</label>
 						);
 					})}
+					{backupScopeIncludesPreferences(scope) ? (
+						<p className="px-1 text-xs text-muted-foreground">
+							{t("backup.scope.setups")}
+						</p>
+					) : null}
 				</fieldset>
 				<div className="mt-3 flex flex-wrap gap-2">
 					<Button

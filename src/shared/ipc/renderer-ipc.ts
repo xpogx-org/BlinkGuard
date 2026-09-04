@@ -368,8 +368,18 @@ export const rendererIpc = {
 			message: "Backup export is unavailable in this environment",
 		};
 	},
-	importBackup: async (scope: BackupScope): Promise<ImportBackupResult> => {
-		const result = await bridge()?.invoke(IPC_CHANNELS.importBackup, scope);
+	importBackup: async (
+		scope: BackupScope,
+		options?: {
+			profilesOverwriteConfirmed?: boolean;
+			filePath?: string;
+		},
+	): Promise<ImportBackupResult> => {
+		const result = await bridge()?.invoke(
+			IPC_CHANNELS.importBackup,
+			scope,
+			options ?? {},
+		);
 		if (
 			result &&
 			typeof result === "object" &&

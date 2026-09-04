@@ -458,11 +458,13 @@ export const en: MessageCatalog = {
 	"reset.showOnboarding": "Show onboarding",
 	"backup.title": "Backup",
 	"backup.body":
-		"Export or import a local JSON file with preferences and/or blink statistics. Nothing is uploaded.",
+		"Export or import a local JSON file with preferences, saved Setups, and/or blink statistics. Nothing is uploaded.",
 	"backup.scope.legend": "Backup scope",
 	"backup.scope.both": "Preferences and statistics",
 	"backup.scope.preferences": "Preferences only",
 	"backup.scope.statistics": "Statistics only",
+	"backup.scope.setups":
+		"Preferences and both include saved Setups when any exist.",
 	"backup.export.button": "Export backup",
 	"backup.export.busy": "Exporting…",
 	"backup.export.success": "Saved to {path}",
@@ -472,6 +474,8 @@ export const en: MessageCatalog = {
 	"backup.import.busy": "Importing…",
 	"backup.import.confirm":
 		"Replace the selected data on this device with the backup file? This cannot be undone.",
+	"backup.import.confirmProfiles":
+		"This backup will replace your saved Setups ({localNames}) with those from the file ({backupNames}). Continue?",
 	"backup.import.success": "Backup imported",
 	"backup.import.cancelled": "Import cancelled",
 	"backup.import.error": "Import failed: {message}",

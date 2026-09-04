@@ -469,11 +469,13 @@ export const uk: MessageCatalog = {
 	"reset.showOnboarding": "Показати онбординг",
 	"backup.title": "Резервна копія",
 	"backup.body":
-		"Експорт або імпорт локального JSON-файлу з налаштуваннями та/або статистикою моргань. Нічого не надсилається в хмару.",
+		"Експорт або імпорт локального JSON-файлу з налаштуваннями, збереженими наборами та/або статистикою моргань. Нічого не надсилається в хмару.",
 	"backup.scope.legend": "Обсяг резервної копії",
 	"backup.scope.both": "Налаштування і статистика",
 	"backup.scope.preferences": "Лише налаштування",
 	"backup.scope.statistics": "Лише статистика",
+	"backup.scope.setups":
+		"Налаштування та «обидва» включають збережені набори, якщо вони є.",
 	"backup.export.button": "Експортувати копію",
 	"backup.export.busy": "Експорт…",
 	"backup.export.success": "Збережено: {path}",
@@ -483,6 +485,8 @@ export const uk: MessageCatalog = {
 	"backup.import.busy": "Імпорт…",
 	"backup.import.confirm":
 		"Замінити вибрані дані на цьому пристрої вмістом файлу резервної копії? Цю дію не можна скасувати.",
+	"backup.import.confirmProfiles":
+		"Ця копія замінить ваші збережені набори ({localNames}) наборами з файлу ({backupNames}). Продовжити?",
 	"backup.import.success": "Резервну копію імпортовано",
 	"backup.import.cancelled": "Імпорт скасовано",
 	"backup.import.error": "Помилка імпорту: {message}",
