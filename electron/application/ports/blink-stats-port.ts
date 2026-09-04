@@ -14,6 +14,8 @@ export interface BlinkStatsPort {
 		blinksPerMinute: number;
 		blinkRateReady: boolean;
 	};
+	/** Banked snooze tokens from the rewards shop (optional in older mocks). */
+	getSnoozeTokenCharges?(): number;
 }
 
 export interface BlinkRateCoachingPort {

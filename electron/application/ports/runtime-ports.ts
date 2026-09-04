@@ -74,6 +74,8 @@ export type OsToastPayload = {
 	title: string;
 	body: string;
 	snoozeLabel: string;
+	/** Second action: extended global hush using a snooze token. */
+	tokenSnoozeLabel?: string;
 };
 
 export interface OsNotificationPort {
@@ -89,6 +91,7 @@ export interface OsNotificationPort {
 	setActivationHandlers(handlers: {
 		onClick: (kind: OsToastKind) => void;
 		onSnooze: (kind: OsToastKind) => void;
+		onSnoozeWithToken?: () => void;
 	}): void;
 }
 

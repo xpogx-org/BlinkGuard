@@ -193,6 +193,9 @@ export function useShortcutControls({
 				case "snoozeAll":
 					rendererIpc.snoozeAll();
 					return;
+				case "snoozeWithToken":
+					rendererIpc.snoozeAll({ useToken: true });
+					return;
 				case "openSettings":
 					// Already in settings shell; no-op.
 					return;

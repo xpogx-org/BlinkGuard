@@ -1,3 +1,4 @@
+import { tokenSnoozeMinutes } from "../../../shared/blink-stats";
 import {
 	cameraCaptureStatusMessageKey,
 	type CameraCaptureStatusPayload,
@@ -30,6 +31,7 @@ export type TrayMenuItemSpec =
 	| { id: "show"; label: string; accelerator?: string }
 	| { id: "tracking"; label: string; isTracking: boolean; accelerator?: string }
 	| { id: "hush"; label: string; active: boolean; accelerator?: string }
+	| { id: "hush-token"; label: string; accelerator?: string }
 	| { id: "camera"; label: string; enabled: false }
 	| { id: "pause"; label: string; enabled: false }
 	| { id: "snooze"; label: string; submenu: TraySnoozeItemSpec[] }
@@ -63,6 +65,8 @@ export type BuildTrayMenuSpecInput = {
 	includeHush?: boolean;
 	isPromptHushed?: boolean;
 	hushAccelerator?: string;
+	snoozeTokenCharges?: number;
+	tokenSnoozeAccelerator?: string;
 	setups?: TraySetupSummary[];
 	activeSetupId?: string | null;
 };
@@ -121,6 +125,18 @@ export function buildTrayMenuSpec(
 				input.isPromptHushed ? "" : (input.hushAccelerator ?? ""),
 			),
 		});
+		const tokenCharges = input.snoozeTokenCharges ?? 0;
+		if (!input.isPromptHushed && tokenCharges > 0) {
+			const tokenMinutes = tokenSnoozeMinutes(snoozeMinutes);
+			items.push({
+				id: "hush-token",
+				label: t(locale, pluralKey("tray.hushWithToken", locale, tokenMinutes), {
+					n: tokenMinutes,
+					count: tokenCharges,
+				}),
+				...optionalAccelerator(input.tokenSnoozeAccelerator ?? ""),
+			});
+		}
 	}
 	items.push({ id: "separator" });
 	items.push({

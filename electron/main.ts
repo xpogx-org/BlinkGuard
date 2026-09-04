@@ -52,6 +52,8 @@ import { ElectronPreferenceStore } from "./infrastructure/store/electron-prefere
 import { TrayController } from "./infrastructure/tray/tray-controller";
 import { traySwitchPayload } from "./infrastructure/tray/tray-menu-model";
 import { endPromptHush, snoozeAllPrompts } from "./application/snooze-all";
+import { promptSnoozeMs } from "./domain/reminder-policy";
+import { tokenSnoozeMinutes } from "../shared/blink-stats";
 import { AutoUpdateService } from "./infrastructure/updates/auto-update-service";
 import { WindowManager } from "./infrastructure/windows/window-manager";
 import { IPC_CHANNELS } from "../shared/ipc-channels";
@@ -320,15 +322,6 @@ function bootstrap(): void {
 		osNotifications,
 		blinkStats,
 	);
-	osNotifications.setActivationHandlers({
-		onClick: () => windows.showMain(),
-		onSnooze: (kind) => {
-			if (kind === "sessionRecap") return;
-			if (kind === "blink") reminders.snooze();
-			else if (kind === "exercise") exercises.snooze();
-			else lookAway.snooze();
-		},
-	});
 	focusPause.bindPromptDismissers({
 		blink: () => reminders.dismissVisibleBlink(),
 		exercise: () => exercises.dismissVisible(),
@@ -383,7 +376,33 @@ function bootstrap(): void {
 		onHushStateChange: () => trayRef.current?.rebuildMenu(),
 	});
 	const hushAllPrompts = () => snoozeAllPrompts(promptHushDeps());
+	const hushAllWithSnoozeToken = () => {
+		if (!blinkStats.consumeSnoozeToken()) return false;
+		const ms = promptSnoozeMs(
+			tokenSnoozeMinutes(preferences.snoozeMinutes),
+		);
+		snoozeAllPrompts(promptHushDeps(), { durationMs: ms });
+		return true;
+	};
+	const hushAllPromptsMaybeToken = (useToken?: boolean) => {
+		if (useToken) {
+			hushAllWithSnoozeToken();
+			return;
+		}
+		hushAllPrompts();
+	};
 	const endHush = () => endPromptHush(promptHushDeps());
+	blinkStats.setOnSnoozeTokenChargesChanged(() => trayRef.current?.rebuildMenu());
+	osNotifications.setActivationHandlers({
+		onClick: () => windows.showMain(),
+		onSnooze: (kind) => {
+			if (kind === "sessionRecap") return;
+			if (kind === "blink") reminders.snooze();
+			else if (kind === "exercise") exercises.snooze();
+			else lookAway.snooze();
+		},
+		onSnoozeWithToken: () => hushAllWithSnoozeToken(),
+	});
 	const sessionPause = new SessionPauseService(
 		preferences,
 		state,
@@ -407,6 +426,7 @@ function bootstrap(): void {
 		windows,
 		interactionLogger,
 		hushAllPrompts,
+		hushAllWithSnoozeToken,
 	);
 	const processCleanup = new ProcessCleanup(processes);
 	const autoUpdates = new AutoUpdateService(
@@ -493,6 +513,8 @@ function bootstrap(): void {
 		() => isPromptHushed(state.promptSuppressUntil),
 		hushAllPrompts,
 		endHush,
+		() => blinkStats.getSnoozeTokenCharges(),
+		hushAllWithSnoozeToken,
 	);
 	trayRef.current = tray;
 	reminders.setOnTrackingChange((isTracking) => {
@@ -573,7 +595,7 @@ function bootstrap(): void {
 		},
 		onSnoozeMinutesChanged: () => tray.rebuildMenu(),
 		onKeyboardShortcutsChanged: () => tray.rebuildMenu(),
-		hushAllPrompts,
+		hushAllPrompts: hushAllPromptsMaybeToken,
 		endPromptHush: endHush,
 	});
 

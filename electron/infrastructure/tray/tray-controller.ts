@@ -61,6 +61,8 @@ export class TrayController {
 		private readonly getIsPromptHushed: () => boolean = () => false,
 		private readonly onHush: (() => void) | null = null,
 		private readonly onEndHush: (() => void) | null = null,
+		private readonly getSnoozeTokenCharges: () => number = () => 0,
+		private readonly onHushWithToken: (() => void) | null = null,
 	) {}
 
 	create(): void {
@@ -102,6 +104,8 @@ export class TrayController {
 			includeHush: this.onHush != null,
 			isPromptHushed: this.getIsPromptHushed(),
 			hushAccelerator: shortcuts.snoozeAll,
+			snoozeTokenCharges: this.getSnoozeTokenCharges(),
+			tokenSnoozeAccelerator: shortcuts.snoozeWithToken,
 			setups: setups.profiles,
 			activeSetupId: setups.activeSetupId,
 		});
@@ -201,6 +205,18 @@ export class TrayController {
 							action: "menu-hush",
 						});
 						this.onHush?.();
+					},
+				};
+			case "hush-token":
+				return {
+					label: item.label,
+					...optionalAccelerator(item.accelerator),
+					click: () => {
+						this.interactions?.append({
+							source: "tray",
+							action: "menu-hush-with-token",
+						});
+						this.onHushWithToken?.();
 					},
 				};
 			case "camera":

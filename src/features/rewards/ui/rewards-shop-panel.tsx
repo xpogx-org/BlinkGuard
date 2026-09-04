@@ -4,6 +4,7 @@ import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useBlinkStats } from "@/features/statistics/model/use-blink-stats";
 import { useI18n } from "@/i18n";
+import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import { cn } from "@/lib/utils";
 import type {
 	BlinkRewardId,
@@ -46,12 +47,14 @@ function RewardRow({
 	flashId,
 	onBuy,
 	onEquip,
+	onUseSnoozeToken,
 	t,
 }: {
 	reward: RewardOffer;
 	flashId: BlinkRewardId | null;
 	onBuy: (id: BlinkRewardId) => void;
 	onEquip: (reward: RewardOffer) => void;
+	onUseSnoozeToken: () => void;
 	t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
 	const description =
@@ -86,18 +89,34 @@ function RewardRow({
 				{t("rewards.equip")}
 			</Button>
 		);
+	} else if (reward.id === "snoozeToken" && reward.canUse) {
+		action = (
+			<div className="flex flex-wrap items-center justify-end gap-2">
+				<Button
+					type="button"
+					variant="secondary"
+					size="sm"
+					onClick={onUseSnoozeToken}
+				>
+					{t("rewards.useSnoozeToken")}
+				</Button>
+				<Button
+					type="button"
+					variant="secondary"
+					size="sm"
+					disabled={!reward.canBuy}
+					onClick={() => onBuy(reward.id)}
+				>
+					{t("rewards.buy", { cost: reward.cost })}
+				</Button>
+			</div>
+		);
 	} else if (reward.owned && !reward.equipKind && reward.id !== "snoozeToken") {
 		action = (
 			<span className="text-xs font-medium text-muted-foreground">
 				{reward.id === "streakShield" && reward.charges > 0
 					? t("stats.streak.shieldReady")
 					: t("rewards.owned")}
-			</span>
-		);
-	} else if (!reward.canBuy && reward.owned && reward.id === "snoozeToken") {
-		action = (
-			<span className="text-xs font-medium text-muted-foreground">
-				{t("rewards.max")}
 			</span>
 		);
 	} else {
@@ -177,6 +196,10 @@ export function RewardsShopPanel() {
 		}
 	};
 
+	const handleUseSnoozeToken = () => {
+		rendererIpc.snoozeAll({ useToken: true });
+	};
+
 	let lastCategory: RewardCategory | null = null;
 
 	return (
@@ -236,6 +259,7 @@ export function RewardsShopPanel() {
 										flashId={flashId}
 										onBuy={handleBuy}
 										onEquip={handleEquip}
+										onUseSnoozeToken={handleUseSnoozeToken}
 										t={t}
 									/>
 								</div>

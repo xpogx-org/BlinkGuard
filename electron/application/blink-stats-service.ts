@@ -33,6 +33,7 @@ import {
 	applyRewardPurchase,
 	clearEquippedPopupPreset,
 	computeStreak,
+	consumeSnoozeToken,
 	equipCheerTheme,
 	equipCheerThemeRandom,
 	equipPopupPreset,
@@ -106,6 +107,7 @@ export class BlinkStatsService {
 	private debugCheerThemeCycle = 0;
 	/** One-shot override while previewCheer runs (sync onCheer). */
 	private cheerThemeOverride: string | null = null;
+	private onSnoozeTokenChargesChanged: (() => void) | null = null;
 
 	/**
 	 * When true (camera face-aware): BPM denominator + trackingMs use face-visible
@@ -135,6 +137,14 @@ export class BlinkStatsService {
 
 	setCheerEffects(effects: CheerRewardEffects): void {
 		this.cheerEffects = effects;
+	}
+
+	setOnSnoozeTokenChargesChanged(callback: (() => void) | null): void {
+		this.onSnoozeTokenChargesChanged = callback;
+	}
+
+	getSnoozeTokenCharges(): number {
+		return this.state.snoozeTokenCharges;
 	}
 
 	/**
@@ -558,7 +568,21 @@ export class BlinkStatsService {
 		} else {
 			this.celebrateAchievements(newly, "live");
 		}
+		if (rewardId === "snoozeToken") {
+			this.onSnoozeTokenChargesChanged?.();
+		}
 		this.schedulePush(true);
+		return true;
+	}
+
+	/** Spend one banked snooze token; persists and pushes snapshot. */
+	consumeSnoozeToken(): boolean {
+		const next = consumeSnoozeToken(this.state);
+		if (!next) return false;
+		this.state = next;
+		this.persist();
+		this.schedulePush(true);
+		this.onSnoozeTokenChargesChanged?.();
 		return true;
 	}
 

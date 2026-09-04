@@ -193,7 +193,8 @@ export const rendererIpc = {
 		send(IPC_CHANNELS.updateKeyboardShortcuts, shortcuts),
 	setShortcutCaptureMode: (capturing: boolean) =>
 		send(IPC_CHANNELS.setShortcutCaptureMode, capturing),
-	snoozeAll: () => send(IPC_CHANNELS.snoozeAll),
+	snoozeAll: (options?: { useToken?: boolean }) =>
+		send(IPC_CHANNELS.snoozeAll, options),
 	endPromptHush: () => send(IPC_CHANNELS.endPromptHush),
 	updateSoundEnabled: (enabled: boolean) =>
 		send(IPC_CHANNELS.updateSoundEnabled, enabled),

@@ -64,11 +64,15 @@ function schedulePromptHushExpiry(
 }
 
 /**
- * Hush all interruptive prompts for {@link promptSnoozeMs}(`snoozeMinutes`).
+ * Hush all interruptive prompts for {@link promptSnoozeMs}(`snoozeMinutes`) or a custom duration.
  * Tracking stays armed; camera keeps running.
  */
-export function snoozeAllPrompts(deps: PromptHushDeps): void {
-	const ms = promptSnoozeMs(deps.preferences.snoozeMinutes);
+export function snoozeAllPrompts(
+	deps: PromptHushDeps,
+	options?: { durationMs?: number },
+): void {
+	const ms =
+		options?.durationMs ?? promptSnoozeMs(deps.preferences.snoozeMinutes);
 	deps.focusPause.closeInterruptiveUi();
 	deps.state.promptSuppressUntil = Date.now() + ms;
 	deps.reminders.snooze();

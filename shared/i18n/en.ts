@@ -418,6 +418,9 @@ export const en: MessageCatalog = {
 		"Show a quick summary when you stop tracking, lock your PC, or quit BlinkGuard.",
 	"settings.sessionRecap.toggleAria": "Toggle desk session recap",
 	"osToast.snooze": "Snooze",
+	"osToast.snoozeWithToken": "Hush all with token ({n} min)",
+	"osToast.snoozeWithToken_few": "Hush all with token ({n} min)",
+	"osToast.snoozeWithToken_plural": "Hush all with token ({n} min)",
 	"osToast.lookAway.body": "{n} second",
 	"osToast.lookAway.body_few": "{n} seconds",
 	"osToast.lookAway.body_plural": "{n} seconds",
@@ -566,6 +569,9 @@ export const en: MessageCatalog = {
 	"shortcut.action.snoozeAll": "Snooze prompts",
 	"shortcut.action.snoozeAllDesc":
 		"Hush all prompts (blink, exercise, look-away) for the snooze duration. Available from the tray and this shortcut.",
+	"shortcut.action.snoozeWithToken": "Extended hush (snooze token)",
+	"shortcut.action.snoozeWithTokenDesc":
+		"Spend one banked snooze token to hush all prompts for twice your snooze duration. Bind here or use the tray when you have tokens.",
 	"shortcut.action.openSettings": "Open settings",
 	"shortcut.action.openSettingsDesc": "Show and focus the BlinkGuard settings window.",
 	"shortcut.action.openCameraPreview": "Camera preview",
@@ -696,7 +702,8 @@ export const en: MessageCatalog = {
 	"rewards.popupPresetSunsetDesc": "Warm amber popups with a pulsing orange glow.",
 	"rewards.snoozeToken": "Snooze token",
 	"rewards.snoozeTokenDesc":
-		"Bank a snooze token (max 2). Saved for future quick-snooze perks.",
+		"Bank a snooze token (max 2). Spend from the tray, a shortcut, native toast, or Use now here for extended hush (2× your snooze minutes, all prompt kinds).",
+	"rewards.useSnoozeToken": "Use now",
 	"stats.liveRate": "Live blink rate",
 	"stats.liveRateDesc":
 		"Credited blinks per minute of face-visible time in the last minute (camera). Needs ~24s with your face in view before the rate is ready.",
@@ -792,6 +799,9 @@ export const en: MessageCatalog = {
 	"tray.hush": "Hush prompts ({n} min)",
 	"tray.hush_few": "Hush prompts ({n} min)",
 	"tray.hush_plural": "Hush prompts ({n} min)",
+	"tray.hushWithToken": "Extended hush with token ({n} min) · {count} left",
+	"tray.hushWithToken_few": "Extended hush with token ({n} min) · {count} left",
+	"tray.hushWithToken_plural": "Extended hush with token ({n} min) · {count} left",
 	"tray.endHush": "End hush",
 	"hush.active": "Prompts hushed",
 	"tray.snoozeBlink": "Snooze blink ({n} min)",

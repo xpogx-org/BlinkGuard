@@ -33,6 +33,7 @@ export class ShortcutController {
 		private readonly windows: WindowManager,
 		private readonly interactions: InteractionLogger | null = null,
 		private readonly onSnoozeAll: () => void = () => {},
+		private readonly onSnoozeWithToken: () => void = () => {},
 	) {}
 
 	/** Late-bind after PreferenceActions exists (avoids ctor cycle). */
@@ -119,6 +120,14 @@ export class ShortcutController {
 				this.interactions?.append({
 					source: "shortcut",
 					action: "snooze-all",
+					detail: { shortcut },
+				});
+				return;
+			case "snoozeWithToken":
+				this.onSnoozeWithToken();
+				this.interactions?.append({
+					source: "shortcut",
+					action: "snooze-with-token",
 					detail: { shortcut },
 				});
 				return;

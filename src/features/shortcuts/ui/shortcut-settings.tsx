@@ -25,6 +25,7 @@ interface ShortcutSettingsProps {
 const ACTION_TITLE: Record<ShortcutAction, string> = {
 	trackingToggle: "shortcut.action.trackingToggle",
 	snoozeAll: "shortcut.action.snoozeAll",
+	snoozeWithToken: "shortcut.action.snoozeWithToken",
 	openSettings: "shortcut.action.openSettings",
 	openCameraPreview: "shortcut.action.openCameraPreview",
 };
@@ -32,6 +33,7 @@ const ACTION_TITLE: Record<ShortcutAction, string> = {
 const ACTION_DESC: Record<ShortcutAction, string> = {
 	trackingToggle: "shortcut.action.trackingToggleDesc",
 	snoozeAll: "shortcut.action.snoozeAllDesc",
+	snoozeWithToken: "shortcut.action.snoozeWithTokenDesc",
 	openSettings: "shortcut.action.openSettingsDesc",
 	openCameraPreview: "shortcut.action.openCameraPreviewDesc",
 };

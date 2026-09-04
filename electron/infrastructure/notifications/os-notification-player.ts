@@ -47,6 +47,7 @@ export class OsNotificationPlayer implements OsNotificationPort {
 	private handlers: {
 		onClick: (kind: OsToastKind) => void;
 		onSnooze: (kind: OsToastKind) => void;
+		onSnoozeWithToken?: () => void;
 	} | null = null;
 	private lastShownKind: OsToastKind | null = null;
 	private lastActivationAt = 0;
@@ -68,6 +69,7 @@ export class OsNotificationPlayer implements OsNotificationPort {
 	setActivationHandlers(handlers: {
 		onClick: (kind: OsToastKind) => void;
 		onSnooze: (kind: OsToastKind) => void;
+		onSnoozeWithToken?: () => void;
 	}): void {
 		this.handlers = handlers;
 		if (this.activationRegistered) return;
@@ -85,6 +87,12 @@ export class OsNotificationPlayer implements OsNotificationPort {
 	): OsToastShowResult {
 		if (!this.isSupported()) return { shown: false };
 		this.dismiss(kind);
+		const actions: { type: "button"; text: string }[] = [
+			{ type: "button", text: payload.snoozeLabel },
+		];
+		if (payload.tokenSnoozeLabel) {
+			actions.push({ type: "button", text: payload.tokenSnoozeLabel });
+		}
 		let notification: Notification;
 		try {
 			notification = new Notification({
@@ -92,7 +100,7 @@ export class OsNotificationPlayer implements OsNotificationPort {
 				title: payload.title,
 				body: payload.body,
 				silent: true,
-				actions: [{ type: "button", text: payload.snoozeLabel }],
+				actions,
 			});
 		} catch {
 			return { shown: false };
@@ -124,7 +132,7 @@ export class OsNotificationPlayer implements OsNotificationPort {
 			notification.on("action", (event: { actionIndex?: number }, index?: number) => {
 				const actionIndex =
 					typeof event?.actionIndex === "number" ? event.actionIndex : index;
-				if (actionIndex === 0) this.emitSnooze(kind);
+				this.emitAction(kind, actionIndex ?? 0);
 			});
 		}
 
@@ -208,7 +216,7 @@ export class OsNotificationPlayer implements OsNotificationPort {
 			this.lastShownKind;
 		if (!kind) return;
 		if (details.type === "action") {
-			this.emitSnooze(kind);
+			this.emitAction(kind, details.actionIndex ?? 0);
 			return;
 		}
 		if (details.type === "click" || !details.type) {
@@ -238,6 +246,19 @@ export class OsNotificationPlayer implements OsNotificationPort {
 	private emitSnooze(kind: OsToastKind): void {
 		if (!this.shouldEmit(`snooze:${kind}`)) return;
 		this.handlers?.onSnooze(kind);
+	}
+
+	private emitSnoozeWithToken(): void {
+		if (!this.shouldEmit("snooze-with-token")) return;
+		this.handlers?.onSnoozeWithToken?.();
+	}
+
+	private emitAction(kind: OsToastKind, actionIndex: number): void {
+		if (actionIndex === 1) {
+			this.emitSnoozeWithToken();
+			return;
+		}
+		this.emitSnooze(kind);
 	}
 
 	private shouldEmit(key: string): boolean {

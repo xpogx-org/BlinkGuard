@@ -273,3 +273,13 @@ export const MAIN_RENDERER_INVOKE_CHANNELS = [
 	IPC_CHANNELS.listPauseAppCandidates,
 	IPC_CHANNELS.listCameraDevices,
 ] as const;
+
+/** Optional payload for {@link IPC_CHANNELS.snoozeAll}. */
+export type SnoozeAllPayload = { useToken?: boolean };
+
+/** True only when `useToken` is explicitly true. */
+export function sanitizeSnoozeAllPayload(raw: unknown): boolean {
+	if (raw === undefined || raw === null) return false;
+	if (typeof raw !== "object") return false;
+	return (raw as SnoozeAllPayload).useToken === true;
+}

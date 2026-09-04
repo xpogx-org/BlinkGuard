@@ -10,7 +10,7 @@ import {
 import { isBlinkRewardId } from "../../../shared/blink-rewards";
 import { isCheerThemeId } from "../../../shared/cheer-themes";
 import { isDebugOverlayKind, isDebugSoundKind } from "../../../shared/debug-preview";
-import { IPC_CHANNELS } from "../../../shared/ipc-channels";
+import { IPC_CHANNELS, sanitizeSnoozeAllPayload } from "../../../shared/ipc-channels";
 import { POPUP_PRESETS, isPopupPresetId } from "../../../shared/popup-presets";
 import { sanitizeNotificationStyle } from "../../../shared/notification-style";
 import type { PauseAppRule, Point, PopupColors, Size } from "../../../shared/preferences";
@@ -94,7 +94,7 @@ interface IpcDependencies {
 	onSnoozeMinutesChanged?: () => void;
 	/** Tray accelerator refresh after Settings remaps global shortcuts. */
 	onKeyboardShortcutsChanged?: () => void;
-	hushAllPrompts: () => void;
+	hushAllPrompts: (useToken?: boolean) => void;
 	endPromptHush: () => void;
 	settingsProfiles: SettingsProfilesService;
 }
@@ -383,7 +383,9 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	on(IPC_CHANNELS.skipLookAway, () => lookAway.skip());
 	on(IPC_CHANNELS.snoozeLookAway, () => lookAway.snooze());
 	on(IPC_CHANNELS.snoozeBlink, () => reminders.snooze());
-	on(IPC_CHANNELS.snoozeAll, () => hushAllPrompts());
+	on(IPC_CHANNELS.snoozeAll, (_event, raw) =>
+		hushAllPrompts(sanitizeSnoozeAllPayload(raw)),
+	);
 	on(IPC_CHANNELS.endPromptHush, () => endPromptHush());
 	on(IPC_CHANNELS.updateMgdMode, (_event, enabled: unknown) => {
 		preferences.set("mgdMode", enabled as boolean);

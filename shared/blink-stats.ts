@@ -164,6 +164,8 @@ export type RewardOffer = {
 	owned: boolean;
 	charges: number;
 	canBuy: boolean;
+	/** Banked snooze tokens can be spent for extended hush. */
+	canUse?: boolean;
 	purchaseCount: number;
 	/** Cap for progress UI; null when unlimited (cheer). */
 	maxPurchases: number | null;
@@ -176,6 +178,13 @@ export type RewardOffer = {
 	isEquipped?: boolean;
 	canEquip?: boolean;
 };
+
+/** Token hush lasts twice the user's snoozeMinutes setting. */
+export const SNOOZE_TOKEN_DURATION_MULTIPLIER = 2;
+
+export function tokenSnoozeMinutes(baseMinutes: number): number {
+	return Math.max(1, baseMinutes) * SNOOZE_TOKEN_DURATION_MULTIPLIER;
+}
 
 export type ChartBucket = {
 	label: string;
@@ -676,6 +685,9 @@ export function rewardOffers(
 			canEquip = !isEquipped;
 		}
 
+		const canUse =
+			id === "snoozeToken" ? state.snoozeTokenCharges > 0 : undefined;
+
 		return {
 			id,
 			category: def.category,
@@ -685,6 +697,7 @@ export function rewardOffers(
 			owned,
 			charges,
 			canBuy,
+			canUse,
 			purchaseCount,
 			maxPurchases,
 			discountPercent,
@@ -794,6 +807,16 @@ export function applyRewardPurchase(
 			[rewardId]: (next.rewardPurchaseCounts[rewardId] ?? 0) + 1,
 		};
 	}
+	return next;
+}
+
+/** Spend one banked snooze token; null when charges are 0. */
+export function consumeSnoozeToken(
+	state: BlinkStatsState,
+): BlinkStatsState | null {
+	if (state.snoozeTokenCharges <= 0) return null;
+	const next = cloneState(state);
+	next.snoozeTokenCharges -= 1;
 	return next;
 }
 

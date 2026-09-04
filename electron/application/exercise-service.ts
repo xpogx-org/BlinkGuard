@@ -16,8 +16,10 @@ import {
 	promptSnoozeMs,
 } from "../domain/reminder-policy";
 import type { AppRuntimeState } from "./app-runtime-state";
+import type { BlinkStatsPort } from "./ports/blink-stats-port";
 import type { PreferenceStore } from "./ports/preference-store";
 import type { NotificationGate } from "./ports/notification-gate";
+import { tokenSnoozeToastLabel } from "./snooze-token-prompt";
 import {
 	NO_OP_OS_NOTIFICATIONS,
 	type ExerciseWindowPort,
@@ -43,7 +45,10 @@ export class ExerciseService {
 		private readonly sound: NotificationSoundPort,
 		private readonly notificationGate: NotificationGate = ALLOW_ALL_GATE,
 		private readonly osNotifications: OsNotificationPort = NO_OP_OS_NOTIFICATIONS,
-		private readonly stats: EyeCareStatsRecorder = NOOP_EYE_CARE_STATS,
+		private readonly stats: EyeCareStatsRecorder & Pick<
+			BlinkStatsPort,
+			"getSnoozeTokenCharges"
+		> = NOOP_EYE_CARE_STATS,
 	) {}
 
 	start(): void {
@@ -128,12 +133,18 @@ export class ExerciseService {
 		);
 		let nativeShown = false;
 		if (surfaces.native) {
+			const tokenLabel = tokenSnoozeToastLabel(
+				locale,
+				this.preferences.snoozeMinutes,
+				this.stats.getSnoozeTokenCharges?.() ?? 0,
+			);
 			nativeShown = this.osNotifications.show(
 				"exercise",
 				{
 					title: t(locale, "popup.exercise.title"),
 					body: prompt,
 					snoozeLabel: t(locale, "osToast.snooze"),
+					...(tokenLabel ? { tokenSnoozeLabel: tokenLabel } : {}),
 				},
 				{ onFailed: () => this.fallbackOverlay(prompt) },
 			).shown;

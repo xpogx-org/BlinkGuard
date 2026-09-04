@@ -194,6 +194,7 @@ export type BlinkPromptProfile = "standard" | "gentle" | "strong";
 export const SHORTCUT_ACTIONS = [
 	"trackingToggle",
 	"snoozeAll",
+	"snoozeWithToken",
 	"openSettings",
 	"openCameraPreview",
 ] as const;
@@ -215,6 +216,7 @@ export type ShortcutErrorPayload = {
 export const DEFAULT_KEYBOARD_SHORTCUTS: Readonly<KeyboardShortcuts> = {
 	trackingToggle: "Ctrl+I",
 	snoozeAll: "Ctrl+Shift+S",
+	snoozeWithToken: "",
 	openSettings: "",
 	openCameraPreview: "",
 };

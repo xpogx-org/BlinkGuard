@@ -32,6 +32,7 @@ import {
 	resetBackoff,
 } from "../domain/reminder-prompt-policy";
 import type { AppRuntimeState } from "./app-runtime-state";
+import { tokenSnoozeToastLabel } from "./snooze-token-prompt";
 import type {
 	BlinkRateCoachingPort,
 	BlinkStatsPort,
@@ -877,12 +878,18 @@ export class ReminderService {
 		);
 		let nativeShown = false;
 		if (surfaces.native) {
+			const tokenLabel = tokenSnoozeToastLabel(
+				locale,
+				this.preferences.snoozeMinutes,
+				this.stats?.getSnoozeTokenCharges?.() ?? 0,
+			);
 			nativeShown = this.osNotifications.show(
 				"blink",
 				{
 					title: t(locale, "popup.blink.title"),
 					body,
 					snoozeLabel: t(locale, "osToast.snooze"),
+					...(tokenLabel ? { tokenSnoozeLabel: tokenLabel } : {}),
 				},
 				{ onFailed: () => this.fallbackBlinkOverlay() },
 			).shown;

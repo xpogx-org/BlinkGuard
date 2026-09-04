@@ -428,6 +428,9 @@ export const uk: MessageCatalog = {
 		"Короткий підсумок, коли ви зупиняєте відстеження, блокуєте ПК або виходите з BlinkGuard.",
 	"settings.sessionRecap.toggleAria": "Увімкнути підсумок робочої сесії",
 	"osToast.snooze": "Відкласти",
+	"osToast.snoozeWithToken": "Приглушити всі з жетоном ({n} хв)",
+	"osToast.snoozeWithToken_few": "Приглушити всі з жетоном ({n} хв)",
+	"osToast.snoozeWithToken_plural": "Приглушити всі з жетоном ({n} хв)",
 	"osToast.lookAway.body": "{n} секунда",
 	"osToast.lookAway.body_few": "{n} секунди",
 	"osToast.lookAway.body_plural": "{n} секунд",
@@ -578,7 +581,10 @@ export const uk: MessageCatalog = {
 		"Увімкнути або вимкнути відстеження нагадувань (як кнопки Старт / Стоп).",
 	"shortcut.action.snoozeAll": "Відкласти підказки",
 	"shortcut.action.snoozeAllDesc":
-		"Приглушити всі підказки (моргання, вправи, погляд у далечінь) на час відкладення. Доступно в треї та цією комбінацією.",
+		"Приглушити всі підказки (моргання, вправи, відвести погляд) на час відкладення. Доступно з трею та цієї комбінації.",
+	"shortcut.action.snoozeWithToken": "Подовжене приглушення (жетон)",
+	"shortcut.action.snoozeWithTokenDesc":
+		"Витратити один збережений жетон відкладення, щоб приглушити всі підказки на подвійний час відкладення. Призначте тут або скористайтеся треєм, коли є жетони.",
 	"shortcut.action.openSettings": "Відкрити налаштування",
 	"shortcut.action.openSettingsDesc":
 		"Показати й сфокусувати вікно налаштувань BlinkGuard.",
@@ -710,7 +716,8 @@ export const uk: MessageCatalog = {
 	"rewards.popupPresetSunsetDesc": "Теплі янтарні попапи з пульсуючим помаранчевим світінням.",
 	"rewards.snoozeToken": "Жетон відкладення",
 	"rewards.snoozeTokenDesc":
-		"Зберігає жетон відкладення (макс. 2). Резерв на майбутні швидкі відкладення.",
+		"Зберігає жетон відкладення (макс. 2). Витратьте з трею, комбінації, сповіщення ОС або «Використати зараз» тут — подовжене приглушення (2× ваш час відкладення, усі підказки).",
+	"rewards.useSnoozeToken": "Використати зараз",
 	"stats.liveRate": "Жива частота моргання",
 	"stats.liveRateDesc":
 		"Зараховані моргання за хвилину часу з видимим обличчям (камера). Потрібно ~24 с з обличчям у кадрі, перш ніж частота буде готова.",
@@ -806,6 +813,9 @@ export const uk: MessageCatalog = {
 	"tray.hush": "Приглушити підказки ({n} хв)",
 	"tray.hush_few": "Приглушити підказки ({n} хв)",
 	"tray.hush_plural": "Приглушити підказки ({n} хв)",
+	"tray.hushWithToken": "Подовжене приглушення з жетоном ({n} хв) · залишилось {count}",
+	"tray.hushWithToken_few": "Подовжене приглушення з жетоном ({n} хв) · залишилось {count}",
+	"tray.hushWithToken_plural": "Подовжене приглушення з жетоном ({n} хв) · залишилось {count}",
 	"tray.endHush": "Зняти приглушення",
 	"hush.active": "Підказки приглушено",
 	"tray.snoozeBlink": "Відкласти моргання ({n} хв)",
