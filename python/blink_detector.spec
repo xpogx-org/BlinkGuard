@@ -2,7 +2,12 @@
 
 from PyInstaller.utils.hooks import collect_submodules
 
-hiddenimports = collect_submodules("blink_detector_package")
+_pkg_modules = [
+	m
+	for m in collect_submodules("blink_detector_package")
+	if ".tests" not in m
+]
+hiddenimports = _pkg_modules + ["cv2"]
 
 a = Analysis(
 	["blink_detector.py"],
@@ -19,9 +24,22 @@ a = Analysis(
 	hookspath=[],
 	hooksconfig={},
 	runtime_hooks=[],
-	excludes=["mediapipe"],
+	# Unused GUI/stdlib/test modules — verified by import smoke after rebuild.
+	excludes=[
+		"mediapipe",
+		"matplotlib",
+		"PIL",
+		"tkinter",
+		"unittest",
+		"pydoc",
+		"test",
+		"tests",
+		"IPython",
+		"notebook",
+		"scipy",
+	],
 	noarchive=False,
-	optimize=0,
+	optimize=2,
 )
 pyz = PYZ(a.pure)
 
