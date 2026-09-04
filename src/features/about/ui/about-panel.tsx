@@ -13,6 +13,7 @@ import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import { author, version } from "../../../../package.json";
 
 const AUTHOR_NAME = author.name;
+const TELEGRAM_URL = "https://t.me/PaOnGa";
 
 const OVERVIEW_COPY = [
 	{ title: "about.what.title", body: "about.what.body" },
@@ -32,6 +33,7 @@ export function AboutPanel({ autoUpdate }: AboutPanelProps) {
 	const [tab, setTab] = useState<AboutTabId>("overview");
 	const [exportBusy, setExportBusy] = useState(false);
 	const [exportStatus, setExportStatus] = useState<string | null>(null);
+	const [exportSucceeded, setExportSucceeded] = useState(false);
 	const aboutTabs = [
 		{ id: "overview" as const, label: t("app.about.tab.overview") },
 		{ id: "notes" as const, label: t("app.about.tab.notes") },
@@ -45,14 +47,17 @@ export function AboutPanel({ autoUpdate }: AboutPanelProps) {
 		try {
 			const result = await rendererIpc.exportDiagnostics();
 			if (result.status === "cancelled") {
+				setExportSucceeded(false);
 				setExportStatus(t("about.exportDiagnostics.cancelled"));
 			} else if (result.status === "saved") {
+				setExportSucceeded(true);
 				setExportStatus(
 					t("about.exportDiagnostics.success", {
 						path: result.path ?? "",
 					}),
 				);
 			} else {
+				setExportSucceeded(false);
 				setExportStatus(
 					t("about.exportDiagnostics.error", {
 						message: result.message ?? "unknown",
@@ -60,6 +65,7 @@ export function AboutPanel({ autoUpdate }: AboutPanelProps) {
 				);
 			}
 		} catch (error) {
+			setExportSucceeded(false);
 			setExportStatus(
 				t("about.exportDiagnostics.error", {
 					message: error instanceof Error ? error.message : String(error),
@@ -105,24 +111,39 @@ export function AboutPanel({ autoUpdate }: AboutPanelProps) {
 
 					<SettingPanel>
 						<SettingRow
-							title={t("about.exportDiagnostics.title")}
-							description={t("about.exportDiagnostics.body")}
+							title={t("about.reportProblem.title")}
+							description={t("about.reportProblem.body")}
 							action={
-								<Button
-									type="button"
-									variant="secondary"
-									disabled={exportBusy}
-									onClick={() => {
-										void handleExportDiagnostics();
-									}}
-								>
-									<Upload className="mr-2 h-4 w-4" aria-hidden />
-									{exportBusy
-										? t("about.exportDiagnostics.busy")
-										: t("about.exportDiagnostics.button")}
-								</Button>
+								<div className="flex flex-col gap-2 sm:items-end">
+									<Button
+										type="button"
+										variant="secondary"
+										disabled={exportBusy}
+										onClick={() => {
+											void handleExportDiagnostics();
+										}}
+									>
+										<Upload className="mr-2 h-4 w-4" aria-hidden />
+										{exportBusy
+											? t("about.exportDiagnostics.busy")
+											: t("about.reportProblem.export")}
+									</Button>
+									<Button
+										type="button"
+										variant="secondary"
+										onClick={() => rendererIpc.openGithubReportIssue()}
+									>
+										<ExternalLink className="mr-2 h-4 w-4" aria-hidden />
+										{t("about.reportProblem.openIssue")}
+									</Button>
+								</div>
 							}
 						>
+							<Reveal variant="fade" open={!exportSucceeded}>
+								<p className="text-sm text-muted-foreground">
+									{t("about.reportProblem.attachReminder")}
+								</p>
+							</Reveal>
 							<Reveal variant="fade" open={Boolean(exportStatus)}>
 								{exportStatus ? (
 									<p className="select-text text-sm text-muted-foreground break-all">
@@ -130,6 +151,17 @@ export function AboutPanel({ autoUpdate }: AboutPanelProps) {
 									</p>
 								) : null}
 							</Reveal>
+							<p className="mt-2 text-sm text-muted-foreground">
+								{t("about.reportProblem.telegramSecondary")}{" "}
+								<Button
+									type="button"
+									variant="link"
+									className="h-auto p-0 text-sm"
+									onClick={() => rendererIpc.openExternalUrl(TELEGRAM_URL)}
+								>
+									{t("about.reportProblem.telegramLink")}
+								</Button>
+							</p>
 						</SettingRow>
 					</SettingPanel>
 

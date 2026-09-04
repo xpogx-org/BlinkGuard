@@ -54,7 +54,7 @@ export const en: MessageCatalog = {
 	// About
 	"about.what.title": "What it is",
 	"about.what.body":
-		"BlinkGuard is a small desktop companion for your eyes when you spend long hours at a screen. It can nudge you to blink on a timer, optionally watch blinks with the camera, and remind you about short eye exercises or classic 20-20-20 look-away breaks. Use as much or as little as you want — the goal is simply kinder eyes on long workdays.",
+		"BlinkGuard is a small desktop companion for your eyes when you spend long hours at a screen. Timer-based blink reminders work without a camera; you can optionally add blink-aware timing with the camera, plus short eye exercises or classic 20-20-20 look-away breaks. Use as much or as little as you want — the goal is simply kinder eyes on long workdays.",
 	"about.why.title": "Why it exists",
 	"about.why.body":
 		"I built BlinkGuard because I needed it myself. After enough dry, tired eyes from coding and browsing, I wanted something local, quiet, and under my control — not another cloud product. This is a personal project made from the heart; if it helps you too, that is the whole point.",
@@ -68,6 +68,16 @@ export const en: MessageCatalog = {
 	"about.opensource.body":
 		"BlinkGuard is open source. It started from ScreenBlink and is now maintained as its own project — read the code, open issues, share ideas, or contribute on GitHub.",
 	"about.opensource.github": "View on GitHub",
+	"about.reportProblem.title": "Report a problem",
+	"about.reportProblem.body":
+		"Export a local diagnostics zip, then open a structured GitHub issue and attach the file. Nothing uploads automatically — see PRIVACY in the repo for details.",
+	"about.reportProblem.export": "Export diagnostics",
+	"about.reportProblem.openIssue": "Open GitHub issue",
+	"about.reportProblem.attachReminder":
+		"Attach the diagnostics zip to your GitHub issue so we can triage faster.",
+	"about.reportProblem.telegramSecondary":
+		"Prefer GitHub for bugs; you can also reach the maintainer on Telegram.",
+	"about.reportProblem.telegramLink": "Telegram",
 	"about.exportDiagnostics.title": "Export diagnostics",
 	"about.exportDiagnostics.body":
 		"Save a local zip with blink debug logs, a recent action trail (settings, popups, tray, shortcuts), app log if present, and algorithm settings — no custom popup text. Nothing is uploaded; attach the file to a GitHub issue if you want help improving BlinkGuard.",

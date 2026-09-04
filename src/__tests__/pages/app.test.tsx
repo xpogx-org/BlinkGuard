@@ -147,9 +147,12 @@ describe("settings shell", () => {
 		fireEvent.click(screen.getByRole("button", { name: "About" }));
 		expect(screen.getByText("What it is")).toBeDefined();
 		expect(screen.getByText("Open source")).toBeDefined();
+		expect(screen.getByText("Report a problem")).toBeDefined();
 		expect(screen.getByText(`Version ${version}`)).toBeDefined();
 		fireEvent.click(screen.getByRole("button", { name: "View on GitHub" }));
 		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.openGithubRepo);
+		fireEvent.click(screen.getByRole("button", { name: "Open GitHub issue" }));
+		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.openGithubReportIssue);
 		fireEvent.click(screen.getByRole("button", { name: "Check for updates" }));
 		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.checkForUpdates);
 
