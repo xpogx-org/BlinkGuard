@@ -1,5 +1,6 @@
 import { screen, type Display } from "electron";
 import type { Point, Size } from "../../../shared/preferences";
+import { POPUP_SHADOW_INSET } from "../../../shared/popup-window-chrome";
 
 export type WorkArea = {
 	x: number;
@@ -309,11 +310,14 @@ export type PopupLayout = {
 	size: Size;
 };
 
-/** Shrink a popup so it fits inside a workArea (never below 1px). */
+/** Shrink a popup card so the window (card + shadow gutter) fits inside workArea. */
 export function clampPopupSizeToWorkArea(size: Size, workArea: WorkArea): Size {
+	const inset = POPUP_SHADOW_INSET;
+	const maxWidth = Math.max(1, workArea.width - inset * 2);
+	const maxHeight = Math.max(1, workArea.height - inset * 2);
 	return {
-		width: Math.max(1, Math.min(Math.round(size.width), workArea.width)),
-		height: Math.max(1, Math.min(Math.round(size.height), workArea.height)),
+		width: Math.max(1, Math.min(Math.round(size.width), maxWidth)),
+		height: Math.max(1, Math.min(Math.round(size.height), maxHeight)),
 	};
 }
 

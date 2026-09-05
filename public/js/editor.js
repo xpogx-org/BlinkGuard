@@ -3,8 +3,9 @@
 function updateSizeDisplay() {
 	const sizeDisplay = document.getElementById("sizeDisplay");
 	if (sizeDisplay) {
-		const width = Math.round(window.innerWidth);
-		const height = Math.round(window.innerHeight);
+		const inset = readPopupShadowInset();
+		const width = Math.round(window.innerWidth - inset * 2);
+		const height = Math.round(window.innerHeight - inset * 2);
 		const tr =
 			window.__i18n && typeof window.__i18n.t === "function"
 				? window.__i18n.t.bind(window.__i18n)
@@ -14,14 +15,15 @@ function updateSizeDisplay() {
 }
 
 function editorGeometry() {
+	const inset = readPopupShadowInset();
 	return {
 		size: {
-			width: Math.round(window.innerWidth),
-			height: Math.round(window.innerHeight),
+			width: Math.round(window.innerWidth - inset * 2),
+			height: Math.round(window.innerHeight - inset * 2),
 		},
 		position: {
-			x: Math.round(window.screenX),
-			y: Math.round(window.screenY),
+			x: Math.round(window.screenX + inset),
+			y: Math.round(window.screenY + inset),
 		},
 	};
 }

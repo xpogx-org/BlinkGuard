@@ -7,8 +7,7 @@ body.recap-body {
 body.recap-body {
 	justify-content: center;
 	align-items: center;
-	padding: 0;
-	overflow: hidden;
+	overflow: visible;
 }
 
 .recap-stage {

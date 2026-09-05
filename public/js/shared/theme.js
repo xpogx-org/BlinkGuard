@@ -32,6 +32,14 @@ function clamp01(value) {
 }
 
 /** Card/surface alpha from transparency — keep window opacity at 1 for sharp glyphs. */
+function readPopupShadowInset() {
+	const raw = getComputedStyle(document.documentElement)
+		.getPropertyValue("--popup-shadow-inset")
+		.trim();
+	const parsed = Number.parseFloat(raw);
+	return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed) : 32;
+}
+
 function applyPopupSurfaceAlpha() {
 	const root = document.documentElement;
 	const styles = getComputedStyle(root);
@@ -86,6 +94,7 @@ function updateColors(colors) {
 		);
 	}
 	applyPopupSurfaceAlpha();
+
 	applyPopupGlow(colors);
 }
 
@@ -147,3 +156,4 @@ function updateCameraMode(isEnabled) {
 }
 
 applyPopupSurfaceAlpha();
+

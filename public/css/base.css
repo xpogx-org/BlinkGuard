@@ -16,6 +16,7 @@
 	--popup-radius: 10px;
 	--popup-radius-sm: 6px;
 	--popup-glass-blur: 4px;
+	--popup-shadow-inset: 32px;
 	--popup-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 	--popup-muted: #e2e8f0;
 	--popup-muted-2: #94a3b8;
@@ -144,6 +145,34 @@ button:disabled,
 
 .popup-enter {
 	animation: popupEnter 220ms ease-out both;
+}
+
+/*
+ * Transparent panel windows use CSS box-shadow (BrowserWindow hasShadow:false).
+ * Reserve a gutter so shadows are not clipped by overflow:hidden on html/body.
+ * WindowManager expands width/height and offsets position by the same inset.
+ */
+html.popup-panel-root,
+html.popup-panel-root body {
+	background: transparent !important;
+	overflow: visible;
+}
+
+html.popup-panel-root body {
+	box-sizing: border-box;
+	padding: var(--popup-shadow-inset);
+}
+
+.popup-panel-root :is(
+	.popup-glass,
+	.reminder-card,
+	.exercise-container,
+	.look-away-container,
+	.editor-container,
+	#no-face,
+	#calibration-nudge
+) {
+	box-shadow: 0 10px 28px var(--popup-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {

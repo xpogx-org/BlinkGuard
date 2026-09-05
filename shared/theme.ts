@@ -123,6 +123,8 @@ export const theme = {
 		softAlpha: 0.14,
 		borderAlpha: 0.1,
 		glassBlur: "4px",
+		/** Room for CSS drop shadow inside transparent panel windows (px). */
+		shadowInset: 32,
 		buttonMuted: "#334155",
 		buttonMutedHover: "#475569",
 	},
@@ -260,6 +262,7 @@ export function popupCssVars(): string {
 		`${indent}--popup-radius: ${theme.radius.popup};`,
 		`${indent}--popup-radius-sm: ${theme.radius.popupSm};`,
 		`${indent}--popup-glass-blur: ${p.glassBlur};`,
+		`${indent}--popup-shadow-inset: ${p.shadowInset}px;`,
 		`${indent}--popup-font: ${theme.font.popup};`,
 		`${indent}--popup-muted: ${p.muted};`,
 		`${indent}--popup-muted-2: ${p.muted2};`,

@@ -1,10 +1,5 @@
 /* Animated outer glow for shop popup presets (Aurora / Sunset). */
 
-html[data-popup-glow] body {
-	box-sizing: border-box;
-	padding: 10px;
-}
-
 html[data-popup-glow] .reminder-card,
 html[data-popup-glow] .exercise-container,
 html[data-popup-glow] .look-away-container {

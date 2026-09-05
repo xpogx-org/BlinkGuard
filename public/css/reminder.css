@@ -8,7 +8,6 @@ body:has(.reminder-card) {
 /* Keep border/radius inside the transparent window — flush edges clip on Windows. */
 body:has(.reminder-card) {
 	box-sizing: border-box;
-	padding: 8px;
 }
 
 .reminder-card {

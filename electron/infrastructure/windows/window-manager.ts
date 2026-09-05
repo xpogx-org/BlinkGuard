@@ -33,6 +33,13 @@ import { IPC_CHANNELS } from "../../../shared/ipc-channels";
 import { buildOverlayPayload } from "../../../shared/session-recap";
 import type { SessionRecapOverlayPayload } from "../../../shared/session-recap";
 import { buildPopupAppearancePayload } from "../../../shared/popup-presets";
+import {
+	POPUP_SHADOW_INSET,
+	popupCardPosition,
+	popupCardSize,
+	popupWindowSize,
+	withPopupWindowChrome,
+} from "../../../shared/popup-window-chrome";
 import { BLINK_RATE_COACH_DISMISS_MS } from "../../domain/blink-rate-coaching";
 import { RECAP_OVERLAY_DISMISS_MS } from "../../domain/session-recap-policy";
 import {
@@ -233,15 +240,16 @@ export class WindowManager {
 		}
 		this.closeReminder();
 		const display = getActiveDisplay();
-		const size = this.popupSizeForDisplay(display);
-		const position = this.ensurePopupPosition(display);
+		const cardSize = this.popupSizeForDisplay(display);
+		const cardPosition = this.ensurePopupPosition(display);
+		const frame = withPopupWindowChrome(cardSize, cardPosition);
 		const interactive =
 			kind === "blink" && !this.preferences.blinkPopupClickThrough;
 		const popup = createPanelWindow({
-			width: size.width,
-			height: size.height,
-			x: position.x,
-			y: position.y,
+			width: frame.size.width,
+			height: frame.size.height,
+			x: frame.position.x,
+			y: frame.position.y,
 			focusable: interactive,
 		}, this.paths.preload);
 		this.reminder = popup;
@@ -341,10 +349,12 @@ export class WindowManager {
 		if (this.noFace && !this.noFace.isDestroyed()) {
 			this.hideNoFace();
 		}
-		const { x, y } = getTopCenterPopupPosition(220);
+		const cardSize = { width: 220, height: 48 };
+		const winSize = popupWindowSize(cardSize);
+		const { x, y } = getTopCenterPopupPosition(winSize.width);
 		const popup = createPanelWindow({
-			width: 220,
-			height: 48,
+			width: winSize.width,
+			height: winSize.height,
 			x,
 			y,
 			focusable: false,
@@ -384,12 +394,13 @@ export class WindowManager {
 		if (this.calibrationNudge && !this.calibrationNudge.isDestroyed()) {
 			this.hideCalibrationNudge();
 		}
-		const width = 320;
-		const { x, y } = getTopCenterPopupPosition(width);
+		const cardSize = { width: 320, height: 48 };
+		const winSize = popupWindowSize(cardSize);
+		const { x, y } = getTopCenterPopupPosition(winSize.width);
 		const popup = createPanelWindow(
 			{
-				width,
-				height: 48,
+				width: winSize.width,
+				height: winSize.height,
 				x,
 				y,
 				focusable: false,
@@ -447,13 +458,13 @@ export class WindowManager {
 			Number.isFinite(celebration.level)
 				? Math.max(1, Math.floor(celebration.level))
 				: 1;
-		const width = 360;
-		const height = isStacked ? 140 : 120;
-		const { x, y } = getTopCenterPopupPosition(width);
+		const cardSize = { width: 360, height: isStacked ? 140 : 120 };
+		const winSize = popupWindowSize(cardSize);
+		const { x, y } = getTopCenterPopupPosition(winSize.width);
 		const popup = createPanelWindow(
 			{
-				width,
-				height,
+				width: winSize.width,
+				height: winSize.height,
 				x,
 				y,
 				focusable: false,
@@ -533,13 +544,13 @@ export class WindowManager {
 		if (this.recapToast && !this.recapToast.isDestroyed()) {
 			this.hideSessionRecap();
 		}
-		const width = 400;
-		const height = 160;
-		const { x, y } = getTopCenterPopupPosition(width);
+		const cardSize = { width: 400, height: 160 };
+		const winSize = popupWindowSize(cardSize);
+		const { x, y } = getTopCenterPopupPosition(winSize.width);
 		const popup = createPanelWindow(
 			{
-				width,
-				height,
+				width: winSize.width,
+				height: winSize.height,
 				x,
 				y,
 				focusable: false,
@@ -609,12 +620,12 @@ export class WindowManager {
 	showExercise(prompt: string, onClosed: () => void): BrowserWindow | null {
 		if (this.exercise && !this.exercise.isDestroyed()) return null;
 		const interactive = !this.preferences.blinkPopupClickThrough;
-		const popupWidth = 340;
-		const popupHeight = 200;
-		const { x, y } = getLeftBiasedPopupPosition(popupWidth, popupHeight);
+		const cardSize = { width: 340, height: 200 };
+		const winSize = popupWindowSize(cardSize);
+		const { x, y } = getLeftBiasedPopupPosition(winSize.width, winSize.height);
 		const popup = createPanelWindow({
-			width: popupWidth,
-			height: popupHeight,
+			width: winSize.width,
+			height: winSize.height,
 			x,
 			y,
 			focusable: interactive,
@@ -748,12 +759,12 @@ export class WindowManager {
 	showLookAway(onClosed: () => void): BrowserWindow | null {
 		if (this.lookAway && !this.lookAway.isDestroyed()) return null;
 		const interactive = !this.preferences.blinkPopupClickThrough;
-		const popupWidth = 340;
-		const popupHeight = 220;
-		const { x, y } = getRightBiasedPopupPosition(popupWidth, popupHeight);
+		const cardSize = { width: 340, height: 220 };
+		const winSize = popupWindowSize(cardSize);
+		const { x, y } = getRightBiasedPopupPosition(winSize.width, winSize.height);
 		const popup = createPanelWindow({
-			width: popupWidth,
-			height: popupHeight,
+			width: winSize.width,
+			height: winSize.height,
 			x,
 			y,
 			focusable: interactive,
@@ -854,17 +865,18 @@ export class WindowManager {
 			return this.editor;
 		}
 		const display = getActiveDisplay();
-		const size = this.popupSizeForDisplay(display);
-		const position = this.ensurePopupPosition(display);
+		const cardSize = this.popupSizeForDisplay(display);
+		const cardPosition = this.ensurePopupPosition(display);
+		const frame = withPopupWindowChrome(cardSize, cardPosition);
 		const window = createPanelWindow({
-			width: size.width,
-			height: size.height,
-			x: position.x,
-			y: position.y,
+			width: frame.size.width,
+			height: frame.size.height,
+			x: frame.position.x,
+			y: frame.position.y,
 			focusable: true,
 			resizable: true,
-			minWidth: 200,
-			minHeight: 80,
+			minWidth: 200 + POPUP_SHADOW_INSET * 2,
+			minHeight: 80 + POPUP_SHADOW_INSET * 2,
 		}, this.paths.preload);
 		this.editor = window;
 		void window.loadFile(path.join(this.paths.publicDir, "popup-editor.html"));
@@ -875,8 +887,8 @@ export class WindowManager {
 				this.popupAppearancePayload(),
 			);
 			window.webContents.send(IPC_CHANNELS.currentPopupState, {
-				size,
-				position,
+				size: cardSize,
+				position: cardPosition,
 				multiDisplay: screen.getAllDisplays().length > 1,
 				hasNextUnsaved: false,
 			});
@@ -909,8 +921,8 @@ export class WindowManager {
 		if (!this.editor || this.editor.isDestroyed()) return;
 		const bounds = this.editor.getBounds();
 		this.editor.webContents.send(IPC_CHANNELS.currentPopupState, {
-			size: { width: bounds.width, height: bounds.height },
-			position: { x: bounds.x, y: bounds.y },
+			size: popupCardSize({ width: bounds.width, height: bounds.height }),
+			position: popupCardPosition({ x: bounds.x, y: bounds.y }),
 			multiDisplay: screen.getAllDisplays().length > 1,
 			hasNextUnsaved,
 		});
@@ -923,12 +935,16 @@ export class WindowManager {
 	moveEditorToNextUnsaved(): boolean {
 		if (!this.editor || this.editor.isDestroyed()) return false;
 		const bounds = this.editor.getBounds();
-		const size = { width: bounds.width, height: bounds.height };
+		const cardSize = popupCardSize({
+			width: bounds.width,
+			height: bounds.height,
+		});
+		const cardPosition = popupCardPosition({ x: bounds.x, y: bounds.y });
 		const source = getDisplayForPopupRect(
-			bounds.x,
-			bounds.y,
-			bounds.width,
-			bounds.height,
+			cardPosition.x,
+			cardPosition.y,
+			cardSize.width,
+			cardSize.height,
 		);
 		const currentId = String(source.id);
 		const live = screen.getAllDisplays();
@@ -943,8 +959,8 @@ export class WindowManager {
 			return false;
 		}
 		const layouts = layoutForDisplays(
-			{ x: bounds.x, y: bounds.y },
-			size,
+			cardPosition,
+			cardSize,
 			source.workArea,
 			[{ id: nextId, workArea: target.workArea }],
 		);
@@ -953,8 +969,9 @@ export class WindowManager {
 			this.sendEditorSetupNextState(false);
 			return false;
 		}
-		this.editor.setSize(layout.size.width, layout.size.height);
-		this.editor.setPosition(layout.position.x, layout.position.y);
+		const frame = withPopupWindowChrome(layout.size, layout.position);
+		this.editor.setSize(frame.size.width, frame.size.height);
+		this.editor.setPosition(frame.position.x, frame.position.y);
 		this.editor.webContents.send(IPC_CHANNELS.currentPopupState, {
 			size: layout.size,
 			position: layout.position,
@@ -1075,9 +1092,10 @@ export class WindowManager {
 
 	applyPopupGeometry(size: Size, position: Point): Point {
 		const resolved = this.clampPopupPosition(position, size);
+		const frame = withPopupWindowChrome(size, resolved);
 		if (this.reminder && !this.reminder.isDestroyed()) {
-			this.reminder.setSize(size.width, size.height);
-			this.reminder.setPosition(resolved.x, resolved.y);
+			this.reminder.setSize(frame.size.width, frame.size.height);
+			this.reminder.setPosition(frame.position.x, frame.position.y);
 		}
 		return resolved;
 	}
@@ -1094,11 +1112,15 @@ export class WindowManager {
 		this.recoverTrackedPopup(this.editor);
 
 		if (this.exercise && !this.exercise.isDestroyed()) {
-			const next = getLeftBiasedPopupPosition(340, 200);
+			const cardSize = { width: 340, height: 200 };
+			const winSize = popupWindowSize(cardSize);
+			const next = getLeftBiasedPopupPosition(winSize.width, winSize.height);
 			this.setWindowPositionIfOpen(this.exercise, next);
 		}
 		if (this.lookAway && !this.lookAway.isDestroyed()) {
-			const next = getRightBiasedPopupPosition(340, 220);
+			const cardSize = { width: 340, height: 220 };
+			const winSize = popupWindowSize(cardSize);
+			const next = getRightBiasedPopupPosition(winSize.width, winSize.height);
 			this.setWindowPositionIfOpen(this.lookAway, next);
 		}
 		this.repositionAmbient();
@@ -1337,31 +1359,38 @@ export class WindowManager {
 	private recoverTrackedPopup(window: BrowserWindow | null): void {
 		if (!window || window.isDestroyed()) return;
 		const bounds = window.getBounds();
+		const cardSize = popupCardSize({
+			width: bounds.width,
+			height: bounds.height,
+		});
+		const cardPosition = popupCardPosition({ x: bounds.x, y: bounds.y });
 		const display = getDisplayForPopupRect(
-			bounds.x,
-			bounds.y,
-			bounds.width,
-			bounds.height,
+			cardPosition.x,
+			cardPosition.y,
+			cardSize.width,
+			cardSize.height,
 		);
-		const current = { x: bounds.x, y: bounds.y };
 		const saved =
 			this.preferences.popupPositionsByDisplayId[String(display.id)] ??
 			null;
 		const { position, recovered } = resolveOpenWindowPosition(
-			current,
+			cardPosition,
 			saved,
 			display.workArea,
-			{ width: bounds.width, height: bounds.height },
+			cardSize,
 		);
-		const fitted = clampPopupSizeToWorkArea(
-			{ width: bounds.width, height: bounds.height },
-			display.workArea,
-		);
+		const fittedCard = clampPopupSizeToWorkArea(cardSize, display.workArea);
+		const frame = withPopupWindowChrome(fittedCard, position);
 		const sizeChanged =
-			fitted.width !== bounds.width || fitted.height !== bounds.height;
+			fittedCard.width !== cardSize.width ||
+			fittedCard.height !== cardSize.height;
 		if (!recovered && !sizeChanged) return;
-		if (recovered) this.setWindowPositionIfOpen(window, position);
-		if (sizeChanged) window.setSize(fitted.width, fitted.height);
+		if (recovered) {
+			this.setWindowPositionIfOpen(window, frame.position);
+		}
+		if (sizeChanged) {
+			window.setSize(frame.size.width, frame.size.height);
+		}
 	}
 
 	private displayForCandidate(candidate: Point | null, size: Size): Display {

@@ -7,8 +7,7 @@ body.cheer-body {
 body.cheer-body {
 	justify-content: center;
 	align-items: center;
-	padding: 0;
-	overflow: hidden;
+	overflow: visible;
 }
 
 .cheer-stage {
