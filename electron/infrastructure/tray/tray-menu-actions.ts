@@ -3,6 +3,7 @@ import type { WindowManager } from "../windows/window-manager";
 import { shouldSwitchTraySetup } from "./tray-menu-model";
 import type {
 	TrayMenuActionPayload,
+	TrayMenuHushDurationActionId,
 	TrayMenuItemActionId,
 } from "../../../shared/tray-menu";
 
@@ -23,6 +24,8 @@ export type TrayMenuActionDeps = {
 	onEndHush: (() => void) | null;
 	isPromptHushed: boolean;
 	onHushWithToken: (() => void) | null;
+	onHushDuration: ((minutes: number) => void) | null;
+	onHushUntilResume: (() => void) | null;
 };
 
 export function handleTrayMenuAction(
@@ -35,6 +38,9 @@ export function handleTrayMenuAction(
 			return;
 		case "snooze":
 			handleTrayMenuSnoozeAction(payload.id, deps);
+			return;
+		case "hush-duration":
+			handleTrayMenuHushDurationAction(payload.id, deps);
 			return;
 		case "setup":
 			handleTrayMenuSetupAction(payload.id, deps);
@@ -91,6 +97,27 @@ function handleTrayMenuItemAction(
 			deps.onQuit();
 			return;
 	}
+}
+
+function handleTrayMenuHushDurationAction(
+	id: TrayMenuHushDurationActionId,
+	deps: TrayMenuActionDeps,
+): void {
+	if (id === "hush-until-resume") {
+		deps.interactions?.append({
+			source: "tray",
+			action: "menu-hush-until-resume",
+		});
+		deps.onHushUntilResume?.();
+		return;
+	}
+	const minutes = Number.parseInt(id.slice("hush-".length), 10);
+	if (!Number.isFinite(minutes) || minutes <= 0) return;
+	deps.interactions?.append({
+		source: "tray",
+		action: `menu-hush-${minutes}`,
+	});
+	deps.onHushDuration?.(minutes);
 }
 
 function handleTrayMenuSnoozeAction(

@@ -1,4 +1,4 @@
-import { t, type Locale } from "./i18n";
+import { pluralKey, t, type Locale } from "./i18n";
 
 export type SessionIdleCause =
 	| "suspend"
@@ -90,18 +90,79 @@ export function pauseStatusMessageKey(
 	return null;
 }
 
-/** True while manual prompt hush is active. */
+/** True while manual prompt hush is active (timed or until-resume). */
 export function isPromptHushed(
 	promptSuppressUntil: number,
+	untilResume = false,
 	now = Date.now(),
 ): boolean {
-	return promptSuppressUntil > now;
+	return untilResume || promptSuppressUntil > now;
+}
+
+/** Minutes left on a timed hush; null when not hushed or sticky. */
+export function promptHushRemainingMinutes(
+	promptSuppressUntil: number,
+	untilResume = false,
+	now = Date.now(),
+): number | null {
+	if (!isPromptHushed(promptSuppressUntil, untilResume, now)) return null;
+	if (untilResume) return null;
+	const ms = promptSuppressUntil - now;
+	if (ms <= 0) return null;
+	return Math.max(1, Math.ceil(ms / 60_000));
+}
+
+/** Tray pause row / tooltip copy while manual hush is active. */
+export function hushActiveLabel(
+	locale: Locale,
+	promptSuppressUntil: number,
+	untilResume = false,
+	now = Date.now(),
+): string {
+	if (untilResume) {
+		return t(locale, "hush.activeUntilResume");
+	}
+	const minutes = promptHushRemainingMinutes(
+		promptSuppressUntil,
+		untilResume,
+		now,
+	);
+	if (minutes === null) {
+		return t(locale, "hush.active");
+	}
+	return t(locale, pluralKey("hush.activeMinutes", locale, minutes), {
+		n: minutes,
+	});
+}
+
+/** Tray End hush row while hush is active. */
+export function endHushLabel(
+	locale: Locale,
+	promptSuppressUntil: number,
+	untilResume = false,
+	now = Date.now(),
+): string {
+	if (untilResume) {
+		return t(locale, "tray.endHush");
+	}
+	const minutes = promptHushRemainingMinutes(
+		promptSuppressUntil,
+		untilResume,
+		now,
+	);
+	if (minutes === null) {
+		return t(locale, "tray.endHush");
+	}
+	return t(locale, pluralKey("tray.endHushMinutes", locale, minutes), {
+		n: minutes,
+	});
 }
 
 /** Overlay manual hush on focus pause UI when session idle does not win. */
 export function overlayManualHush(
 	payload: FocusPauseStatePayload,
 	promptSuppressUntil: number,
+	untilResume = false,
 	now = Date.now(),
 ): FocusPauseStatePayload {
 	if (
@@ -110,7 +171,7 @@ export function overlayManualHush(
 	) {
 		return payload;
 	}
-	if (isPromptHushed(promptSuppressUntil, now)) {
+	if (isPromptHushed(promptSuppressUntil, untilResume, now)) {
 		return { ...payload, reason: "manual-hush" };
 	}
 	return payload;

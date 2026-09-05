@@ -26,7 +26,7 @@ import type {
 	DebugSoundKind,
 } from "../../../shared/debug-preview";
 import type { ExportDiagnosticsResult } from "../../../shared/diagnostics";
-import { IPC_CHANNELS } from "../../../shared/ipc-channels";
+import { IPC_CHANNELS, type SnoozeAllPayload } from "../../../shared/ipc-channels";
 import type { NotificationStyle } from "../../../shared/notification-style";
 import {
 	type BlinkPromptProfile,
@@ -193,7 +193,7 @@ export const rendererIpc = {
 		send(IPC_CHANNELS.updateKeyboardShortcuts, shortcuts),
 	setShortcutCaptureMode: (capturing: boolean) =>
 		send(IPC_CHANNELS.setShortcutCaptureMode, capturing),
-	snoozeAll: (options?: { useToken?: boolean }) =>
+	snoozeAll: (options?: SnoozeAllPayload) =>
 		send(IPC_CHANNELS.snoozeAll, options),
 	endPromptHush: () => send(IPC_CHANNELS.endPromptHush),
 	updateSoundEnabled: (enabled: boolean) =>

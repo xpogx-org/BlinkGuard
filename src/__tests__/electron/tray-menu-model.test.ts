@@ -141,6 +141,7 @@ describe("buildTrayMenuSpec", () => {
 			"show",
 			"tracking",
 			"hush",
+			"hush-longer",
 			"separator",
 			"camera",
 			"separator",
@@ -154,6 +155,13 @@ describe("buildTrayMenuSpec", () => {
 			label: t("en", "tray.hush", { n: 5 }),
 			active: false,
 		});
+		const longer = idleHush.find((item) => item.id === "hush-longer");
+		expect(longer?.submenu?.map((row) => row.id)).toEqual([
+			"hush-15",
+			"hush-30",
+			"hush-60",
+			"hush-until-resume",
+		]);
 		expect(
 			spec({ includeHush: true, isPromptHushed: true }).find(
 				(item) => item.id === "hush",
@@ -163,6 +171,11 @@ describe("buildTrayMenuSpec", () => {
 			label: t("en", "tray.endHush"),
 			active: true,
 		});
+		expect(
+			spec({ includeHush: true, isPromptHushed: true }).some(
+				(item) => item.id === "hush-longer",
+			),
+		).toBe(false);
 	});
 
 	it("shows extended hush with token when charges are banked", () => {
@@ -175,6 +188,7 @@ describe("buildTrayMenuSpec", () => {
 			"show",
 			"tracking",
 			"hush",
+			"hush-longer",
 			"hush-token",
 			"separator",
 			"camera",

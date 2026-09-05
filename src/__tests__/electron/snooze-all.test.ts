@@ -8,6 +8,7 @@ import {
 function createState() {
 	return {
 		promptSuppressUntil: 0,
+		promptHushUntilResume: false,
 		promptSuppressTimeout: null as ReturnType<typeof setTimeout> | null,
 		blinkSnoozeUntil: 0,
 		blinkSnoozeTimeout: null as ReturnType<typeof setTimeout> | null,
@@ -96,10 +97,35 @@ describe("snoozeAllPrompts", () => {
 		snoozeAllPrompts(deps, { durationMs: customMs });
 
 		expect(deps.state.promptSuppressUntil).toBe(now + customMs);
+		expect(deps.state.promptHushUntilResume).toBe(false);
 
 		vi.advanceTimersByTime(customMs);
 
 		expect(deps.state.promptSuppressUntil).toBe(0);
+	});
+
+	it("hushes until resume without scheduling expiry", () => {
+		const deps = createDeps();
+
+		snoozeAllPrompts(deps, { untilResume: true });
+
+		expect(deps.state.promptHushUntilResume).toBe(true);
+		expect(deps.state.promptSuppressUntil).toBe(0);
+		expect(deps.state.promptSuppressTimeout).toBeNull();
+
+		vi.advanceTimersByTime(60 * 60 * 1000);
+
+		expect(deps.state.promptHushUntilResume).toBe(true);
+	});
+
+	it("clears sticky hush on endPromptHush", () => {
+		const deps = createDeps();
+		snoozeAllPrompts(deps, { untilResume: true });
+
+		endPromptHush(deps);
+
+		expect(deps.state.promptHushUntilResume).toBe(false);
+		expect(deps.focusPause.pushState).toHaveBeenCalledTimes(2);
 	});
 });
 

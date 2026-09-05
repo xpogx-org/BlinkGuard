@@ -1,5 +1,6 @@
 import { t, type Locale } from "./i18n";
 import {
+	hushActiveLabel,
 	pauseStatusMessageKey,
 	type FocusPauseStatePayload,
 } from "./session-pause-status";
@@ -74,6 +75,10 @@ export function composeTrayTooltip(
 	pause: FocusPauseStatePayload | null,
 	capture: CameraCaptureStatusPayload | null,
 	glanceFragment?: string | null,
+	hushTiming?: {
+		promptSuppressUntil: number;
+		promptHushUntilResume: boolean;
+	} | null,
 ): string {
 	const parts: string[] = [TRAY_PRODUCT_NAME];
 	if (capture?.capturing) {
@@ -81,8 +86,20 @@ export function composeTrayTooltip(
 			capture.surface === "preview" ? "tray.cameraPreview" : "tray.cameraOn";
 		parts.push(t(locale, camKey));
 	}
-	const pauseKey = pause ? pauseStatusMessageKey(pause) : null;
-	if (pauseKey) parts.push(t(locale, pauseKey));
+	if (pause) {
+		const pauseKey = pauseStatusMessageKey(pause);
+		if (pauseKey === "hush.active" && hushTiming) {
+			parts.push(
+				hushActiveLabel(
+					locale,
+					hushTiming.promptSuppressUntil,
+					hushTiming.promptHushUntilResume,
+				),
+			);
+		} else if (pauseKey) {
+			parts.push(t(locale, pauseKey));
+		}
+	}
 	const glance = glanceFragment?.trim();
 	if (glance) parts.push(glance);
 	return parts.join(" — ");

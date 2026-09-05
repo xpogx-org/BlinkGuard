@@ -196,7 +196,15 @@
 		trigger.className = "tray-item tray-menu-group__trigger";
 		trigger.setAttribute("aria-expanded", "false");
 		trigger.setAttribute("aria-controls", panelId);
-		trigger.appendChild(icon(kind === "snooze" ? "snooze" : "setups"));
+		trigger.appendChild(
+			icon(
+				kind === "snooze"
+					? "snooze"
+					: kind === "setups"
+						? "setups"
+						: "hush",
+			),
+		);
 		trigger.appendChild(label(item.label));
 		const chevron = document.createElement("span");
 		chevron.className = "tray-item__chevron";
@@ -214,15 +222,26 @@
 		panelInner.className = "tray-menu-group__panel-inner";
 
 		for (const child of item.submenu) {
+			let payload;
+			let iconName;
+			let checked = false;
+			if (kind === "snooze") {
+				payload = { kind: "snooze", id: child.id };
+				iconName = "snoozeItem";
+			} else if (kind === "setups") {
+				payload = { kind: "setup", id: child.id };
+				iconName = "setups";
+				checked = child.checked;
+			} else {
+				payload = { kind: "hush-duration", id: child.id };
+				iconName = "hush";
+			}
 			panelInner.appendChild(
 				actionRow(child.label, {
-					icon: kind === "snooze" ? "snoozeItem" : "setups",
+					icon: iconName,
 					nested: true,
-					checked: kind === "setups" && child.checked,
-					payload:
-						kind === "snooze"
-							? { kind: "snooze", id: child.id }
-							: { kind: "setup", id: child.id },
+					checked,
+					payload,
 				}),
 			);
 		}
@@ -299,6 +318,9 @@
 							accelerator: item.accelerator,
 						}),
 					);
+					break;
+				case "hush-longer":
+					section.appendChild(expandableGroup(item, "hush-longer"));
 					break;
 				case "camera":
 				case "glance":

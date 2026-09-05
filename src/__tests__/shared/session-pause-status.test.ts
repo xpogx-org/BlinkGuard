@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+	endHushLabel,
+	hushActiveLabel,
 	type FocusPauseStatePayload,
 	isPromptHushed,
 	overlayManualHush,
 	pauseStatusMessageKey,
+	promptHushRemainingMinutes,
 	sanitizeFocusPauseStatePayload,
 	trayTooltipLabel,
 } from "../../../shared/session-pause-status";
@@ -211,8 +214,33 @@ describe("overlayManualHush", () => {
 		});
 	});
 
-	it("isPromptHushed reflects suppress-until epoch", () => {
+	it("isPromptHushed reflects suppress-until epoch and until-resume", () => {
 		expect(isPromptHushed(Date.now() + 1)).toBe(true);
 		expect(isPromptHushed(Date.now() - 1)).toBe(false);
+		expect(isPromptHushed(0, true)).toBe(true);
+		expect(isPromptHushed(0, false)).toBe(false);
+	});
+
+	it("overlays sticky manual hush", () => {
+		expect(
+			overlayManualHush({ ...active, reason: "quiet-hours" }, 0, true),
+		).toEqual({
+			...active,
+			reason: "manual-hush",
+		});
+	});
+
+	it("formats remaining minutes and active labels", () => {
+		const until = Date.now() + 90_000;
+		expect(promptHushRemainingMinutes(until, false)).toBe(2);
+		expect(promptHushRemainingMinutes(until, true)).toBeNull();
+		expect(hushActiveLabel("en", until, false)).toBe(
+			"Prompts hushed (2 min left)",
+		);
+		expect(hushActiveLabel("en", 0, true)).toBe(
+			"Prompts hushed until you resume",
+		);
+		expect(endHushLabel("en", until, false)).toBe("End hush (2 min left)");
+		expect(endHushLabel("en", 0, true)).toBe("End hush");
 	});
 });

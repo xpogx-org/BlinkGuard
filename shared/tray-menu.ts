@@ -7,6 +7,11 @@ export type TraySnoozeItemSpec = {
 	label: string;
 };
 
+export type TrayHushDurationItemSpec = {
+	id: "hush-15" | "hush-30" | "hush-60" | "hush-until-resume";
+	label: string;
+};
+
 export type TraySetupItemSpec = {
 	id: string;
 	label: string;
@@ -18,6 +23,7 @@ export type TrayMenuItemSpec =
 	| { id: "tracking"; label: string; isTracking: boolean; accelerator?: string }
 	| { id: "hush"; label: string; active: boolean; accelerator?: string }
 	| { id: "hush-token"; label: string; accelerator?: string }
+	| { id: "hush-longer"; label: string; submenu: TrayHushDurationItemSpec[] }
 	| { id: "camera"; label: string; enabled: false }
 	| { id: "glance"; label: string; enabled: false }
 	| { id: "pause"; label: string; enabled: false }
@@ -47,9 +53,12 @@ export type TrayMenuItemActionId =
 
 export type TrayMenuSnoozeActionId = TraySnoozeItemSpec["id"];
 
+export type TrayMenuHushDurationActionId = TrayHushDurationItemSpec["id"];
+
 export type TrayMenuActionPayload =
 	| { kind: "item"; id: TrayMenuItemActionId }
 	| { kind: "snooze"; id: TrayMenuSnoozeActionId }
+	| { kind: "hush-duration"; id: TrayMenuHushDurationActionId }
 	| { kind: "setup"; id: string };
 
 export type TrayMenuRenderPayload = {
@@ -110,6 +119,9 @@ const TRAY_MENU_SNOOZE_ACTION_IDS: readonly TrayMenuSnoozeActionId[] = [
 	"snooze-look-away",
 ];
 
+const TRAY_MENU_HUSH_DURATION_ACTION_IDS: readonly TrayMenuHushDurationActionId[] =
+	["hush-15", "hush-30", "hush-60", "hush-until-resume"];
+
 export function isTrayMenuItemActionId(
 	id: string,
 ): id is TrayMenuItemActionId {
@@ -120,6 +132,12 @@ export function isTrayMenuSnoozeActionId(
 	id: string,
 ): id is TrayMenuSnoozeActionId {
 	return (TRAY_MENU_SNOOZE_ACTION_IDS as readonly string[]).includes(id);
+}
+
+export function isTrayMenuHushDurationActionId(
+	id: string,
+): id is TrayMenuHushDurationActionId {
+	return (TRAY_MENU_HUSH_DURATION_ACTION_IDS as readonly string[]).includes(id);
 }
 
 export function sanitizeTrayMenuActionPayload(
@@ -137,6 +155,13 @@ export function sanitizeTrayMenuActionPayload(
 		const id = record.id;
 		if (typeof id !== "string" || !isTrayMenuSnoozeActionId(id)) return null;
 		return { kind: "snooze", id };
+	}
+	if (kind === "hush-duration") {
+		const id = record.id;
+		if (typeof id !== "string" || !isTrayMenuHushDurationActionId(id)) {
+			return null;
+		}
+		return { kind: "hush-duration", id };
 	}
 	if (kind === "setup") {
 		const id = record.id;

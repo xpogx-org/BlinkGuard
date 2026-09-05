@@ -62,6 +62,7 @@ import { IPC_CHANNELS } from "../shared/ipc-channels";
 import { sameCameraDevice } from "../shared/camera-devices";
 import { isReliableFaceStatus } from "../shared/face-status";
 import { isPromptHushed } from "../shared/session-pause-status";
+import type { SanitizedSnoozeAllOptions } from "../shared/ipc-channels";
 import { goalsConfigFromPreferences } from "../shared/preferences";
 
 if (process.platform === "darwin") {
@@ -157,14 +158,15 @@ function bootstrap(): void {
 			pauseReason: () => null,
 		},
 	};
+	const isHushed = () =>
+		isPromptHushed(state.promptSuppressUntil, state.promptHushUntilResume);
 	const notificationGate: NotificationGate = {
 		notificationsAllowed: () =>
-			gateHolder.current.notificationsAllowed() &&
-			!isPromptHushed(state.promptSuppressUntil),
+			gateHolder.current.notificationsAllowed() && !isHushed(),
 		pauseReason: () => {
 			const base = gateHolder.current.pauseReason();
 			if (base === "session-idle") return base;
-			if (isPromptHushed(state.promptSuppressUntil)) return "manual-hush";
+			if (isHushed()) return "manual-hush";
 			return base;
 		},
 	};
@@ -296,7 +298,10 @@ function bootstrap(): void {
 		osNotifications,
 	);
 	gateHolder.current = focusPause;
-	focusPause.setPromptSuppressUntil(() => state.promptSuppressUntil);
+	focusPause.setPromptHushState(() => ({
+		promptSuppressUntil: state.promptSuppressUntil,
+		promptHushUntilResume: state.promptHushUntilResume,
+	}));
 	const focusMonitor = new FocusEnvironmentMonitor(
 		focusEnvironment,
 		(snapshot) => {
@@ -386,12 +391,28 @@ function bootstrap(): void {
 		snoozeAllPrompts(promptHushDeps(), { durationMs: ms });
 		return true;
 	};
-	const hushAllPromptsMaybeToken = (useToken?: boolean) => {
-		if (useToken) {
+	const hushAllPromptsMaybeToken = (options: SanitizedSnoozeAllOptions) => {
+		if (options.useToken) {
 			hushAllWithSnoozeToken();
 			return;
 		}
+		if (options.untilResume) {
+			snoozeAllPrompts(promptHushDeps(), { untilResume: true });
+			return;
+		}
+		if (options.durationMinutes !== undefined) {
+			snoozeAllPrompts(promptHushDeps(), {
+				durationMs: options.durationMinutes * 60_000,
+			});
+			return;
+		}
 		hushAllPrompts();
+	};
+	const hushForTrayMinutes = (minutes: number) => {
+		snoozeAllPrompts(promptHushDeps(), { durationMs: minutes * 60_000 });
+	};
+	const hushUntilResume = () => {
+		snoozeAllPrompts(promptHushDeps(), { untilResume: true });
 	};
 	const endHush = () => endPromptHush(promptHushDeps());
 	blinkStats.setOnSnoozeTokenChargesChanged(() => trayRef.current?.rebuildMenu());
@@ -516,11 +537,17 @@ function bootstrap(): void {
 		(id) => {
 			settingsProfiles.switch(traySwitchPayload(id));
 		},
-		() => isPromptHushed(state.promptSuppressUntil),
+		() => isHushed(),
 		hushAllPrompts,
 		endHush,
 		() => blinkStats.getSnoozeTokenCharges(),
 		hushAllWithSnoozeToken,
+		hushForTrayMinutes,
+		hushUntilResume,
+		() => ({
+			promptSuppressUntil: state.promptSuppressUntil,
+			promptHushUntilResume: state.promptHushUntilResume,
+		}),
 		() => buildTrayMenuTheme(preferences.darkMode),
 	);
 	trayRef.current = tray;
@@ -530,6 +557,9 @@ function bootstrap(): void {
 				preferences.isTracking && preferences.cameraEnabled,
 			),
 		);
+		if (isHushed()) {
+			tray.rebuildMenu();
+		}
 	};
 	blinkStats.setTrayGlanceHandler(pushTrayGlance);
 	reminders.setOnTrackingChange((isTracking) => {

@@ -44,7 +44,10 @@ export class FocusPauseService implements NotificationGate {
 	private lastExternal: PauseAppRule | null = null;
 	private quietHoursTimer: ReturnType<typeof setInterval> | null = null;
 	private onState: ((payload: FocusPauseStatePayload) => void) | null = null;
-	private getPromptSuppressUntil: () => number = () => 0;
+	private getPromptHushState: () => {
+		promptSuppressUntil: number;
+		promptHushUntilResume: boolean;
+	} = () => ({ promptSuppressUntil: 0, promptHushUntilResume: false });
 
 	private promptDismissers: {
 		blink: () => void;
@@ -65,8 +68,13 @@ export class FocusPauseService implements NotificationGate {
 		this.onState = listener;
 	}
 
-	setPromptSuppressUntil(getter: () => number): void {
-		this.getPromptSuppressUntil = getter;
+	setPromptHushState(
+		getter: () => {
+			promptSuppressUntil: number;
+			promptHushUntilResume: boolean;
+		},
+	): void {
+		this.getPromptHushState = getter;
 	}
 
 	/**
@@ -192,6 +200,7 @@ export class FocusPauseService implements NotificationGate {
 	}
 
 	pushState(): void {
+		const hush = this.getPromptHushState();
 		const payload = overlayManualHush(
 			{
 				reason: this.pauseReason(),
@@ -199,7 +208,8 @@ export class FocusPauseService implements NotificationGate {
 				sessionPauseMode: this.sessionPauseMode,
 				sessionIdleCause: this.sessionIdleCause,
 			},
-			this.getPromptSuppressUntil(),
+			hush.promptSuppressUntil,
+			hush.promptHushUntilResume,
 		);
 		this.windows.sendToMain(this.focusPauseChannel, payload);
 		this.onState?.(payload);

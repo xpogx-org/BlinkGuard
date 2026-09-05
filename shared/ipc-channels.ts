@@ -1,3 +1,8 @@
+import {
+	isTrayHushDurationMinutes,
+	type TrayHushDurationMinutes,
+} from "./hush-durations";
+
 export const IPC_CHANNELS = {
 	mainProcessMessage: "main-process-message",
 	loadPreferences: "load-preferences",
@@ -281,11 +286,38 @@ export const MAIN_RENDERER_INVOKE_CHANNELS = [
 ] as const;
 
 /** Optional payload for {@link IPC_CHANNELS.snoozeAll}. */
-export type SnoozeAllPayload = { useToken?: boolean };
+export type SnoozeAllPayload = {
+	useToken?: boolean;
+	durationMinutes?: number;
+	untilResume?: boolean;
+};
 
-/** True only when `useToken` is explicitly true. */
-export function sanitizeSnoozeAllPayload(raw: unknown): boolean {
-	if (raw === undefined || raw === null) return false;
-	if (typeof raw !== "object") return false;
-	return (raw as SnoozeAllPayload).useToken === true;
+export type SanitizedSnoozeAllOptions = {
+	useToken: boolean;
+	durationMinutes?: TrayHushDurationMinutes;
+	untilResume: boolean;
+};
+
+/** Sanitize renderer snooze-all payload; hostile values are dropped. */
+export function sanitizeSnoozeAllOptions(raw: unknown): SanitizedSnoozeAllOptions {
+	const empty: SanitizedSnoozeAllOptions = {
+		useToken: false,
+		untilResume: false,
+	};
+	if (raw === undefined || raw === null) return empty;
+	if (typeof raw !== "object") return empty;
+	const record = raw as SnoozeAllPayload;
+	const useToken = record.useToken === true;
+	let untilResume = record.untilResume === true;
+	let durationMinutes: TrayHushDurationMinutes | undefined;
+	if (untilResume && record.durationMinutes !== undefined) {
+		untilResume = false;
+	}
+	if (!untilResume && isTrayHushDurationMinutes(record.durationMinutes)) {
+		durationMinutes = record.durationMinutes;
+	}
+	if (useToken) {
+		return { useToken: true, untilResume: false };
+	}
+	return { useToken: false, durationMinutes, untilResume };
 }

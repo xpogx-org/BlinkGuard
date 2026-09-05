@@ -78,6 +78,12 @@ export class TrayController {
 		private readonly onEndHush: (() => void) | null = null,
 		private readonly getSnoozeTokenCharges: () => number = () => 0,
 		private readonly onHushWithToken: (() => void) | null = null,
+		private readonly onHushDuration: ((minutes: number) => void) | null = null,
+		private readonly onHushUntilResume: (() => void) | null = null,
+		private readonly getPromptHushTiming: () => {
+			promptSuppressUntil: number;
+			promptHushUntilResume: boolean;
+		} = () => ({ promptSuppressUntil: 0, promptHushUntilResume: false }),
 		private readonly getTheme: () => TrayThemeSnapshot = () => ({
 			darkMode: true,
 			colors: { background: "#0f172a", text: "#f8fafc" },
@@ -177,6 +183,8 @@ export class TrayController {
 				onEndHush: this.onEndHush,
 				isPromptHushed: this.getIsPromptHushed(),
 				onHushWithToken: this.onHushWithToken,
+				onHushDuration: this.onHushDuration,
+				onHushUntilResume: this.onHushUntilResume,
 			}),
 		);
 	}
@@ -197,6 +205,7 @@ export class TrayController {
 		const setups = this.getSetups();
 		const glanceLabel = formatTraySessionGlance(locale, this.sessionGlance);
 		const theme = this.getTheme();
+		const hushTiming = this.getPromptHushTiming();
 		return {
 			spec: buildTrayMenuSpec({
 				locale,
@@ -213,6 +222,8 @@ export class TrayController {
 				trackingAccelerator: shortcuts.trackingToggle,
 				includeHush: this.onHush != null,
 				isPromptHushed: this.getIsPromptHushed(),
+				promptSuppressUntil: hushTiming.promptSuppressUntil,
+				promptHushUntilResume: hushTiming.promptHushUntilResume,
 				hushAccelerator: shortcuts.snoozeAll,
 				snoozeTokenCharges: this.getSnoozeTokenCharges(),
 				tokenSnoozeAccelerator: shortcuts.snoozeWithToken,
@@ -237,8 +248,15 @@ export class TrayController {
 
 	private applyTooltip(locale: Locale = this.getLocale()): void {
 		const glance = formatTraySessionGlance(locale, this.sessionGlance);
+		const hushTiming = this.getPromptHushTiming();
 		this.tray?.setToolTip(
-			composeTrayTooltip(locale, this.pauseState, this.captureState, glance),
+			composeTrayTooltip(
+				locale,
+				this.pauseState,
+				this.captureState,
+				glance,
+				this.getIsPromptHushed() ? hushTiming : null,
+			),
 		);
 	}
 

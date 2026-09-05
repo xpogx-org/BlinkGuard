@@ -146,4 +146,18 @@ describe("composeTrayTooltip", () => {
 			"BlinkGuard — Camera on — Paused: quiet hours — 12/min · Low · Today 40 blinks",
 		);
 	});
+
+	it("appends hush remaining copy when timing is provided", () => {
+		const paused: FocusPauseStatePayload = {
+			...active,
+			reason: "manual-hush",
+		};
+		const until = Date.now() + 5 * 60 * 1000;
+		expect(
+			composeTrayTooltip("en", paused, idle, null, {
+				promptSuppressUntil: until,
+				promptHushUntilResume: false,
+			}),
+		).toBe("BlinkGuard — Prompts hushed (5 min left)");
+	});
 });

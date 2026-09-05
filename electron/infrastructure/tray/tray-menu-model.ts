@@ -3,13 +3,17 @@ import {
 	cameraCaptureStatusMessageKey,
 	type CameraCaptureStatusPayload,
 } from "../../../shared/camera-capture-status";
+import { TRAY_HUSH_DURATION_MINUTES } from "../../../shared/hush-durations";
 import { pluralKey, t, type Locale } from "../../../shared/i18n";
 import { SETTINGS_PROFILE_CAP } from "../../../shared/settings-profiles";
 import {
+	endHushLabel,
+	hushActiveLabel,
 	pauseStatusMessageKey,
 	type FocusPauseStatePayload,
 } from "../../../shared/session-pause-status";
 import type {
+	TrayHushDurationItemSpec,
 	TrayMenuItemSpec,
 	TraySetupItemSpec,
 	TraySetupSummary,
@@ -45,6 +49,8 @@ export type BuildTrayMenuSpecInput = {
 	trackingAccelerator: string;
 	includeHush?: boolean;
 	isPromptHushed?: boolean;
+	promptSuppressUntil?: number;
+	promptHushUntilResume?: boolean;
 	hushAccelerator?: string;
 	snoozeTokenCharges?: number;
 	tokenSnoozeAccelerator?: string;
@@ -94,10 +100,12 @@ export function buildTrayMenuSpec(
 		},
 	];
 	if (input.includeHush) {
+		const suppressUntil = input.promptSuppressUntil ?? 0;
+		const untilResume = input.promptHushUntilResume ?? false;
 		items.push({
 			id: "hush",
 			label: input.isPromptHushed
-				? t(locale, "tray.endHush")
+				? endHushLabel(locale, suppressUntil, untilResume)
 				: t(locale, pluralKey("tray.hush", locale, snoozeMinutes), {
 						n: snoozeMinutes,
 					}),
@@ -106,17 +114,31 @@ export function buildTrayMenuSpec(
 				input.isPromptHushed ? "" : (input.hushAccelerator ?? ""),
 			),
 		});
-		const tokenCharges = input.snoozeTokenCharges ?? 0;
-		if (!input.isPromptHushed && tokenCharges > 0) {
-			const tokenMinutes = tokenSnoozeMinutes(snoozeMinutes);
-			items.push({
-				id: "hush-token",
-				label: t(locale, pluralKey("tray.hushWithToken", locale, tokenMinutes), {
-					n: tokenMinutes,
-					count: tokenCharges,
-				}),
-				...optionalAccelerator(input.tokenSnoozeAccelerator ?? ""),
-			});
+		if (!input.isPromptHushed) {
+			const longerSubmenu = hushLongerSubmenuSpec(locale);
+			if (longerSubmenu.length > 0) {
+				items.push({
+					id: "hush-longer",
+					label: t(locale, "tray.hushLonger"),
+					submenu: longerSubmenu,
+				});
+			}
+			const tokenCharges = input.snoozeTokenCharges ?? 0;
+			if (tokenCharges > 0) {
+				const tokenMinutes = tokenSnoozeMinutes(snoozeMinutes);
+				items.push({
+					id: "hush-token",
+					label: t(
+						locale,
+						pluralKey("tray.hushWithToken", locale, tokenMinutes),
+						{
+							n: tokenMinutes,
+							count: tokenCharges,
+						},
+					),
+					...optionalAccelerator(input.tokenSnoozeAccelerator ?? ""),
+				});
+			}
 		}
 	}
 	items.push({ id: "separator" });
@@ -135,9 +157,17 @@ export function buildTrayMenuSpec(
 	}
 	const pauseKey = pause ? pauseStatusMessageKey(pause) : null;
 	if (pauseKey) {
+		const label =
+			pauseKey === "hush.active" && input.isPromptHushed
+				? hushActiveLabel(
+						locale,
+						input.promptSuppressUntil ?? 0,
+						input.promptHushUntilResume ?? false,
+					)
+				: t(locale, pauseKey);
 		items.push({
 			id: "pause",
-			label: t(locale, pauseKey),
+			label,
 			enabled: false,
 		});
 	}
@@ -172,6 +202,22 @@ export function buildTrayMenuSpec(
 	}
 	items.push({ id: "quit", label: t(locale, "tray.quit") });
 	return items;
+}
+
+function hushLongerSubmenuSpec(locale: Locale): TrayHushDurationItemSpec[] {
+	const submenu: TrayHushDurationItemSpec[] = TRAY_HUSH_DURATION_MINUTES.map(
+		(minutes) => ({
+			id: `hush-${minutes}` as TrayHushDurationItemSpec["id"],
+			label: t(locale, pluralKey("tray.hushDuration", locale, minutes), {
+				n: minutes,
+			}),
+		}),
+	);
+	submenu.push({
+		id: "hush-until-resume",
+		label: t(locale, "tray.hushUntilResume"),
+	});
+	return submenu;
 }
 
 function snoozeSubmenuSpec(

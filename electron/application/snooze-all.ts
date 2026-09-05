@@ -14,6 +14,7 @@ export type PromptHushDeps = {
 	state: Pick<
 		AppRuntimeState,
 		| "promptSuppressUntil"
+		| "promptHushUntilResume"
 		| "promptSuppressTimeout"
 		| "blinkSnoozeUntil"
 		| "blinkSnoozeTimeout"
@@ -29,12 +30,14 @@ function clearHushSuppressState(
 	state: Pick<
 		PromptHushDeps["state"],
 		| "promptSuppressUntil"
+		| "promptHushUntilResume"
 		| "promptSuppressTimeout"
 		| "blinkSnoozeUntil"
 		| "blinkSnoozeTimeout"
 	>,
 ): void {
 	state.promptSuppressUntil = 0;
+	state.promptHushUntilResume = false;
 	if (state.promptSuppressTimeout) {
 		clearTimeout(state.promptSuppressTimeout);
 		state.promptSuppressTimeout = null;
@@ -64,28 +67,47 @@ function schedulePromptHushExpiry(
 }
 
 /**
- * Hush all interruptive prompts for {@link promptSnoozeMs}(`snoozeMinutes`) or a custom duration.
- * Tracking stays armed; camera keeps running.
+ * Hush all interruptive prompts for {@link promptSnoozeMs}(`snoozeMinutes`), a custom duration,
+ * or until End hush. Tracking stays armed; camera keeps running.
  */
 export function snoozeAllPrompts(
 	deps: PromptHushDeps,
-	options?: { durationMs?: number },
+	options?: { durationMs?: number; untilResume?: boolean },
 ): void {
-	const ms =
-		options?.durationMs ?? promptSnoozeMs(deps.preferences.snoozeMinutes);
 	deps.focusPause.closeInterruptiveUi();
-	deps.state.promptSuppressUntil = Date.now() + ms;
 	deps.reminders.snooze();
 	deps.exercises.suppressPrompts();
 	deps.lookAway.suppressPrompts();
-	schedulePromptHushExpiry(deps, ms);
+
+	if (options?.untilResume) {
+		if (deps.state.promptSuppressTimeout) {
+			clearTimeout(deps.state.promptSuppressTimeout);
+			deps.state.promptSuppressTimeout = null;
+		}
+		deps.state.promptSuppressUntil = 0;
+		deps.state.promptHushUntilResume = true;
+	} else {
+		const ms =
+			options?.durationMs ?? promptSnoozeMs(deps.preferences.snoozeMinutes);
+		deps.state.promptHushUntilResume = false;
+		deps.state.promptSuppressUntil = Date.now() + ms;
+		schedulePromptHushExpiry(deps, ms);
+	}
+
 	deps.focusPause.pushState();
 	deps.onHushStateChange?.();
 }
 
 /** End manual prompt hush early and resume normal cadence. */
 export function endPromptHush(deps: PromptHushDeps): void {
-	if (!isPromptHushed(deps.state.promptSuppressUntil)) return;
+	if (
+		!isPromptHushed(
+			deps.state.promptSuppressUntil,
+			deps.state.promptHushUntilResume,
+		)
+	) {
+		return;
+	}
 	clearHushSuppressState(deps.state);
 	if (deps.state.exerciseSnoozeTimeout) {
 		clearTimeout(deps.state.exerciseSnoozeTimeout);

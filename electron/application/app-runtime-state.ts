@@ -23,12 +23,15 @@ export class AppRuntimeState {
 	lastReminderShownAt = Date.now();
 	/** Epoch ms until which blink popups are suppressed (0 = not snoozed). */
 	blinkSnoozeUntil = 0;
-	/** Epoch ms until which all interruptive prompts are hushed (0 = not hushed). */
+	/** Epoch ms until which all interruptive prompts are hushed (0 = not timed hush). */
 	promptSuppressUntil = 0;
+	/** Sticky hush until End hush; in-memory only (cleared on quit). */
+	promptHushUntilResume = false;
 	promptSuppressTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	clearPromptHush(): void {
 		this.promptSuppressUntil = 0;
+		this.promptHushUntilResume = false;
 		if (this.promptSuppressTimeout) {
 			clearTimeout(this.promptSuppressTimeout);
 			this.promptSuppressTimeout = null;

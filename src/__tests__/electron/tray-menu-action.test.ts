@@ -24,6 +24,8 @@ function deps(overrides: Partial<ReturnType<typeof createTrayMenuActionDeps>> = 
 		onEndHush: vi.fn(),
 		isPromptHushed: false,
 		onHushWithToken: vi.fn(),
+		onHushDuration: vi.fn(),
+		onHushUntilResume: vi.fn(),
 		...overrides,
 	});
 }
@@ -63,6 +65,16 @@ describe("handleTrayMenuAction", () => {
 			deps({ onHush, onEndHush, isPromptHushed: true }),
 		);
 		expect(onEndHush).toHaveBeenCalledOnce();
+	});
+
+	it("routes meeting hush durations", () => {
+		const onHushDuration = vi.fn();
+		const onHushUntilResume = vi.fn();
+		const d = deps({ onHushDuration, onHushUntilResume });
+		handleTrayMenuAction({ kind: "hush-duration", id: "hush-30" }, d);
+		expect(onHushDuration).toHaveBeenCalledWith(30);
+		handleTrayMenuAction({ kind: "hush-duration", id: "hush-until-resume" }, d);
+		expect(onHushUntilResume).toHaveBeenCalledOnce();
 	});
 
 	it("snoozes blink reminders", () => {
