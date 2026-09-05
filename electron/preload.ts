@@ -145,6 +145,22 @@ contextBridge.exposeInMainWorld('popupAPI', {
   savePopupEditor: (data: any) => {
     ipcRenderer.send(IPC_CHANNELS.popupEditorSaved, data);
   },
+
+  onTrayMenuRender: (callback: (payload: any) => void) => {
+    ipcRenderer.on(IPC_CHANNELS.trayMenuRender, (_event, payload) => callback(payload));
+  },
+  trayMenuAction: (payload: unknown) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.trayMenuAction, payload);
+  },
+  notifyTrayMenuReady: () => {
+    ipcRenderer.send(IPC_CHANNELS.trayMenuReady);
+  },
+  notifyTrayMenuSize: (payload: { width: number; height: number }) => {
+    ipcRenderer.send(IPC_CHANNELS.trayMenuSize, payload);
+  },
+  notifyTrayMenuHide: () => {
+    ipcRenderer.send(IPC_CHANNELS.trayMenuHide);
+  },
 })
 
 // Type definitions for TypeScript
@@ -185,6 +201,11 @@ declare global {
       snoozeBlink: () => void;
       onPopupEditorUpdate: (callback: (data: any) => void) => void;
       savePopupEditor: (data: any) => void;
+      onTrayMenuRender: (callback: (payload: any) => void) => void;
+      trayMenuAction: (payload: unknown) => Promise<void>;
+      notifyTrayMenuReady: () => void;
+      notifyTrayMenuSize: (payload: { width: number; height: number }) => void;
+      notifyTrayMenuHide: () => void;
     };
   }
 }

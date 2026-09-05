@@ -50,6 +50,8 @@ import { NotificationSoundPlayer } from "./infrastructure/sound/notification-sou
 import { OsNotificationPlayer } from "./infrastructure/notifications/os-notification-player";
 import { ElectronPreferenceStore } from "./infrastructure/store/electron-preference-store";
 import { TrayController } from "./infrastructure/tray/tray-controller";
+import { TrayMenuWindow } from "./infrastructure/tray/tray-menu-window";
+import { buildTrayMenuTheme } from "../shared/tray-menu";
 import { traySwitchPayload } from "./infrastructure/tray/tray-menu-model";
 import { endPromptHush, snoozeAllPrompts } from "./application/snooze-all";
 import { promptSnoozeMs } from "./domain/reminder-policy";
@@ -464,9 +466,13 @@ function bootstrap(): void {
 		() => sessionRecap.handleUnlock(),
 	);
 	let settingsProfiles!: SettingsProfilesService;
+	const trayMenu = new TrayMenuWindow(paths, (payload) => {
+		trayRef.current?.handleTrayMenuAction(payload);
+	});
 	const tray = new TrayController(
 		paths,
 		windows,
+		trayMenu,
 		() => lifecycle.quit(),
 		() => preferences.locale,
 		() => preferences.snoozeMinutes,
@@ -515,6 +521,7 @@ function bootstrap(): void {
 		endHush,
 		() => blinkStats.getSnoozeTokenCharges(),
 		hushAllWithSnoozeToken,
+		() => buildTrayMenuTheme(preferences.darkMode),
 	);
 	trayRef.current = tray;
 	const pushTrayGlance = () => {

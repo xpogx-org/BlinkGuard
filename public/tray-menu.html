@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" class="tray-menu-root popup-panel-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self';">
+  <title>BlinkGuard</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/tray-menu.css">
+</head>
+<body class="tray-menu-body">
+  <div id="tray-menu-frame" class="tray-menu-frame">
+    <div id="tray-menu-shell" class="tray-menu-shell popup-glass">
+      <header class="tray-menu-header">
+        <img src="boot-icon.png" width="20" height="20" alt="" class="tray-menu-app-icon" />
+        <span class="tray-menu-app-name">BlinkGuard</span>
+      </header>
+      <div id="tray-menu-list" class="tray-menu-list" role="menu"></div>
+    </div>
+  </div>
+  <script src="js/shared/theme.js"></script>
+  <script src="js/tray-menu.js"></script>
+</body>
+</html>

@@ -9,47 +9,26 @@ import {
 	pauseStatusMessageKey,
 	type FocusPauseStatePayload,
 } from "../../../shared/session-pause-status";
+import type {
+	TrayMenuItemSpec,
+	TraySetupItemSpec,
+	TraySetupSummary,
+	TraySnoozeItemSpec,
+} from "../../../shared/tray-menu";
+
+export type {
+	TrayMenuItemSpec,
+	TraySetupItemSpec,
+	TraySetupSummary,
+	TraySetupsSnapshot,
+	TraySnoozeItemSpec,
+} from "../../../shared/tray-menu";
 
 export function trackingTrayLabelKey(
 	isTracking: boolean,
 ): "tracking.start" | "tracking.stop" {
 	return isTracking ? "tracking.stop" : "tracking.start";
 }
-
-export type TraySnoozeItemSpec = {
-	id: "snooze-blink" | "snooze-exercise" | "snooze-look-away";
-	label: string;
-};
-
-export type TraySetupItemSpec = {
-	id: string;
-	label: string;
-	checked: boolean;
-};
-
-export type TrayMenuItemSpec =
-	| { id: "show"; label: string; accelerator?: string }
-	| { id: "tracking"; label: string; isTracking: boolean; accelerator?: string }
-	| { id: "hush"; label: string; active: boolean; accelerator?: string }
-	| { id: "hush-token"; label: string; accelerator?: string }
-	| { id: "camera"; label: string; enabled: false }
-	| { id: "glance"; label: string; enabled: false }
-	| { id: "pause"; label: string; enabled: false }
-	| { id: "snooze"; label: string; submenu: TraySnoozeItemSpec[] }
-	| { id: "setups"; label: string; submenu: TraySetupItemSpec[] }
-	| { id: "check-for-updates"; label: string }
-	| { id: "separator" }
-	| { id: "quit"; label: string };
-
-export type TraySetupSummary = {
-	id: string;
-	name: string;
-};
-
-export type TraySetupsSnapshot = {
-	profiles: TraySetupSummary[];
-	activeSetupId: string | null;
-};
 
 export type BuildTrayMenuSpecInput = {
 	locale: Locale;

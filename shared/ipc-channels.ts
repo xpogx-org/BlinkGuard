@@ -136,6 +136,11 @@ export const IPC_CHANNELS = {
 	equipCheerTheme: "equip-cheer-theme",
 	equipPopupPreset: "equip-popup-preset",
 	shellReady: "shell-ready",
+	trayMenuRender: "tray-menu-render",
+	trayMenuAction: "tray-menu-action",
+	trayMenuReady: "tray-menu-ready",
+	trayMenuSize: "tray-menu-size",
+	trayMenuHide: "tray-menu-hide",
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

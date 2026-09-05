@@ -1,9 +1,8 @@
 import {
-	Menu,
 	Tray,
 	nativeImage,
-	type MenuItemConstructorOptions,
 	type NativeImage,
+	type Point,
 } from "electron";
 import path from "node:path";
 import {
@@ -21,21 +20,29 @@ import {
 	traySessionGlanceEqual,
 	type TraySessionGlanceInput,
 } from "../../../shared/tray-session-glance";
+import type { TrayMenuRenderPayload } from "../../../shared/tray-menu";
 import type { InteractionLogger } from "../logging/interaction-logger";
 import type { AppPaths } from "../paths/app-paths";
 import type { WindowManager } from "../windows/window-manager";
 import {
 	buildTrayMenuSpec,
-	shouldSwitchTraySetup,
-	type TrayMenuItemSpec,
 	type TraySetupsSnapshot,
-	type TraySetupItemSpec,
-	type TraySnoozeItemSpec,
 } from "./tray-menu-model";
+import {
+	createTrayMenuActionDeps,
+	handleTrayMenuAction,
+} from "./tray-menu-actions";
+import { TrayMenuWindow } from "./tray-menu-window";
 
 const EMPTY_SETUPS: TraySetupsSnapshot = {
 	profiles: [],
 	activeSetupId: null,
+};
+
+export type TrayThemeSnapshot = {
+	darkMode: boolean;
+	colors: { background: string; text: string };
+	transparency: number;
 };
 
 export class TrayController {
@@ -46,10 +53,12 @@ export class TrayController {
 	private sessionGlance: TraySessionGlanceInput | null = null;
 	private colorIcon: NativeImage | null = null;
 	private idleIcon: NativeImage | null = null;
+	private cachedMenuPayload: TrayMenuRenderPayload | null = null;
 
 	constructor(
 		private readonly paths: AppPaths,
 		private readonly windows: WindowManager,
+		private readonly trayMenu: TrayMenuWindow,
 		private readonly onQuit: () => void,
 		private readonly getLocale: () => Locale = () => "en",
 		private readonly getSnoozeMinutes: () => number = () => 5,
@@ -69,6 +78,11 @@ export class TrayController {
 		private readonly onEndHush: (() => void) | null = null,
 		private readonly getSnoozeTokenCharges: () => number = () => 0,
 		private readonly onHushWithToken: (() => void) | null = null,
+		private readonly getTheme: () => TrayThemeSnapshot = () => ({
+			darkMode: true,
+			colors: { background: "#0f172a", text: "#f8fafc" },
+			transparency: 0.15,
+		}),
 	) {}
 
 	create(): void {
@@ -77,7 +91,7 @@ export class TrayController {
 		this.idleIcon = desaturateNativeImage(this.colorIcon);
 		this.isTracking = this.getIsTracking();
 		this.tray = new Tray(this.iconForTracking());
-		this.rebuildMenu(this.getLocale());
+		this.refreshTrayMenu(this.getLocale());
 		this.tray.on("click", () => {
 			this.interactions?.append({ source: "tray", action: "click-show" });
 			this.windows.showMain();
@@ -89,42 +103,25 @@ export class TrayController {
 			});
 			this.windows.showMain();
 		});
+		this.tray.on("right-click", () => {
+			this.toggleTrayMenu();
+		});
 	}
 
 	rebuildMenu(locale: Locale = this.getLocale()): void {
-		if (!this.tray) return;
-		const shortcuts = this.getKeyboardShortcuts();
-		const setups = this.getSetups();
-		const glanceLabel = formatTraySessionGlance(locale, this.sessionGlance);
-		const spec = buildTrayMenuSpec({
-			locale,
-			isTracking: this.isTracking,
-			capture: this.captureState,
-			pause: this.pauseState,
-			glanceLabel: glanceLabel || null,
-			snoozeMinutes: this.getSnoozeMinutes(),
-			includeSnoozeBlink: this.onSnoozeBlink != null,
-			includeSnoozeExercise: this.onSnoozeExercise != null,
-			includeSnoozeLookAway: this.onSnoozeLookAway != null,
-			includeCheckForUpdates: this.onCheckForUpdates != null,
-			showAccelerator: shortcuts.openSettings,
-			trackingAccelerator: shortcuts.trackingToggle,
-			includeHush: this.onHush != null,
-			isPromptHushed: this.getIsPromptHushed(),
-			hushAccelerator: shortcuts.snoozeAll,
-			snoozeTokenCharges: this.getSnoozeTokenCharges(),
-			tokenSnoozeAccelerator: shortcuts.snoozeWithToken,
-			setups: setups.profiles,
-			activeSetupId: setups.activeSetupId,
-		});
-		const items = spec.map((item) => this.toMenuItem(item));
-		this.tray.setContextMenu(Menu.buildFromTemplate(items));
+		this.refreshTrayMenu(locale);
+	}
+
+	refreshTrayMenu(locale: Locale = this.getLocale()): void {
+		const payload = this.buildTrayMenuPayload(locale);
+		this.cachedMenuPayload = payload;
+		this.trayMenu.update(payload);
 		this.applyTooltip(locale);
 	}
 
 	setPauseState(payload: FocusPauseStatePayload): void {
 		this.pauseState = payload;
-		this.rebuildMenu();
+		this.refreshTrayMenu();
 	}
 
 	setCaptureState(payload: CameraCaptureStatusPayload): void {
@@ -136,14 +133,14 @@ export class TrayController {
 			return;
 		}
 		this.captureState = payload;
-		this.rebuildMenu();
+		this.refreshTrayMenu();
 	}
 
 	setTrackingState(isTracking: boolean): void {
 		if (this.isTracking === isTracking) return;
 		this.isTracking = isTracking;
 		this.applyIcon();
-		this.rebuildMenu();
+		this.refreshTrayMenu();
 	}
 
 	setSessionGlance(input: TraySessionGlanceInput): void {
@@ -153,9 +150,79 @@ export class TrayController {
 	}
 
 	destroy(): void {
+		this.trayMenu.destroy();
 		if (!this.tray) return;
 		this.tray.destroy();
 		this.tray = null;
+	}
+
+	handleTrayMenuAction(payload: Parameters<typeof handleTrayMenuAction>[0]): void {
+		const setups = this.getSetups();
+		handleTrayMenuAction(
+			payload,
+			createTrayMenuActionDeps({
+				windows: this.windows,
+				onQuit: this.onQuit,
+				onCheckForUpdates: this.onCheckForUpdates,
+				interactions: this.interactions,
+				onSnoozeBlink: this.onSnoozeBlink,
+				onSnoozeExercise: this.onSnoozeExercise,
+				onSnoozeLookAway: this.onSnoozeLookAway,
+				isTracking: this.isTracking,
+				onToggleTracking: this.onToggleTracking,
+				getActiveSetupId: () => setups.activeSetupId,
+				getSetupIds: () => setups.profiles.map((profile) => profile.id),
+				onSwitchSetup: this.onSwitchSetup,
+				onHush: this.onHush,
+				onEndHush: this.onEndHush,
+				isPromptHushed: this.getIsPromptHushed(),
+				onHushWithToken: this.onHushWithToken,
+			}),
+		);
+	}
+
+	private toggleTrayMenu(cursor?: Point): void {
+		if (!this.tray) return;
+		if (this.trayMenu.isVisible()) {
+			this.trayMenu.hide();
+			return;
+		}
+		const payload =
+			this.cachedMenuPayload ?? this.buildTrayMenuPayload(this.getLocale());
+		this.trayMenu.show(this.tray, payload, cursor);
+	}
+
+	private buildTrayMenuPayload(locale: Locale): TrayMenuRenderPayload {
+		const shortcuts = this.getKeyboardShortcuts();
+		const setups = this.getSetups();
+		const glanceLabel = formatTraySessionGlance(locale, this.sessionGlance);
+		const theme = this.getTheme();
+		return {
+			spec: buildTrayMenuSpec({
+				locale,
+				isTracking: this.isTracking,
+				capture: this.captureState,
+				pause: this.pauseState,
+				glanceLabel: glanceLabel || null,
+				snoozeMinutes: this.getSnoozeMinutes(),
+				includeSnoozeBlink: this.onSnoozeBlink != null,
+				includeSnoozeExercise: this.onSnoozeExercise != null,
+				includeSnoozeLookAway: this.onSnoozeLookAway != null,
+				includeCheckForUpdates: this.onCheckForUpdates != null,
+				showAccelerator: shortcuts.openSettings,
+				trackingAccelerator: shortcuts.trackingToggle,
+				includeHush: this.onHush != null,
+				isPromptHushed: this.getIsPromptHushed(),
+				hushAccelerator: shortcuts.snoozeAll,
+				snoozeTokenCharges: this.getSnoozeTokenCharges(),
+				tokenSnoozeAccelerator: shortcuts.snoozeWithToken,
+				setups: setups.profiles,
+				activeSetupId: setups.activeSetupId,
+			}),
+			darkMode: theme.darkMode,
+			colors: theme.colors,
+			transparency: theme.transparency,
+		};
 	}
 
 	private applyIcon(): void {
@@ -175,163 +242,6 @@ export class TrayController {
 		);
 	}
 
-	private toMenuItem(item: TrayMenuItemSpec): MenuItemConstructorOptions {
-		switch (item.id) {
-			case "show":
-				return {
-					label: item.label,
-					...optionalAccelerator(item.accelerator),
-					click: () => {
-						this.interactions?.append({ source: "tray", action: "menu-show" });
-						this.windows.showMain();
-					},
-				};
-			case "tracking":
-				return {
-					label: item.label,
-					type: "checkbox",
-					checked: item.isTracking,
-					...optionalAccelerator(item.accelerator),
-					click: () => {
-						this.interactions?.append({
-							source: "tray",
-							action: item.isTracking
-								? "menu-stop-tracking"
-								: "menu-start-tracking",
-						});
-						this.onToggleTracking?.();
-					},
-				};
-			case "hush":
-				return {
-					label: item.label,
-					...optionalAccelerator(item.accelerator),
-					click: () => {
-						if (item.active) {
-							this.interactions?.append({
-								source: "tray",
-								action: "menu-end-hush",
-							});
-							this.onEndHush?.();
-							return;
-						}
-						this.interactions?.append({
-							source: "tray",
-							action: "menu-hush",
-						});
-						this.onHush?.();
-					},
-				};
-			case "hush-token":
-				return {
-					label: item.label,
-					...optionalAccelerator(item.accelerator),
-					click: () => {
-						this.interactions?.append({
-							source: "tray",
-							action: "menu-hush-with-token",
-						});
-						this.onHushWithToken?.();
-					},
-				};
-			case "camera":
-			case "pause":
-			case "glance":
-				return { label: item.label, enabled: false };
-			case "snooze":
-				return {
-					label: item.label,
-					submenu: item.submenu.map((child) => this.snoozeSubmenuItem(child)),
-				};
-			case "setups":
-				return {
-					label: item.label,
-					submenu: item.submenu.map((child) => this.setupSubmenuItem(child)),
-				};
-			case "check-for-updates":
-				return {
-					label: item.label,
-					click: () => {
-						this.interactions?.append({
-							source: "tray",
-							action: "menu-check-for-updates",
-						});
-						this.onCheckForUpdates?.();
-					},
-				};
-			case "separator":
-				return { type: "separator" };
-			case "quit":
-				return {
-					label: item.label,
-					click: () => {
-						this.interactions?.append({ source: "tray", action: "menu-quit" });
-						this.onQuit();
-					},
-				};
-		}
-	}
-
-	private setupSubmenuItem(
-		item: TraySetupItemSpec,
-	): MenuItemConstructorOptions {
-		return {
-			label: item.label,
-			type: "radio",
-			checked: item.checked,
-			click: () => {
-				if (!shouldSwitchTraySetup(item.id, item.checked ? item.id : null)) {
-					return;
-				}
-				this.interactions?.append({
-					source: "tray",
-					action: "setup-switch",
-					detail: { id: item.id },
-				});
-				this.onSwitchSetup?.(item.id);
-			},
-		};
-	}
-
-	private snoozeSubmenuItem(
-		item: TraySnoozeItemSpec,
-	): MenuItemConstructorOptions {
-		switch (item.id) {
-			case "snooze-blink":
-				return this.snoozeMenuItem(
-					item.label,
-					"menu-snooze-blink",
-					this.onSnoozeBlink,
-				);
-			case "snooze-exercise":
-				return this.snoozeMenuItem(
-					item.label,
-					"menu-snooze-exercise",
-					this.onSnoozeExercise,
-				);
-			case "snooze-look-away":
-				return this.snoozeMenuItem(
-					item.label,
-					"menu-snooze-look-away",
-					this.onSnoozeLookAway,
-				);
-		}
-	}
-
-	private snoozeMenuItem(
-		label: string,
-		action: string,
-		handler: (() => void) | null,
-	): MenuItemConstructorOptions {
-		return {
-			label,
-			click: () => {
-				this.interactions?.append({ source: "tray", action });
-				handler?.();
-			},
-		};
-	}
-
 	private loadIcon(): NativeImage {
 		const pngPath = path.join(this.paths.root, "assets", "icons", "icon.png");
 		let image = nativeImage.createFromPath(pngPath);
@@ -346,12 +256,6 @@ export class TrayController {
 		}
 		return image;
 	}
-}
-
-function optionalAccelerator(
-	accelerator: string | undefined,
-): Pick<MenuItemConstructorOptions, "accelerator"> {
-	return accelerator ? { accelerator } : {};
 }
 
 /** In-memory grayscale copy of the color tray icon (no second art file). */
