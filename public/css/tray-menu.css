@@ -39,6 +39,12 @@ html.tray-menu-root body.tray-menu-body::-webkit-scrollbar {
 	overflow: hidden;
 }
 
+/* Hidden until main reveals at the tray (see trayMenuReveal + .popup-enter). */
+.tray-menu-shell:not(.popup-enter) {
+	opacity: 0;
+	transform: translateY(6px) scale(0.98);
+}
+
 html[data-dark="false"] .tray-menu-shell {
 	color-scheme: light;
 	--popup-accent: #0f766e;
@@ -234,6 +240,11 @@ button.tray-item:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	.tray-menu-shell:not(.popup-enter) {
+		opacity: 1;
+		transform: none;
+	}
+
 	.tray-menu-group__panel,
 	.tray-menu-group__panel-inner,
 	.tray-item__chevron,

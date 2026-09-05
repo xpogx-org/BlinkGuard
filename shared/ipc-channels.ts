@@ -141,6 +141,7 @@ export const IPC_CHANNELS = {
 	trayMenuReady: "tray-menu-ready",
 	trayMenuSize: "tray-menu-size",
 	trayMenuHide: "tray-menu-hide",
+	trayMenuReveal: "tray-menu-reveal",
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

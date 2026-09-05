@@ -149,6 +149,9 @@ contextBridge.exposeInMainWorld('popupAPI', {
   onTrayMenuRender: (callback: (payload: any) => void) => {
     ipcRenderer.on(IPC_CHANNELS.trayMenuRender, (_event, payload) => callback(payload));
   },
+  onTrayMenuReveal: (callback: () => void) => {
+    ipcRenderer.on(IPC_CHANNELS.trayMenuReveal, () => callback());
+  },
   trayMenuAction: (payload: unknown) => {
     return ipcRenderer.invoke(IPC_CHANNELS.trayMenuAction, payload);
   },
@@ -202,6 +205,7 @@ declare global {
       onPopupEditorUpdate: (callback: (data: any) => void) => void;
       savePopupEditor: (data: any) => void;
       onTrayMenuRender: (callback: (payload: any) => void) => void;
+      onTrayMenuReveal: (callback: () => void) => void;
       trayMenuAction: (payload: unknown) => Promise<void>;
       notifyTrayMenuReady: () => void;
       notifyTrayMenuSize: (payload: { width: number; height: number }) => void;

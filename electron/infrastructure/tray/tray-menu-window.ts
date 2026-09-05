@@ -219,7 +219,13 @@ export class TrayMenuWindow {
 		this.applyBounds(win);
 		this.shownAtMs = Date.now();
 		win.show();
+		this.pushReveal(win);
 		win.focus();
+	}
+
+	private pushReveal(win: BrowserWindow): void {
+		if (win.isDestroyed() || win.webContents.isDestroyed()) return;
+		win.webContents.send(IPC_CHANNELS.trayMenuReveal);
 	}
 
 	private applyBounds(win: BrowserWindow): void {

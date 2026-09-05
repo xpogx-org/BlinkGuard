@@ -104,6 +104,12 @@
 		requestAnimationFrame(() => notifySize(Boolean(force)));
 	}
 
+	function playShellEnter() {
+		shell.classList.remove("popup-enter");
+		void shell.offsetWidth;
+		shell.classList.add("popup-enter");
+	}
+
 	const resizeObserver =
 		typeof ResizeObserver === "function"
 			? new ResizeObserver(() => scheduleSizeNotify(false))
@@ -344,6 +350,10 @@
 		if (!payload) return;
 		applyTheme(payload);
 		renderSpec(payload.spec ?? []);
+	});
+
+	window.popupAPI.onTrayMenuReveal(() => {
+		playShellEnter();
 	});
 
 	document.addEventListener("keydown", (event) => {
