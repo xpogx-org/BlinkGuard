@@ -203,6 +203,10 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		if (wasEnabled !== enabled && current.isTracking) {
 			reminders.resyncLoopsForCameraModeChange();
 		}
+		blinkStats.refreshTrayGlance();
+		if (blinkStats.isLivePushEnabled()) {
+			windows.sendToMain(IPC_CHANNELS.loadBlinkStats, blinkStats.getSnapshot());
+		}
 	});
 	on(IPC_CHANNELS.updateCameraQuality, (_event, quality: unknown) => {
 		if (!isCameraQuality(quality)) return;

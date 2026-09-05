@@ -101,12 +101,18 @@ export function buildOverlayPayload(
 	today: TodayBlinkSummary,
 	streak: StreakSummary,
 	locale: Locale,
+	cameraEnabled: boolean = true,
 ): SessionRecapOverlayPayload {
+	const sessionDuration = formatTrackingDuration(delta.trackingMs, locale);
 	const sessionLines = [
-		t(locale, "popup.recap.sessionPrimary", {
-			duration: formatTrackingDuration(delta.trackingMs, locale),
-			blinks: delta.blinks,
-		}),
+		cameraEnabled
+			? t(locale, "popup.recap.sessionPrimary", {
+					duration: sessionDuration,
+					blinks: delta.blinks,
+				})
+			: t(locale, "popup.recap.sessionPrimaryTracking", {
+					duration: sessionDuration,
+				}),
 	];
 	if (delta.eyeCareCompleted > 0) {
 		sessionLines.push(
@@ -117,10 +123,15 @@ export function buildOverlayPayload(
 			),
 		);
 	}
-	const todaySubtitle = t(locale, "popup.recap.todaySubtitle", {
-		duration: formatTrackingDuration(today.trackingMs, locale),
-		blinks: today.blinks,
-	});
+	const todayDuration = formatTrackingDuration(today.trackingMs, locale);
+	const todaySubtitle = cameraEnabled
+		? t(locale, "popup.recap.todaySubtitle", {
+				duration: todayDuration,
+				blinks: today.blinks,
+			})
+		: t(locale, "popup.recap.todaySubtitleTracking", {
+				duration: todayDuration,
+			});
 	const payload: SessionRecapOverlayPayload = {
 		title: t(locale, "popup.recap.title"),
 		sessionLines,
@@ -143,38 +154,45 @@ export function buildNativePayload(
 		delta?: SessionRecapDelta;
 	},
 	locale: Locale,
+	cameraEnabled: boolean = true,
 ): SessionRecapNativePayload {
 	if (scope === "quit" && data.today) {
+		const duration = formatTrackingDuration(data.today.trackingMs, locale);
 		return {
 			kind: "quit",
 			title: t(locale, "popup.recap.quit.title"),
-			body: t(locale, "popup.recap.quit.body", {
-				duration: formatTrackingDuration(data.today.trackingMs, locale),
-				blinks: data.today.blinks,
-			}),
+			body: cameraEnabled
+				? t(locale, "popup.recap.quit.body", {
+						duration,
+						blinks: data.today.blinks,
+					})
+				: t(locale, "popup.recap.quit.bodyTracking", { duration }),
 		};
 	}
 	const delta = data.delta;
 	if (!delta) {
+		const duration = formatTrackingDuration(0, locale);
 		return {
 			kind: "lock",
 			title: t(locale, "popup.recap.lock.title"),
-			body: t(locale, "popup.recap.lock.body", {
-				duration: formatTrackingDuration(0, locale),
-				blinks: 0,
-			}),
+			body: cameraEnabled
+				? t(locale, "popup.recap.lock.body", { duration, blinks: 0 })
+				: t(locale, "popup.recap.lock.bodyTracking", { duration }),
 		};
 	}
+	const duration = formatTrackingDuration(delta.trackingMs, locale);
 	const body =
 		delta.eyeCareCompleted > 0
 			? t(locale, "popup.recap.lock.bodyWithEyeCare", {
-					duration: formatTrackingDuration(delta.trackingMs, locale),
+					duration,
 					eyeCare: delta.eyeCareCompleted,
 				})
-			: t(locale, "popup.recap.lock.body", {
-					duration: formatTrackingDuration(delta.trackingMs, locale),
-					blinks: delta.blinks,
-				});
+			: cameraEnabled
+				? t(locale, "popup.recap.lock.body", {
+						duration,
+						blinks: delta.blinks,
+					})
+				: t(locale, "popup.recap.lock.bodyTracking", { duration });
 	return {
 		kind: "lock",
 		title: t(locale, "popup.recap.lock.title"),

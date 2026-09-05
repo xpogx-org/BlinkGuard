@@ -38,11 +38,12 @@ import {
 } from "./i18n";
 import {
 	DEFAULT_GOALS_CONFIG,
+	goalsConfigForCamera,
 	type GoalsConfig,
 } from "./preferences";
 
 export type { GoalsConfig };
-export { DEFAULT_GOALS_CONFIG };
+export { DEFAULT_GOALS_CONFIG, goalsConfigForCamera };
 
 export const BLINK_STATS_RETENTION_DAYS = 366;
 export const BLINK_STATS_STORE_KEY = "state";
@@ -475,10 +476,12 @@ export function dayMeetsDailyGoals(
 	state: BlinkStatsState,
 	date: string,
 	goals: GoalsConfig,
+	cameraEnabled: boolean = true,
 ): boolean {
-	if (!goals.goalsEnabled) return false;
-	const blinkTarget = goals.dailyBlinkGoal;
-	const trackTarget = goals.dailyTrackingMinutesGoal;
+	const effective = goalsConfigForCamera(goals, cameraEnabled);
+	if (!effective.goalsEnabled) return false;
+	const blinkTarget = effective.dailyBlinkGoal;
+	const trackTarget = effective.dailyTrackingMinutesGoal;
 	if (blinkTarget <= 0 && trackTarget <= 0) return false;
 	const day = dayByDate(state, date);
 	if (blinkTarget > 0 && (day?.blinks ?? 0) < blinkTarget) return false;
@@ -495,21 +498,23 @@ export function goalProgress(
 	state: BlinkStatsState,
 	goals: GoalsConfig,
 	now: Date = new Date(),
+	cameraEnabled: boolean = true,
 ): GoalsProgressSummary {
+	const effective = goalsConfigForCamera(goals, cameraEnabled);
 	const today = localDateKey(now);
 	const day = dayByDate(state, today);
 	const week = weekTotals(state, today);
-	const dailyBlinks = metricProgress(day?.blinks ?? 0, goals.dailyBlinkGoal);
+	const dailyBlinks = metricProgress(day?.blinks ?? 0, effective.dailyBlinkGoal);
 	const dailyTrackingMinutes = metricProgress(
 		trackingMinutes(day?.trackingMs ?? 0),
-		goals.dailyTrackingMinutesGoal,
+		effective.dailyTrackingMinutesGoal,
 	);
-	const weeklyBlinks = metricProgress(week.blinks, goals.weeklyBlinkGoal);
+	const weeklyBlinks = metricProgress(week.blinks, effective.weeklyBlinkGoal);
 	const weeklyTrackingMinutes = metricProgress(
 		trackingMinutes(week.trackingMs),
-		goals.weeklyTrackingMinutesGoal,
+		effective.weeklyTrackingMinutesGoal,
 	);
-	const enabled = goals.goalsEnabled;
+	const enabled = effective.goalsEnabled;
 	const dailyActive =
 		enabled && (dailyBlinks.enabled || dailyTrackingMinutes.enabled);
 	const dailyMet =
@@ -549,11 +554,13 @@ export function computeStreak(
 	state: BlinkStatsState,
 	goals: GoalsConfig,
 	now: Date = new Date(),
+	cameraEnabled: boolean = true,
 ): StreakComputeResult {
+	const effective = goalsConfigForCamera(goals, cameraEnabled);
 	const today = localDateKey(now);
 	if (
-		!goals.goalsEnabled ||
-		(goals.dailyBlinkGoal <= 0 && goals.dailyTrackingMinutesGoal <= 0)
+		!effective.goalsEnabled ||
+		(effective.dailyBlinkGoal <= 0 && effective.dailyTrackingMinutesGoal <= 0)
 	) {
 		return {
 			streak: { current: 0, shieldCharges: state.streakShieldCharges },
@@ -566,7 +573,7 @@ export function computeStreak(
 	const newlyUsed: string[] = [];
 
 	const covers = (date: string, allowShield: boolean): boolean => {
-		if (dayMeetsDailyGoals(state, date, goals)) return true;
+		if (dayMeetsDailyGoals(state, date, effective, true)) return true;
 		if (!allowShield) return false;
 		if (used.has(date) || newlyUsed.includes(date)) return true;
 		if (charges <= 0) return false;
@@ -996,6 +1003,7 @@ export function toBlinkStatsSnapshot(
 		shieldCharges: state.streakShieldCharges,
 	},
 	blinkRateWarmupTargetMs: number = BLINK_RATE_WINDOW_MS,
+	cameraEnabled: boolean = true,
 ): BlinkStatsSnapshot {
 	const today = localDateKey(now);
 	return {
@@ -1009,7 +1017,7 @@ export function toBlinkStatsSnapshot(
 		blinkRateReady,
 		blinkRateWarmupMs,
 		blinkRateWarmupTargetMs,
-		goals: goalProgress(state, goals, now),
+		goals: goalProgress(state, goals, now, cameraEnabled),
 		streak,
 		rewards: rewardOffers(state),
 		hasStatsFlair: state.unlockedRewardIds.includes("statsFlair"),
@@ -1022,6 +1030,7 @@ export function toBlinkStatsSnapshot(
 			stats: state,
 			streak: streak.current,
 			goals,
+			cameraEnabled,
 			hasCompletedOnboarding: false,
 			hasEarCalibration: false,
 		}),

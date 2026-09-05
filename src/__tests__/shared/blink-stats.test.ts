@@ -11,6 +11,7 @@ import {
 	availableBlinks,
 	computeStreak,
 	consumeSnoozeToken,
+	dayMeetsDailyGoals,
 	equipCheerTheme,
 	equipPopupPreset,
 	DEFAULT_BLINK_STATS,
@@ -38,6 +39,10 @@ import {
 	toYearChart,
 	weekEyeCareTotals,
 } from "../../../shared/blink-stats";
+import {
+	DEFAULT_GOALS_CONFIG,
+	goalsConfigForCamera,
+} from "../../../shared/preferences";
 
 function withDays(
 	days: ReturnType<typeof emptyDayStats>[],
@@ -368,6 +373,62 @@ describe("blink-stats helpers", () => {
 		expect(progress.weeklyBlinks.met).toBe(true);
 		expect(progress.weeklyTrackingMinutes.met).toBe(true);
 		expect(progress.dailyMet).toBe(false);
+	});
+
+	it("zeros blink targets for scoring when camera is off", () => {
+		expect(
+			goalsConfigForCamera(DEFAULT_GOALS_CONFIG, false).dailyBlinkGoal,
+		).toBe(0);
+		expect(
+			goalsConfigForCamera(DEFAULT_GOALS_CONFIG, false)
+				.dailyTrackingMinutesGoal,
+		).toBe(DEFAULT_GOALS_CONFIG.dailyTrackingMinutesGoal);
+		expect(
+			goalsConfigForCamera(DEFAULT_GOALS_CONFIG, true).dailyBlinkGoal,
+		).toBe(DEFAULT_GOALS_CONFIG.dailyBlinkGoal);
+	});
+
+	it("meets daily goals on tracking minutes alone when camera is off", () => {
+		const today = new Date(2026, 7, 7, 12, 0, 0);
+		const state = withDays([
+			{
+				...emptyDayStats("2026-08-07"),
+				blinks: 0,
+				trackingMs: 300 * 60_000,
+			},
+		]);
+		expect(
+			dayMeetsDailyGoals(state, "2026-08-07", DEFAULT_GOALS_CONFIG, false),
+		).toBe(true);
+		const progress = goalProgress(state, DEFAULT_GOALS_CONFIG, today, false);
+		expect(progress.dailyBlinks.enabled).toBe(false);
+		expect(progress.dailyTrackingMinutes).toMatchObject({
+			current: 300,
+			target: 300,
+			enabled: true,
+			met: true,
+		});
+		expect(progress.dailyMet).toBe(true);
+	});
+
+	it("increments streak from timer-only tracking goal", () => {
+		const goals = {
+			goalsEnabled: true,
+			dailyBlinkGoal: 4500,
+			dailyTrackingMinutesGoal: 60,
+			weeklyBlinkGoal: 0,
+			weeklyTrackingMinutesGoal: 0,
+		};
+		const state = withDays([
+			{
+				...emptyDayStats("2026-08-07"),
+				blinks: 0,
+				trackingMs: 60 * 60_000,
+			},
+		]);
+		const friday = new Date(2026, 7, 7, 10, 0, 0);
+		const result = computeStreak(state, goals, friday, false);
+		expect(result.streak.current).toBe(1);
 	});
 
 	it("computes streak across midnight and consumes a shield once", () => {

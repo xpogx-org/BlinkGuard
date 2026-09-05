@@ -28,6 +28,7 @@ function ctx(
 		stats: overrides.stats ?? DEFAULT_BLINK_STATS,
 		streak: overrides.streak ?? 0,
 		goals: overrides.goals ?? DEFAULT_GOALS_CONFIG,
+		cameraEnabled: overrides.cameraEnabled ?? true,
 		hasCompletedOnboarding: overrides.hasCompletedOnboarding ?? false,
 		hasEarCalibration: overrides.hasEarCalibration ?? false,
 	};
@@ -121,6 +122,33 @@ describe("achievements catalog", () => {
 		expect(earned).toContain("goalDay");
 		expect(earned).toContain("tracking10h");
 		expect(earned).toContain("activeDays7");
+	});
+
+	it("grants goalDay from tracking minutes when camera is off", () => {
+		const earned = evaluateAchievements(
+			ctx({
+				stats: {
+					...DEFAULT_BLINK_STATS,
+					days: [
+						{
+							...emptyDayStats("2026-08-07"),
+							blinks: 0,
+							trackingMs: 300 * 60_000,
+						},
+					],
+				},
+				goals: {
+					goalsEnabled: true,
+					dailyBlinkGoal: 4500,
+					dailyTrackingMinutesGoal: 300,
+					weeklyBlinkGoal: 0,
+					weeklyTrackingMinutesGoal: 0,
+				},
+				cameraEnabled: false,
+			}),
+		);
+		expect(earned).toContain("goalDay");
+		expect(earned).not.toContain("firstBlink");
 	});
 
 	it("grants firstCheer from purchase counts", () => {

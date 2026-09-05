@@ -143,4 +143,60 @@ describe("formatTraySessionGlance", () => {
 		);
 		expect(text).toContain("Сьогодні");
 	});
+
+	it("shows tracking goal for timer-only mode instead of blink goal", () => {
+		const text = formatTraySessionGlance(
+			"en",
+			glance({
+				showLiveBpm: false,
+				isTracking: true,
+				todayBlinks: 0,
+				todayTrackingMs: 45 * 60_000,
+				goals: {
+					enabled: true,
+					dailyBlinks: {
+						current: 0,
+						target: 4500,
+						enabled: false,
+						met: false,
+					},
+					dailyTrackingMinutes: {
+						current: 45,
+						target: 300,
+						enabled: true,
+						met: false,
+					},
+				},
+			}),
+		);
+		expect(text).not.toContain("4.5k");
+		expect(text).toContain("45 / 300");
+	});
+
+	it("marks met tracking goal in timer-only mode", () => {
+		const text = formatTraySessionGlance(
+			"en",
+			glance({
+				showLiveBpm: false,
+				todayTrackingMs: 300 * 60_000,
+				goals: {
+					enabled: true,
+					dailyBlinks: {
+						current: 0,
+						target: 4500,
+						enabled: false,
+						met: false,
+					},
+					dailyTrackingMinutes: {
+						current: 300,
+						target: 300,
+						enabled: true,
+						met: true,
+					},
+				},
+			}),
+		);
+		expect(text).toContain("300 / 300");
+		expect(text).toContain("Met");
+	});
 });

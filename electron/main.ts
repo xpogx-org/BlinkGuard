@@ -111,6 +111,7 @@ function bootstrap(): void {
 			}),
 		() => preferences.hasCompletedOnboarding,
 		() => preferences.earCalibration != null,
+		() => preferences.cameraEnabled,
 	);
 	const state = new AppRuntimeState();
 	const processes = new ChildProcessRegistry();

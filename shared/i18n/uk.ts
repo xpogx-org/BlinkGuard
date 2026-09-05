@@ -459,6 +459,8 @@ export const uk: MessageCatalog = {
 	"goals.dailyTracking": "Відстеження за день (хвилини)",
 	"goals.weeklyBlinks": "Моргання за тиждень",
 	"goals.weeklyTracking": "Відстеження за тиждень (хвилини)",
+	"goals.blinksRequiresCamera":
+		"Цілі за морганнями потребують увімкненої камери. Увімкніть камеру в «Нагадування», щоб рахувати моргання.",
 	"reset.dangerZone": "Небезпечна зона",
 	"reset.description":
 		"Ці дії остаточно скидають локальні налаштування. Скасувати їх неможливо.",
@@ -932,6 +934,7 @@ export const uk: MessageCatalog = {
 	"popup.cheer.message": "Класні моргання — так тримати!",
 	"popup.recap.title": "Підсумок сесії",
 	"popup.recap.sessionPrimary": "Ця сесія: {duration} · {blinks} моргань",
+	"popup.recap.sessionPrimaryTracking": "Ця сесія: {duration}",
 	"popup.recap.eyeCareLine": "{lookAway} · {exercise}",
 	"popup.recap.lookAwayCount": "{n} відведення очей",
 	"popup.recap.lookAwayCount_few": "{n} відведення очей",
@@ -940,13 +943,16 @@ export const uk: MessageCatalog = {
 	"popup.recap.exerciseCount_few": "{n} вправи",
 	"popup.recap.exerciseCount_plural": "{n} вправ",
 	"popup.recap.todaySubtitle": "Сьогодні: {duration} · {blinks} моргань",
+	"popup.recap.todaySubtitleTracking": "Сьогодні: {duration}",
 	"popup.recap.streakLine": "Серія {n} день",
 	"popup.recap.streakLine_few": "Серія {n} дні",
 	"popup.recap.streakLine_plural": "Серія {n} днів",
 	"popup.recap.quit.title": "Гарна робота сьогодні",
 	"popup.recap.quit.body": "{duration} відстежено · {blinks} моргань",
+	"popup.recap.quit.bodyTracking": "{duration} відстежено",
 	"popup.recap.lock.title": "Відходите від столу",
 	"popup.recap.lock.body": "Ця сесія: {duration} · {blinks} моргань",
+	"popup.recap.lock.bodyTracking": "Ця сесія: {duration}",
 	"popup.recap.lock.bodyWithEyeCare":
 		"Ця сесія: {duration} · {eyeCare} перерв для очей",
 	"popup.levelUp.message": "Рівень {level}!",

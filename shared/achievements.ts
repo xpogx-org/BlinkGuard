@@ -1,6 +1,6 @@
 import { levelFromTotalBlinks } from "./blink-profile";
 import type { BlinkStatsState } from "./blink-stats";
-import type { GoalsConfig } from "./preferences";
+import { goalsConfigForCamera, type GoalsConfig } from "./preferences";
 
 export const ACHIEVEMENT_IDS = [
 	"firstBlink",
@@ -69,6 +69,7 @@ export type AchievementEvalContext = {
 	stats: BlinkStatsState;
 	streak: number;
 	goals: GoalsConfig;
+	cameraEnabled: boolean;
 	hasCompletedOnboarding: boolean;
 	hasEarCalibration: boolean;
 };
@@ -227,10 +228,12 @@ function activeBlinkDays(stats: BlinkStatsState): number {
 function anyDayMeetsDailyGoals(
 	stats: BlinkStatsState,
 	goals: GoalsConfig,
+	cameraEnabled: boolean,
 ): boolean {
-	if (!goals.goalsEnabled) return false;
-	const blinkTarget = goals.dailyBlinkGoal;
-	const trackTarget = goals.dailyTrackingMinutesGoal;
+	const effective = goalsConfigForCamera(goals, cameraEnabled);
+	if (!effective.goalsEnabled) return false;
+	const blinkTarget = effective.dailyBlinkGoal;
+	const trackTarget = effective.dailyTrackingMinutesGoal;
 	if (blinkTarget <= 0 && trackTarget <= 0) return false;
 	return stats.days.some((day) => {
 		if (blinkTarget > 0 && day.blinks < blinkTarget) return false;
@@ -272,7 +275,7 @@ function isEarned(id: AchievementId, ctx: AchievementEvalContext): boolean {
 		case "streak30":
 			return ctx.streak >= 30;
 		case "goalDay":
-			return anyDayMeetsDailyGoals(stats, ctx.goals);
+			return anyDayMeetsDailyGoals(stats, ctx.goals, ctx.cameraEnabled);
 		case "tracking10h":
 			return totalTrackingMs(stats) >= TRACKING_10H_MS;
 		case "activeDays7":

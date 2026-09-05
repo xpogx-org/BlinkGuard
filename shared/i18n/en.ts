@@ -449,6 +449,8 @@ export const en: MessageCatalog = {
 	"goals.dailyTracking": "Daily tracking (minutes)",
 	"goals.weeklyBlinks": "Weekly blinks",
 	"goals.weeklyTracking": "Weekly tracking (minutes)",
+	"goals.blinksRequiresCamera":
+		"Blink goals need the camera on. Turn on camera in Reminders to track blinks.",
 	"reset.dangerZone": "Danger Zone",
 	"reset.description":
 		"These actions permanently reset local settings. They cannot be undone.",
@@ -918,6 +920,7 @@ export const en: MessageCatalog = {
 	"popup.cheer.message": "Nice blinks — keep it up!",
 	"popup.recap.title": "Session recap",
 	"popup.recap.sessionPrimary": "This session: {duration} · {blinks} blinks",
+	"popup.recap.sessionPrimaryTracking": "This session: {duration}",
 	"popup.recap.eyeCareLine": "{lookAway} · {exercise}",
 	"popup.recap.lookAwayCount": "{n} look-away",
 	"popup.recap.lookAwayCount_few": "{n} look-aways",
@@ -926,13 +929,16 @@ export const en: MessageCatalog = {
 	"popup.recap.exerciseCount_few": "{n} exercises",
 	"popup.recap.exerciseCount_plural": "{n} exercises",
 	"popup.recap.todaySubtitle": "Today: {duration} · {blinks} blinks",
+	"popup.recap.todaySubtitleTracking": "Today: {duration}",
 	"popup.recap.streakLine": "{n}-day streak",
 	"popup.recap.streakLine_few": "{n}-day streak",
 	"popup.recap.streakLine_plural": "{n}-day streak",
 	"popup.recap.quit.title": "Nice work today",
 	"popup.recap.quit.body": "{duration} tracked · {blinks} blinks",
+	"popup.recap.quit.bodyTracking": "{duration} tracked",
 	"popup.recap.lock.title": "Stepping away",
 	"popup.recap.lock.body": "This session: {duration} · {blinks} blinks",
+	"popup.recap.lock.bodyTracking": "This session: {duration}",
 	"popup.recap.lock.bodyWithEyeCare":
 		"This session: {duration} · {eyeCare} eye-care breaks",
 	"popup.levelUp.message": "Level {level}!",

@@ -28,7 +28,11 @@ function chartBuckets(range: ChartRange, snapshot: BlinkStatsSnapshot) {
 	}
 }
 
-export function StatisticsPanel() {
+export function StatisticsPanel({
+	cameraEnabled = true,
+}: {
+	cameraEnabled?: boolean;
+}) {
 	const { t, locale } = useI18n();
 	const { snapshot, clearStatistics } = useBlinkStats();
 	const [range, setRange] = useState<ChartRange>("today");
@@ -74,11 +78,18 @@ export function StatisticsPanel() {
 
 			<SettingPanel>
 				<SettingRow title={t("stats.today")} description={t("stats.todayDesc")}>
-					<div className="grid grid-cols-3 gap-3">
-						<SummaryStat
-							label={t("stats.blinks")}
-							value={String(today.blinks)}
-						/>
+					<div
+						className={cn(
+							"grid gap-3",
+							cameraEnabled ? "grid-cols-3" : "grid-cols-2",
+						)}
+					>
+						{cameraEnabled ? (
+							<SummaryStat
+								label={t("stats.blinks")}
+								value={String(today.blinks)}
+							/>
+						) : null}
 						<SummaryStat
 							label={t("stats.tracking")}
 							value={formatTrackingDuration(today.trackingMs, locale)}

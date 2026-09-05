@@ -8,6 +8,7 @@ import {
 	emptyDayStats,
 	localDateKey,
 } from "../../../shared/blink-stats";
+import { DEFAULT_GOALS_CONFIG } from "../../../shared/preferences";
 
 function createStore(): PreferenceStore & { data: Map<string, unknown> } {
 	const data = new Map<string, unknown>();
@@ -565,6 +566,52 @@ describe("BlinkStatsService", () => {
 				.snoozeTokenCharges,
 		).toBe(0);
 		expect(service.consumeSnoozeToken()).toBe(false);
+		service.dispose();
+	});
+
+	it("scores tracking goals when camera is off", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(
+			store,
+			() => "en",
+			() => ({
+				goalsEnabled: true,
+				dailyBlinkGoal: 4500,
+				dailyTrackingMinutesGoal: 5,
+				weeklyBlinkGoal: 0,
+				weeklyTrackingMinutesGoal: 0,
+			}),
+			() => false,
+			() => false,
+			() => false,
+		);
+		service.onTrackingStart();
+		vi.advanceTimersByTime(5 * 60_000);
+		const snapshot = service.getSnapshot();
+		expect(snapshot.goals.dailyBlinks.enabled).toBe(false);
+		expect(snapshot.goals.dailyTrackingMinutes.met).toBe(true);
+		expect(snapshot.goals.dailyMet).toBe(true);
+		expect(snapshot.streak.current).toBe(1);
+		service.dispose();
+	});
+
+	it("exposes timer-only tray glance with tracking goal", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(
+			store,
+			() => "en",
+			() => DEFAULT_GOALS_CONFIG,
+			() => false,
+			() => false,
+			() => false,
+		);
+		service.onTrackingStart();
+		vi.advanceTimersByTime(45 * 60_000);
+		const input = service.getTrayGlanceInput(false);
+		expect(input.showLiveBpm).toBe(false);
+		expect(input.goals.dailyBlinks.enabled).toBe(false);
+		expect(input.goals.dailyTrackingMinutes.enabled).toBe(true);
+		expect(input.goals.dailyTrackingMinutes.current).toBeGreaterThanOrEqual(45);
 		service.dispose();
 	});
 

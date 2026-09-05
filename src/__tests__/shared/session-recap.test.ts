@@ -94,4 +94,48 @@ describe("session-recap shared builders", () => {
 		const long = "x".repeat(SESSION_RECAP_NATIVE_BODY_MAX + 10);
 		expect(truncateNativeBody(long).length).toBe(SESSION_RECAP_NATIVE_BODY_MAX);
 	});
+
+	it("omits blink counts in overlay and native when camera is off", () => {
+		const overlay = buildOverlayPayload(
+			{
+				blinks: 12,
+				trackingMs: 360_000,
+				lookAwayCompleted: 0,
+				exerciseCompleted: 0,
+				eyeCareCompleted: 0,
+			},
+			todayBase,
+			{ current: 0, shieldCharges: 0 },
+			"en",
+			false,
+		);
+		expect(overlay.sessionLines[0]).not.toContain("blinks");
+		expect(overlay.sessionLines[0]).toContain("6m");
+		expect(overlay.todaySubtitle).not.toContain("blinks");
+
+		const quit = buildNativePayload(
+			"quit",
+			{ today: todayBase },
+			"en",
+			false,
+		);
+		expect(quit.body).not.toContain("blinks");
+
+		const lock = buildNativePayload(
+			"lock",
+			{
+				delta: {
+					blinks: 4,
+					trackingMs: 360_000,
+					lookAwayCompleted: 0,
+					exerciseCompleted: 0,
+					eyeCareCompleted: 0,
+				},
+			},
+			"en",
+			false,
+		);
+		expect(lock.body).not.toContain("blinks");
+		expect(lock.body).toContain("6m");
+	});
 });

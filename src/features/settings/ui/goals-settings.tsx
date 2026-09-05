@@ -24,11 +24,13 @@ function GoalNumberInput({
 	label,
 	value,
 	onChange,
+	disabled = false,
 }: {
 	id: string;
 	label: string;
 	value: number;
 	onChange: (value: number) => void;
+	disabled?: boolean;
 }) {
 	return (
 		<label className="flex flex-col gap-1 text-sm">
@@ -39,11 +41,12 @@ function GoalNumberInput({
 				min={0}
 				max={100000}
 				value={value}
+				disabled={disabled}
 				onChange={(event) => {
 					const next = Number.parseInt(event.target.value, 10);
 					onChange(Number.isFinite(next) ? Math.max(0, next) : 0);
 				}}
-				className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-foreground tabular-nums"
+				className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-foreground tabular-nums disabled:cursor-not-allowed disabled:opacity-50"
 			/>
 		</label>
 	);
@@ -89,6 +92,7 @@ export function GoalsSettings({
 	const { t, locale } = useI18n();
 	const { snapshot } = useBlinkStats();
 	const { goals, streak } = snapshot;
+	const cameraOn = preferences.cameraEnabled;
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const atDefaults =
 		preferences.goalsEnabled === DEFAULT_GOALS_CONFIG.goalsEnabled &&
@@ -107,12 +111,20 @@ export function GoalsSettings({
 
 	const streakKey = pluralKey("stats.streak.days", locale, streak.current);
 	const dailyGoals = [
-		{ key: "dailyBlinks", metric: goals.dailyBlinks },
-		{ key: "dailyTracking", metric: goals.dailyTrackingMinutes },
+		{ key: "dailyBlinks", metric: goals.dailyBlinks, blink: true },
+		{
+			key: "dailyTracking",
+			metric: goals.dailyTrackingMinutes,
+			blink: false,
+		},
 	] as const;
 	const weeklyGoals = [
-		{ key: "weeklyBlinks", metric: goals.weeklyBlinks },
-		{ key: "weeklyTracking", metric: goals.weeklyTrackingMinutes },
+		{ key: "weeklyBlinks", metric: goals.weeklyBlinks, blink: true },
+		{
+			key: "weeklyTracking",
+			metric: goals.weeklyTrackingMinutes,
+			blink: false,
+		},
 	] as const;
 
 	return (
@@ -165,8 +177,8 @@ export function GoalsSettings({
 			<div className="mt-4">
 				{preferences.goalsEnabled ? (
 					<div className="space-y-3">
-						{dailyGoals.map(({ key, metric }) =>
-							metric.enabled ? (
+						{dailyGoals.map(({ key, metric, blink }) =>
+							metric.enabled && (cameraOn || !blink) ? (
 								<GoalProgressRow
 									key={key}
 									label={t(`stats.goals.${key}`)}
@@ -175,8 +187,8 @@ export function GoalsSettings({
 								/>
 							) : null,
 						)}
-						{weeklyGoals.map(({ key, metric }) =>
-							metric.enabled ? (
+						{weeklyGoals.map(({ key, metric, blink }) =>
+							metric.enabled && (cameraOn || !blink) ? (
 								<GoalProgressRow
 									key={key}
 									label={t(`stats.goals.${key}`)}
@@ -215,6 +227,7 @@ export function GoalsSettings({
 									id="daily-blink-goal"
 									label={t("goals.dailyBlinks")}
 									value={preferences.dailyBlinkGoal}
+									disabled={!cameraOn}
 									onChange={(dailyBlinkGoal) =>
 										setPreferences((current) => ({
 											...current,
@@ -237,6 +250,7 @@ export function GoalsSettings({
 									id="weekly-blink-goal"
 									label={t("goals.weeklyBlinks")}
 									value={preferences.weeklyBlinkGoal}
+									disabled={!cameraOn}
 									onChange={(weeklyBlinkGoal) =>
 										setPreferences((current) => ({
 											...current,
@@ -256,6 +270,11 @@ export function GoalsSettings({
 									}
 								/>
 							</div>
+							{!cameraOn ? (
+								<p className="mt-3 text-xs text-muted-foreground">
+									{t("goals.blinksRequiresCamera")}
+								</p>
+							) : null}
 						</Reveal>
 						<div className={preferences.goalsEnabled ? "mt-3" : undefined}>
 							<Button

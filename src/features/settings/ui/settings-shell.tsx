@@ -389,7 +389,7 @@ export function SettingsShell({
 											preferences={preferences}
 											setPreferences={setPreferences}
 										/>
-										<StatisticsPanel />
+										<StatisticsPanel cameraEnabled={preferences.cameraEnabled} />
 									</>
 								)}
 								{progressTab === "profile" && <ProfilePanel />}

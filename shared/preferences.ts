@@ -366,6 +366,19 @@ export function goalsConfigFromPreferences(
 	};
 }
 
+/** Blink targets count only when camera is on; tracking targets always apply. */
+export function goalsConfigForCamera(
+	goals: GoalsConfig,
+	cameraEnabled: boolean,
+): GoalsConfig {
+	if (cameraEnabled) return goals;
+	return {
+		...goals,
+		dailyBlinkGoal: 0,
+		weeklyBlinkGoal: 0,
+	};
+}
+
 /** Coerce stored/IPC blink-rate coaching threshold to 1…60. */
 export function sanitizeBlinkRateThresholdPerMin(input: unknown): number {
 	if (input === null || input === undefined || input === "") {

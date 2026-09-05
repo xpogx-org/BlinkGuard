@@ -150,6 +150,23 @@ describe("SessionRecapService", () => {
 		expect(ctx.ports.showOverlay).toHaveBeenCalledOnce();
 	});
 
+	it("omits blink counts in overlay when camera is off", () => {
+		const ctx = createService({
+			preferences: { cameraEnabled: false },
+		});
+		ctx.service.armBaseline(makeSnapshot({ blinks: 0, trackingMs: 0 }));
+		ctx.setSnapshot(
+			makeSnapshot({
+				blinks: 0,
+				trackingMs: SESSION_RECAP_MIN_TRACKING_MS,
+			}),
+		);
+		expect(ctx.service.handleStop({ showStatus: true })).toBe(true);
+		const payload = ctx.ports.showOverlay.mock.calls[0]?.[0];
+		expect(payload.sessionLines[0]).not.toMatch(/blink/i);
+		expect(payload.todaySubtitle).not.toMatch(/blink/i);
+	});
+
 	it("returns false when recap is disabled or suppressed", () => {
 		const disabled = createService({
 			preferences: { sessionRecapEnabled: false },

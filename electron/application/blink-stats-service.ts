@@ -132,6 +132,7 @@ export class BlinkStatsService {
 		}),
 		private readonly getHasCompletedOnboarding: () => boolean = () => false,
 		private readonly getHasEarCalibration: () => boolean = () => false,
+		private readonly getCameraEnabled: () => boolean = () => true,
 	) {
 		this.state = normalizeBlinkStatsState(
 			this.store.get(BLINK_STATS_STORE_KEY, DEFAULT_BLINK_STATS),
@@ -404,7 +405,12 @@ export class BlinkStatsService {
 		const blinksPerMinute = ready ? this.computeLiveBpm(nowMs) : 0;
 		const today = localDateKey(now);
 		const day = todaySummary(this.state, today);
-		const goals = goalProgress(this.state, this.getGoals(), now);
+		const goals = goalProgress(
+			this.state,
+			this.getGoals(),
+			now,
+			this.getCameraEnabled(),
+		);
 		return {
 			isTracking: this.rateSessionStartedAt !== null,
 			showLiveBpm,
@@ -501,11 +507,13 @@ export class BlinkStatsService {
 		const today = localDateKey(now);
 		const locale = this.getLocale();
 		const goals = this.getGoals();
-		const streakResult = computeStreak(this.state, goals, now);
+		const cameraEnabled = this.getCameraEnabled();
+		const streakResult = computeStreak(this.state, goals, now, cameraEnabled);
 		const achievementFields = achievementSnapshotFields({
 			stats: this.state,
 			streak: streakResult.streak.current,
 			goals,
+			cameraEnabled,
 			hasCompletedOnboarding: this.getHasCompletedOnboarding(),
 			hasEarCalibration: this.getHasEarCalibration(),
 		});
@@ -525,6 +533,7 @@ export class BlinkStatsService {
 				goals,
 				streakResult.streak,
 				warmupTargetMs,
+				cameraEnabled,
 			);
 			this.cachedCharts = {
 				dayChart: full.dayChart,
@@ -546,7 +555,7 @@ export class BlinkStatsService {
 			blinkRateReady: ready,
 			blinkRateWarmupMs: warmupMs,
 			blinkRateWarmupTargetMs: warmupTargetMs,
-			goals: goalProgress(this.state, goals, now),
+			goals: goalProgress(this.state, goals, now, cameraEnabled),
 			streak: streakResult.streak,
 			rewards: rewardOffers(this.state),
 			hasStatsFlair: this.state.unlockedRewardIds.includes("statsFlair"),
@@ -721,11 +730,18 @@ export class BlinkStatsService {
 	private applyNewAchievements(now: Date = new Date()): AchievementId[] {
 		this.reconcileStreak(now);
 		const goals = this.getGoals();
-		const streak = computeStreak(this.state, goals, now).streak.current;
+		const cameraEnabled = this.getCameraEnabled();
+		const streak = computeStreak(
+			this.state,
+			goals,
+			now,
+			cameraEnabled,
+		).streak.current;
 		const earned = evaluateAchievements({
 			stats: this.state,
 			streak,
 			goals,
+			cameraEnabled,
 			hasCompletedOnboarding: this.getHasCompletedOnboarding(),
 			hasEarCalibration: this.getHasEarCalibration(),
 		});
@@ -764,7 +780,12 @@ export class BlinkStatsService {
 
 	/** Apply shield consumption for past misses and persist if changed. */
 	private reconcileStreak(now: Date): void {
-		const result = computeStreak(this.state, this.getGoals(), now);
+		const result = computeStreak(
+			this.state,
+			this.getGoals(),
+			now,
+			this.getCameraEnabled(),
+		);
 		if (result.state === this.state) return;
 		const before = this.state;
 		this.state = result.state;

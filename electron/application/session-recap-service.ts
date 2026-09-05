@@ -80,6 +80,7 @@ export class SessionRecapService {
 			snapshot.today,
 			snapshot.streak,
 			locale,
+			this.preferences.cameraEnabled,
 		);
 		this.lastOverlayAt = now;
 		this.ports.showOverlay(payload);
@@ -102,7 +103,12 @@ export class SessionRecapService {
 		}
 
 		const locale = this.preferences.locale === "uk" ? "uk" : "en";
-		const native = buildNativePayload("quit", { today: snapshot.today }, locale);
+		const native = buildNativePayload(
+			"quit",
+			{ today: snapshot.today },
+			locale,
+			this.preferences.cameraEnabled,
+		);
 		this.showNative(native);
 	}
 
@@ -128,7 +134,12 @@ export class SessionRecapService {
 		}
 
 		const locale = this.preferences.locale === "uk" ? "uk" : "en";
-		const native = buildNativePayload("lock", { delta }, locale);
+		const native = buildNativePayload(
+			"lock",
+			{ delta },
+			locale,
+			this.preferences.cameraEnabled,
+		);
 		this.lastNativeLockAt = now;
 		this.showNative(native);
 	}
