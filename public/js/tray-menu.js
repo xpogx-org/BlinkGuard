@@ -39,6 +39,8 @@
 			'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>',
 		pause:
 			'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6"/><path d="M14 9v6"/></svg>',
+		pauseApp:
+			'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M10 9v6"/><path d="M14 9v6"/></svg>',
 		snoozeItem:
 			'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="M9 12h6"/></svg>',
 	};
@@ -335,6 +337,18 @@
 									: "pause",
 						),
 					);
+					break;
+				case "pause-app":
+					if (item.enabled) {
+						section.appendChild(
+							actionRow(item.label, {
+								icon: "pauseApp",
+								payload: { kind: "item", id: "pause-app" },
+							}),
+						);
+					} else {
+						section.appendChild(statusRow(item.label, "pauseApp"));
+					}
 					break;
 				case "separator":
 					startNextSection();

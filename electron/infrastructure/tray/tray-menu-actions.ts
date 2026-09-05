@@ -26,6 +26,7 @@ export type TrayMenuActionDeps = {
 	onHushWithToken: (() => void) | null;
 	onHushDuration: ((minutes: number) => void) | null;
 	onHushUntilResume: (() => void) | null;
+	onPauseApp: (() => boolean) | null;
 };
 
 export function handleTrayMenuAction(
@@ -85,6 +86,16 @@ function handleTrayMenuItemAction(
 			});
 			deps.onHushWithToken?.();
 			return;
+		case "pause-app": {
+			const added = deps.onPauseApp?.() ?? false;
+			if (added) {
+				deps.interactions?.append({
+					source: "tray",
+					action: "menu-pause-app",
+				});
+			}
+			return;
+		}
 		case "check-for-updates":
 			deps.interactions?.append({
 				source: "tray",

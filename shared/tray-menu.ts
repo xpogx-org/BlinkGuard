@@ -27,6 +27,7 @@ export type TrayMenuItemSpec =
 	| { id: "camera"; label: string; enabled: false }
 	| { id: "glance"; label: string; enabled: false }
 	| { id: "pause"; label: string; enabled: false }
+	| { id: "pause-app"; label: string; enabled: boolean }
 	| { id: "snooze"; label: string; submenu: TraySnoozeItemSpec[] }
 	| { id: "setups"; label: string; submenu: TraySetupItemSpec[] }
 	| { id: "check-for-updates"; label: string }
@@ -48,6 +49,7 @@ export type TrayMenuItemActionId =
 	| "tracking"
 	| "hush"
 	| "hush-token"
+	| "pause-app"
 	| "check-for-updates"
 	| "quit";
 
@@ -109,6 +111,7 @@ const TRAY_MENU_ITEM_ACTION_IDS: readonly TrayMenuItemActionId[] = [
 	"tracking",
 	"hush",
 	"hush-token",
+	"pause-app",
 	"check-for-updates",
 	"quit",
 ];

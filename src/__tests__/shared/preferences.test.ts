@@ -31,6 +31,9 @@ import {
 	sanitizePauseAppCandidates,
 	sanitizePauseAppPickerPayload,
 	sanitizePauseAppRules,
+	appendProcessOnlyPauseAppRule,
+	pauseAppProcessBasename,
+	processOnlyPauseAppRule,
 	sanitizePersistedPreferences,
 	sanitizePopupPositionsByDisplayId,
 	sanitizePopupSizesByDisplayId,
@@ -587,6 +590,95 @@ describe("sanitizePauseAppRules", () => {
 
 	it("hydrates missing pauseAppRules to []", () => {
 		expect(sanitizePersistedPreferences({}).pauseAppRules).toEqual([]);
+	});
+});
+
+describe("pauseAppProcessBasename", () => {
+	it("returns the last path segment and preserves casing", () => {
+		expect(pauseAppProcessBasename("C:\\Program Files\\Zoom\\Zoom.exe")).toBe(
+			"Zoom.exe",
+		);
+		expect(pauseAppProcessBasename("/usr/bin/firefox")).toBe("firefox");
+		expect(pauseAppProcessBasename("  Teams.exe  ")).toBe("Teams.exe");
+	});
+
+	it("returns empty for blank input", () => {
+		expect(pauseAppProcessBasename("")).toBe("");
+		expect(pauseAppProcessBasename("   ")).toBe("");
+	});
+});
+
+describe("processOnlyPauseAppRule", () => {
+	it("strips window title and keeps process basename", () => {
+		expect(
+			processOnlyPauseAppRule({
+				processName: "C:\\Apps\\Zoom.exe",
+				windowTitle: "Zoom Meeting — Host",
+			}),
+		).toEqual({ processName: "Zoom.exe", windowTitle: "" });
+	});
+
+	it("returns null for title-only candidates", () => {
+		expect(
+			processOnlyPauseAppRule({ processName: "", windowTitle: "Meeting" }),
+		).toBeNull();
+		expect(processOnlyPauseAppRule(null)).toBeNull();
+	});
+});
+
+describe("appendProcessOnlyPauseAppRule", () => {
+	it("appends a process-only rule", () => {
+		const result = appendProcessOnlyPauseAppRule(
+			[],
+			{ processName: "Zoom.exe", windowTitle: "Host" },
+		);
+		expect(result).toEqual({
+			ok: true,
+			rules: [{ processName: "Zoom.exe", windowTitle: "" }],
+		});
+	});
+
+	it("dedupes case-insensitively on process with empty title", () => {
+		const listed = appendProcessOnlyPauseAppRule(
+			[{ processName: "Zoom.exe", windowTitle: "" }],
+			{ processName: "zoom.exe", windowTitle: "" },
+		);
+		expect(listed).toEqual({ ok: false, reason: "already-listed" });
+	});
+
+	it("allows process-only add when a title-specific rule exists", () => {
+		const result = appendProcessOnlyPauseAppRule(
+			[{ processName: "Zoom.exe", windowTitle: "Standup" }],
+			{ processName: "Zoom.exe", windowTitle: "Other" },
+		);
+		expect(result).toEqual({
+			ok: true,
+			rules: [
+				{ processName: "Zoom.exe", windowTitle: "Standup" },
+				{ processName: "Zoom.exe", windowTitle: "" },
+			],
+		});
+	});
+
+	it("refuses at cap", () => {
+		const full = Array.from({ length: 32 }, (_, i) => ({
+			processName: `app${i}.exe`,
+			windowTitle: "",
+		}));
+		const result = appendProcessOnlyPauseAppRule(full, {
+			processName: "New.exe",
+			windowTitle: "",
+		});
+		expect(result).toEqual({ ok: false, reason: "at-cap" });
+	});
+
+	it("refuses empty process", () => {
+		expect(
+			appendProcessOnlyPauseAppRule([], {
+				processName: "",
+				windowTitle: "Only title",
+			}),
+		).toEqual({ ok: false, reason: "empty-process" });
 	});
 });
 

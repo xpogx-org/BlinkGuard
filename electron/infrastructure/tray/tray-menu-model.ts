@@ -5,6 +5,11 @@ import {
 } from "../../../shared/camera-capture-status";
 import { TRAY_HUSH_DURATION_MINUTES } from "../../../shared/hush-durations";
 import { pluralKey, t, type Locale } from "../../../shared/i18n";
+import {
+	appendProcessOnlyPauseAppRule,
+	type PauseAppRule,
+	processOnlyPauseAppRule,
+} from "../../../shared/preferences";
 import { SETTINGS_PROFILE_CAP } from "../../../shared/settings-profiles";
 import {
 	endHushLabel,
@@ -56,6 +61,8 @@ export type BuildTrayMenuSpecInput = {
 	tokenSnoozeAccelerator?: string;
 	setups?: TraySetupSummary[];
 	activeSetupId?: string | null;
+	pauseAppRules?: PauseAppRule[];
+	lastExternal?: PauseAppRule | null;
 };
 
 /** Tray click on the already-active radio is a no-op (do not re-apply). */
@@ -171,6 +178,20 @@ export function buildTrayMenuSpec(
 			enabled: false,
 		});
 	}
+	const pauseAppRules = input.pauseAppRules ?? [];
+	const lastExternal = input.lastExternal ?? null;
+	const pauseAppAppend = appendProcessOnlyPauseAppRule(
+		pauseAppRules,
+		lastExternal,
+	);
+	const pauseAppProcess = processOnlyPauseAppRule(lastExternal)?.processName ?? "";
+	items.push({
+		id: "pause-app",
+		label: pauseAppProcess
+			? t(locale, "tray.pauseAppNamed", { name: pauseAppProcess })
+			: t(locale, "tray.pauseApp"),
+		enabled: pauseAppAppend.ok,
+	});
 	items.push({ id: "separator" });
 	const snoozeSubmenu = snoozeSubmenuSpec(locale, snoozeMinutes, input);
 	if (snoozeSubmenu.length > 0) {

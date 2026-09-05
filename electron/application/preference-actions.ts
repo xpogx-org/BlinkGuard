@@ -13,6 +13,7 @@ import type {
 	KeyboardShortcuts,
 	Point,
 } from "../../shared/preferences";
+import { appendProcessOnlyPauseAppRule } from "../../shared/preferences";
 import type { BlinkStatsService } from "./blink-stats-service";
 import type { ExerciseService } from "./exercise-service";
 import type { FocusPauseService } from "./focus-pause-service";
@@ -75,6 +76,20 @@ export class PreferenceActions {
 
 	attachSettingsProfiles(service: SettingsProfilesService): void {
 		this.settingsProfiles = service;
+	}
+
+	/** Tray one-click: append last-external process to pauseAppRules. */
+	appendPauseAppFromLastExternal(): boolean {
+		const result = appendProcessOnlyPauseAppRule(
+			this.preferences.current.pauseAppRules,
+			this.focusPause.lastExternalForeground(),
+		);
+		if (!result.ok) return false;
+		this.preferences.set("pauseAppRules", result.rules);
+		this.focusPause.recompute();
+		this.windows.sendPreferences();
+		this.tray?.rebuildMenu();
+		return true;
 	}
 
 	startEarCalibration(): void {
@@ -210,7 +225,6 @@ export class PreferenceActions {
 		const previousDevice = before.cameraDevice;
 		const cameraWasLive = this.sidecar.isCameraReady;
 		const previousCameraEnabled = before.cameraEnabled;
-		const previousSnooze = before.snoozeMinutes;
 		const previousEar = before.earCalibration;
 		const previousBias = before.classifierBias;
 		const previousThreshold = before.classifierThreshold;
@@ -246,10 +260,6 @@ export class PreferenceActions {
 			this.reminders.syncCameraLoopForMgdMode();
 		}
 
-		if (previousSnooze !== next.snoozeMinutes) {
-			this.tray?.rebuildMenu();
-		}
-
 		const eyeCareActive =
 			next.eyeCareIndependentOfTracking || next.isTracking;
 		if (eyeCareActive) {
@@ -271,6 +281,7 @@ export class PreferenceActions {
 		}
 
 		this.focusPause.recompute();
+		this.tray?.rebuildMenu();
 		this.windows.sendPreferences();
 	}
 }

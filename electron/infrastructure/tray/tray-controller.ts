@@ -13,6 +13,7 @@ import type { Locale } from "../../../shared/i18n";
 import {
 	DEFAULT_KEYBOARD_SHORTCUTS,
 	type KeyboardShortcuts,
+	type PauseAppRule,
 } from "../../../shared/preferences";
 import type { FocusPauseStatePayload } from "../../../shared/session-pause-status";
 import {
@@ -80,6 +81,9 @@ export class TrayController {
 		private readonly onHushWithToken: (() => void) | null = null,
 		private readonly onHushDuration: ((minutes: number) => void) | null = null,
 		private readonly onHushUntilResume: (() => void) | null = null,
+		private readonly onPauseApp: (() => boolean) | null = null,
+		private readonly getPauseAppRules: () => readonly PauseAppRule[] = () => [],
+		private readonly getLastExternalForeground: () => PauseAppRule | null = () => null,
 		private readonly getPromptHushTiming: () => {
 			promptSuppressUntil: number;
 			promptHushUntilResume: boolean;
@@ -185,6 +189,7 @@ export class TrayController {
 				onHushWithToken: this.onHushWithToken,
 				onHushDuration: this.onHushDuration,
 				onHushUntilResume: this.onHushUntilResume,
+				onPauseApp: this.onPauseApp,
 			}),
 		);
 	}
@@ -195,6 +200,7 @@ export class TrayController {
 			this.trayMenu.hide();
 			return;
 		}
+		this.refreshTrayMenu(this.getLocale());
 		const payload =
 			this.cachedMenuPayload ?? this.buildTrayMenuPayload(this.getLocale());
 		this.trayMenu.show(this.tray, payload, cursor);
@@ -229,6 +235,8 @@ export class TrayController {
 				tokenSnoozeAccelerator: shortcuts.snoozeWithToken,
 				setups: setups.profiles,
 				activeSetupId: setups.activeSetupId,
+				pauseAppRules: [...this.getPauseAppRules()],
+				lastExternal: this.getLastExternalForeground(),
 			}),
 			darkMode: theme.darkMode,
 			colors: theme.colors,

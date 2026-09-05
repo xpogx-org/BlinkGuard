@@ -345,6 +345,50 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 	});
 });
 
+describe("FocusPauseService recompute after rule assignment", () => {
+	it("pauses when a process-only rule is assigned while foreground still matches", () => {
+		const sendToMain = vi.fn();
+		const closeReminder = vi.fn();
+		const pauseCameraForFocus = vi.fn();
+		const preferences = {
+			...DEFAULT_PREFERENCES,
+			quietHoursEnabled: false,
+			cameraEnabled: true,
+			isTracking: true,
+			pauseAppRules: [] as typeof DEFAULT_PREFERENCES.pauseAppRules,
+		};
+		const service = new FocusPauseService(
+			preferences,
+			{
+				closeReminder,
+				closeExercise: vi.fn(),
+				closeLookAway: vi.fn(),
+				hideNoFace: vi.fn(),
+				hideAmbient: vi.fn(),
+				hideCalibrationNudge: vi.fn(),
+				sendToMain,
+			},
+			{ pauseCameraForFocus, resumeCameraIfNeeded: vi.fn() } as never,
+			"focus-pause-state",
+			true,
+		);
+
+		service.setForeground({
+			isFullscreen: false,
+			processName: "Zoom.exe",
+			windowTitle: "Zoom Meeting",
+		});
+		expect(service.pauseReason()).toBeNull();
+
+		preferences.pauseAppRules = [{ processName: "Zoom.exe", windowTitle: "" }];
+		service.recompute();
+
+		expect(service.pauseReason()).toBe("app-rule");
+		expect(closeReminder).toHaveBeenCalled();
+		expect(pauseCameraForFocus).toHaveBeenCalled();
+	});
+});
+
 describe("FocusPauseService lastExternalForeground", () => {
 	it("keeps the last process-only identity when BlinkGuard-focused probes are empty", () => {
 		const { service } = makeService();

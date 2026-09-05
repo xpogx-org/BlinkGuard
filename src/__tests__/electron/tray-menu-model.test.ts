@@ -66,6 +66,7 @@ describe("buildTrayMenuSpec", () => {
 			"tracking",
 			"separator",
 			"camera",
+			"pause-app",
 			"separator",
 			"snooze",
 			"check-for-updates",
@@ -126,8 +127,10 @@ describe("buildTrayMenuSpec", () => {
 		const cameraIdx = ids.indexOf("camera");
 		const glanceIdx = ids.indexOf("glance");
 		const pauseIdx = ids.indexOf("pause");
+		const pauseAppIdx = ids.indexOf("pause-app");
 		expect(glanceIdx).toBeGreaterThan(cameraIdx);
 		expect(pauseIdx).toBeGreaterThan(glanceIdx);
+		expect(pauseAppIdx).toBeGreaterThan(pauseIdx);
 		expect(items.find((item) => item.id === "glance")).toEqual({
 			id: "glance",
 			label: "12/min · Low · Today 40 blinks",
@@ -144,6 +147,7 @@ describe("buildTrayMenuSpec", () => {
 			"hush-longer",
 			"separator",
 			"camera",
+			"pause-app",
 			"separator",
 			"snooze",
 			"check-for-updates",
@@ -192,6 +196,7 @@ describe("buildTrayMenuSpec", () => {
 			"hush-token",
 			"separator",
 			"camera",
+			"pause-app",
 			"separator",
 			"snooze",
 			"check-for-updates",
@@ -230,6 +235,7 @@ describe("buildTrayMenuSpec", () => {
 			"separator",
 			"camera",
 			"pause",
+			"pause-app",
 			"separator",
 			"snooze",
 			"check-for-updates",
@@ -243,6 +249,44 @@ describe("buildTrayMenuSpec", () => {
 			label: t("en", pauseKey ?? "quietHours.paused"),
 			enabled: false,
 		});
+	});
+
+	it("always includes pause-app row with named label when append is allowed", () => {
+		const enabled = spec({
+			pauseAppRules: [],
+			lastExternal: { processName: "Zoom.exe", windowTitle: "Meeting" },
+		});
+		expect(enabled.find((item) => item.id === "pause-app")).toEqual({
+			id: "pause-app",
+			label: t("en", "tray.pauseAppNamed", { name: "Zoom.exe" }),
+			enabled: true,
+		});
+	});
+
+	it("disables pause-app when no process, already listed, or at cap", () => {
+		expect(
+			spec({ lastExternal: null }).find((item) => item.id === "pause-app"),
+		).toEqual({
+			id: "pause-app",
+			label: t("en", "tray.pauseApp"),
+			enabled: false,
+		});
+		expect(
+			spec({
+				pauseAppRules: [{ processName: "Zoom.exe", windowTitle: "" }],
+				lastExternal: { processName: "zoom.exe", windowTitle: "" },
+			}).find((item) => item.id === "pause-app")?.enabled,
+		).toBe(false);
+		const full = Array.from({ length: 32 }, (_, i) => ({
+			processName: `app${i}.exe`,
+			windowTitle: "",
+		}));
+		expect(
+			spec({
+				pauseAppRules: full,
+				lastExternal: { processName: "New.exe", windowTitle: "" },
+			}).find((item) => item.id === "pause-app")?.enabled,
+		).toBe(false);
 	});
 
 	it("nests per-kind snooze items and omits the parent when none are included", () => {
@@ -274,7 +318,7 @@ describe("buildTrayMenuSpec", () => {
 					includeCheckForUpdates: false,
 				}),
 			),
-		).toEqual(["show", "tracking", "separator", "camera", "separator", "quit"]);
+		).toEqual(["show", "tracking", "separator", "camera", "pause-app", "separator", "quit"]);
 	});
 
 	it("attaches accelerators only when they are non-empty", () => {
@@ -314,6 +358,7 @@ describe("buildTrayMenuSpec", () => {
 			"tracking",
 			"separator",
 			"camera",
+			"pause-app",
 			"separator",
 			"snooze",
 			"setups",

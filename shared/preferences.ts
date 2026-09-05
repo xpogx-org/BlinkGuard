@@ -162,6 +162,56 @@ export function sanitizePauseAppRules(input: unknown): PauseAppRule[] {
 	return cleaned;
 }
 
+/** Last path segment of a process name; preserves casing for labels and storage. */
+export function pauseAppProcessBasename(processName: string): string {
+	const trimmed = processName.trim();
+	if (!trimmed) return "";
+	const segments = trimmed.split(/[/\\]/);
+	const base = (segments[segments.length - 1] ?? trimmed).trim();
+	return base.slice(0, PAUSE_APP_RULE_FIELD_MAX);
+}
+
+/** Process-only rule for tray / last-focused add; drops title-only candidates. */
+export function processOnlyPauseAppRule(
+	candidate: PauseAppRule | null,
+): PauseAppRule | null {
+	if (!candidate) return null;
+	const processName = pauseAppProcessBasename(candidate.processName);
+	if (!processName) return null;
+	return { processName, windowTitle: "" };
+}
+
+function pauseAppRuleKey(rule: PauseAppRule): string {
+	return `${rule.processName.toLowerCase()}\0${rule.windowTitle.toLowerCase()}`;
+}
+
+export type AppendProcessOnlyPauseAppRuleResult =
+	| { ok: true; rules: PauseAppRule[] }
+	| {
+			ok: false;
+			reason: "empty-process" | "at-cap" | "already-listed";
+	  };
+
+/** Append a process-only rule; dedup case-insensitive; honor PAUSE_APP_RULES_MAX. */
+export function appendProcessOnlyPauseAppRule(
+	current: readonly PauseAppRule[],
+	candidate: PauseAppRule | null,
+): AppendProcessOnlyPauseAppRuleResult {
+	const rules = sanitizePauseAppRules([...current]);
+	const nextRule = processOnlyPauseAppRule(candidate);
+	if (!nextRule) {
+		return { ok: false, reason: "empty-process" };
+	}
+	if (rules.length >= PAUSE_APP_RULES_MAX) {
+		return { ok: false, reason: "at-cap" };
+	}
+	const nextKey = pauseAppRuleKey(nextRule);
+	if (rules.some((rule) => pauseAppRuleKey(rule) === nextKey)) {
+		return { ok: false, reason: "already-listed" };
+	}
+	return { ok: true, rules: [...rules, nextRule] };
+}
+
 const BLINK_RATE_THRESHOLD_MIN = 1;
 const BLINK_RATE_THRESHOLD_MAX = 60;
 

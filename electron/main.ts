@@ -488,6 +488,7 @@ function bootstrap(): void {
 		() => sessionRecap.handleUnlock(),
 	);
 	let settingsProfiles!: SettingsProfilesService;
+	let preferenceActions!: PreferenceActions;
 	const trayMenu = new TrayMenuWindow(paths, (payload) => {
 		trayRef.current?.handleTrayMenuAction(payload);
 	});
@@ -545,6 +546,9 @@ function bootstrap(): void {
 		hushAllWithSnoozeToken,
 		hushForTrayMinutes,
 		hushUntilResume,
+		() => preferenceActions.appendPauseAppFromLastExternal(),
+		() => preferences.pauseAppRules,
+		() => focusPause.lastExternalForeground(),
 		() => ({
 			promptSuppressUntil: state.promptSuppressUntil,
 			promptHushUntilResume: state.promptHushUntilResume,
@@ -577,7 +581,7 @@ function bootstrap(): void {
 	});
 	lifecycle.attachTray(tray);
 
-	const preferenceActions = new PreferenceActions(
+	preferenceActions = new PreferenceActions(
 		preferencesService,
 		reminders,
 		exercises,
@@ -643,6 +647,7 @@ function bootstrap(): void {
 		},
 		onSnoozeMinutesChanged: () => tray.rebuildMenu(),
 		onKeyboardShortcutsChanged: () => tray.rebuildMenu(),
+		onPauseAppRulesChanged: () => tray.rebuildMenu(),
 		hushAllPrompts: hushAllPromptsMaybeToken,
 		endPromptHush: endHush,
 	});

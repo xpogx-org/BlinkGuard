@@ -834,3 +834,56 @@ describe("PreferenceActions", () => {
 		expect(sidecar.applySessionConfig).toHaveBeenCalledOnce();
 	});
 });
+
+describe("PreferenceActions.appendPauseAppFromLastExternal", () => {
+	it("persists, echoes prefs, recomputes, and rebuilds the tray on success", () => {
+		const preferences = new PreferencesService(createStore());
+		const focusPause = {
+			lastExternalForeground: vi.fn(() => ({
+				processName: "Zoom.exe",
+				windowTitle: "Meeting",
+			})),
+			recompute: vi.fn(),
+		};
+		const windows = { sendPreferences: vi.fn() };
+		const tray = { rebuildMenu: vi.fn() };
+		const actions = createActions(preferences, {
+			focusPause,
+			windows,
+			tray,
+		});
+
+		expect(actions.appendPauseAppFromLastExternal()).toBe(true);
+		expect(preferences.current.pauseAppRules).toEqual([
+			{ processName: "Zoom.exe", windowTitle: "" },
+		]);
+		expect(focusPause.recompute).toHaveBeenCalledOnce();
+		expect(windows.sendPreferences).toHaveBeenCalledOnce();
+		expect(tray.rebuildMenu).toHaveBeenCalledOnce();
+		expect(preferences.current.isTracking).toBe(false);
+	});
+
+	it("no-ops when last external has no process", () => {
+		const preferences = new PreferencesService(createStore());
+		const focusPause = {
+			lastExternalForeground: vi.fn(() => ({
+				processName: "",
+				windowTitle: "Only title",
+			})),
+			recompute: vi.fn(),
+		};
+		const windows = { sendPreferences: vi.fn() };
+		const tray = { rebuildMenu: vi.fn() };
+		const actions = createActions(preferences, {
+			focusPause,
+			windows,
+			tray,
+		});
+
+		expect(actions.appendPauseAppFromLastExternal()).toBe(false);
+		expect(preferences.current.pauseAppRules).toEqual([]);
+		expect(windows.sendPreferences).not.toHaveBeenCalled();
+		expect(focusPause.recompute).not.toHaveBeenCalled();
+		expect(tray.rebuildMenu).not.toHaveBeenCalled();
+	});
+});

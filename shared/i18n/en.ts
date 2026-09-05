@@ -801,6 +801,8 @@ export const en: MessageCatalog = {
 
 	// Tray / window titles
 	"tray.show": "Show BlinkGuard",
+	"tray.pauseApp": "Pause this app",
+	"tray.pauseAppNamed": "Pause for {name}",
 	"tray.snooze": "Snooze",
 	"tray.hush": "Hush prompts ({n} min)",
 	"tray.hush_few": "Hush prompts ({n} min)",

@@ -26,6 +26,7 @@ function deps(overrides: Partial<ReturnType<typeof createTrayMenuActionDeps>> = 
 		onHushWithToken: vi.fn(),
 		onHushDuration: vi.fn(),
 		onHushUntilResume: vi.fn(),
+		onPauseApp: vi.fn(() => false),
 		...overrides,
 	});
 }
@@ -115,5 +116,20 @@ describe("handleTrayMenuAction", () => {
 		});
 		handleTrayMenuAction({ kind: "setup", id: "missing" }, d);
 		expect(onSwitchSetup).not.toHaveBeenCalled();
+	});
+
+	it("logs pause-app only when the handler reports success", () => {
+		const onPauseApp = vi.fn(() => true);
+		const d = deps({ onPauseApp });
+		handleTrayMenuAction({ kind: "item", id: "pause-app" }, d);
+		expect(onPauseApp).toHaveBeenCalledOnce();
+		expect(d.interactions?.append).toHaveBeenCalledWith({
+			source: "tray",
+			action: "menu-pause-app",
+		});
+
+		const noop = deps({ onPauseApp: vi.fn(() => false) });
+		handleTrayMenuAction({ kind: "item", id: "pause-app" }, noop);
+		expect(noop.interactions?.append).not.toHaveBeenCalled();
 	});
 });

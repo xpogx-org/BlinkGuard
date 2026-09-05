@@ -94,6 +94,8 @@ interface IpcDependencies {
 	onSnoozeMinutesChanged?: () => void;
 	/** Tray accelerator refresh after Settings remaps global shortcuts. */
 	onKeyboardShortcutsChanged?: () => void;
+	/** Tray pause-app row refresh when blocklist changes from Settings. */
+	onPauseAppRulesChanged?: () => void;
 	hushAllPrompts: (options: SanitizedSnoozeAllOptions) => void;
 	endPromptHush: () => void;
 	settingsProfiles: SettingsProfilesService;
@@ -121,6 +123,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		pushCameraCaptureStatus,
 		onSnoozeMinutesChanged,
 		onKeyboardShortcutsChanged,
+		onPauseAppRulesChanged,
 		hushAllPrompts,
 		endPromptHush,
 		settingsProfiles,
@@ -448,6 +451,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	on(IPC_CHANNELS.updatePauseAppRules, (_event, rules: unknown) => {
 		preferences.set("pauseAppRules", rules as PauseAppRule[]);
 		focusPause.recompute();
+		onPauseAppRulesChanged?.();
 	});
 	on(
 		IPC_CHANNELS.updateBlinkRateCoachingEnabled,

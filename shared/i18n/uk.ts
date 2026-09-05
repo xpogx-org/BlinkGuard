@@ -815,6 +815,8 @@ export const uk: MessageCatalog = {
 
 	// Tray / window titles
 	"tray.show": "Показати BlinkGuard",
+	"tray.pauseApp": "Пауза для цієї програми",
+	"tray.pauseAppNamed": "Пауза для {name}",
 	"tray.snooze": "Відкласти",
 	"tray.hush": "Приглушити підказки ({n} хв)",
 	"tray.hush_few": "Приглушити підказки ({n} хв)",
