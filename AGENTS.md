@@ -28,7 +28,7 @@ Pragmatic Clean Architecture with a thin `electron/main.ts` composition root. Fe
 | `python/blink_detector.py` | Thin entry |
 | `python/blink_detector_package/` | `domain` / `application` / `infrastructure` for the sidecar |
 
-Cursor rules under `.cursor/rules/` and project skills under `.cursor/skills/` document these seams (note: `.cursor/` and `specs/` are gitignored locally; `.cursorignore` re-includes them for Cursor chat/indexing; security bar for BrowserWindow / preload / IPC payloads is rule `electron-security`). Local Cursor surfaces may also live under `.cursor/agents/`, `.cursor/hooks/`, and `.cursor/commands/` when present. Human-facing README/architecture docs may lag; prefer the rules when placing new code. Skills:
+Cursor rules under `.cursor/rules/` and project skills under `.cursor/skills/` document these seams (note: `.cursor/` is gitignored locally; security bar for BrowserWindow / preload / IPC payloads is rule `electron-security`). Local Cursor surfaces may also live under `.cursor/agents/`, `.cursor/hooks/`, and `.cursor/commands/` when present. Human-facing README/architecture docs may lag; prefer the rules when placing new code. Skills:
 
 - `blink-detector-sidecar` — NDJSON protocol, rebuild, JSONL analysis + Stage-0 EAR-trace corpus / `metrics.py` F1 gate + Stage-4 harvest/train + Stage-7 OCEC confirm via `python/log_tools/`
 - `readme-screenshots` — README product PNGs via `scripts/screenshot_tools/` (Windows); intro MP4 via `npm run generate:intro-video`
