@@ -32,6 +32,10 @@ function makeService(prefs: Partial<typeof DEFAULT_PREFERENCES> = {}) {
 	const focusPause = {
 		setSessionOverlay: vi.fn(),
 		recompute: vi.fn(),
+		pauseReason: vi.fn(
+			(): null | "quiet-hours" | "fullscreen" | "app-rule" | "session-idle" | "manual-hush" =>
+				null,
+		),
 	};
 	const service = new SessionPauseService(
 		preferences,
@@ -200,6 +204,33 @@ describe("SessionPauseService", () => {
 		expect(ctx.focusPause.setSessionOverlay).toHaveBeenCalledWith({
 			mode: "inactive",
 			cause: "suspend",
+		});
+	});
+
+	it("does not restore tracking stats on unlock during quiet hours", () => {
+		const ctx = makeService();
+		ctx.focusPause.pauseReason.mockReturnValue("quiet-hours");
+		ctx.service.setPowerFlags({ locked: true });
+		ctx.service.setPowerFlags({ locked: false });
+		vi.advanceTimersByTime(SESSION_RESUME_DELAY_MS);
+
+		expect(ctx.resumeAfterSleep).toHaveBeenCalledWith({
+			releaseCamera: true,
+			restoreStats: false,
+		});
+		expect(ctx.focusPause.recompute.mock.calls.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it("restores tracking stats on unlock when not in quiet hours", () => {
+		const ctx = makeService();
+		ctx.focusPause.pauseReason.mockReturnValue(null);
+		ctx.service.setPowerFlags({ locked: true });
+		ctx.service.setPowerFlags({ locked: false });
+		vi.advanceTimersByTime(SESSION_RESUME_DELAY_MS);
+
+		expect(ctx.resumeAfterSleep).toHaveBeenCalledWith({
+			releaseCamera: true,
+			restoreStats: true,
 		});
 	});
 });

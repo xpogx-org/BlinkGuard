@@ -302,6 +302,8 @@ export class ReminderService {
 	 * Restore loops after sleep / lid-open. Does not persist isTracking.
 	 * `releaseCamera` drops the session camera hold; `restoreStats` restarts
 	 * tracking-minute accrual after {@link pauseForSession}.
+	 * When another soft-pause (quiet hours / fullscreen) still holds the camera,
+	 * keep timer-mode reminder cadence — shows stay gated by NotificationGate.
 	 */
 	resumeAfterSleep(
 		options: { releaseCamera?: boolean; restoreStats?: boolean } = {},
@@ -321,7 +323,7 @@ export class ReminderService {
 				this.cameraPauseReasons.size === 0
 			) {
 				this.startCameraMonitoring(false);
-			} else if (!this.preferences.cameraEnabled || !releaseCamera) {
+			} else {
 				this.startTimerLoop(false);
 			}
 		}

@@ -507,7 +507,7 @@ export const en: MessageCatalog = {
 	"settingsProfiles.error.generic": "Something went wrong with setups.",
 	"quietHours.title": "Quiet hours",
 	"quietHours.description":
-		"Hide blink, exercise, and look-away popups during this local-time window",
+		"Hide blink, exercise, and look-away popups during this local-time window. The camera LED turns off and tracking time does not count.",
 	"quietHours.toggleAria": "Toggle quiet hours",
 	"quietHours.paused": "Paused: quiet hours",
 	"quietHours.dayOff": "No quiet hours this day",
@@ -622,7 +622,7 @@ export const en: MessageCatalog = {
 	"onboarding.launchDesc":
 		"Start BlinkGuard hidden in the system tray when you sign in. Closing the window keeps the app running in the tray.",
 	"onboarding.quietDesc":
-		"Hide blink and eye-care popups during this local-time window.",
+		"Hide blink and eye-care popups during this local-time window. The camera LED turns off and tracking time does not count.",
 	"onboarding.readyDesc":
 		"Open Reminders and press Start, or use {shortcut} anytime to start or stop blink reminders.",
 	"onboarding.readyDescUnbound":

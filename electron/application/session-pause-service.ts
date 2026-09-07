@@ -70,7 +70,7 @@ export class SessionPauseService {
 		>,
 		private readonly focusPause: Pick<
 			FocusPauseService,
-			"setSessionOverlay" | "recompute"
+			"setSessionOverlay" | "recompute" | "pauseReason"
 		>,
 		options: SessionPauseServiceOptions = {},
 	) {
@@ -197,14 +197,19 @@ export class SessionPauseService {
 			this.lookAway.resetTimer();
 			this.lookAway.start();
 		}
+		// Overlay is already `active`; pauseReason() is quiet-hours when still
+		// inside the window — do not restart tracking minutes overnight.
 		this.focusPause.recompute();
+		const restoreStats = this.focusPause.pauseReason() !== "quiet-hours";
 		if (snap?.tracking && this.preferences.isTracking) {
 			this.reminders.resumeAfterSleep({
 				releaseCamera: next === "active",
-				restoreStats: true,
+				restoreStats,
 			});
 		} else if (next === "active") {
 			this.reminders.resumeCameraIfNeeded("session");
 		}
+		// Re-apply quiet-hours / fullscreen soft-pause if start/resume raced.
+		this.focusPause.recompute();
 	}
 }

@@ -1127,6 +1127,43 @@ describe("ReminderService preview camera", () => {
 		expect(stats.onTrackingStart).toHaveBeenCalledTimes(1);
 	});
 
+	it("resumeAfterSleep keeps timer cadence when focus still soft-pauses the camera", () => {
+		const preferences = createPreferences({ cameraEnabled: true });
+		const sidecar = createSidecar();
+		const state = new AppRuntimeState();
+		const stats = {
+			recordBlink: vi.fn(),
+			onTrackingStart: vi.fn(),
+			onTrackingStop: vi.fn(),
+			onFaceVisibility: vi.fn(),
+			setFaceCoverageMode: vi.fn(),
+		};
+		const service = new ReminderService(
+			preferences,
+			state,
+			createWindows(),
+			sidecar,
+			createSound(),
+			createStore(),
+			stats,
+		);
+
+		service.start(3000);
+		service.pauseForSession();
+		service.pauseCameraForFocus("focus");
+		vi.mocked(sidecar.startCamera).mockClear();
+		stats.onTrackingStart.mockClear();
+
+		service.resumeAfterSleep({ restoreStats: false });
+
+		expect(stats.onTrackingStart).not.toHaveBeenCalled();
+		expect(service.isCameraSoftPaused).toBe(true);
+		expect(sidecar.startCamera).not.toHaveBeenCalled();
+		expect(state.blinkReminderActive).toBe(true);
+		expect(state.blinkInterval).not.toBeNull();
+		service.ensureStopped();
+	});
+
 	it("keeps the camera paused when session still holds after focus resume", () => {
 		const preferences = createPreferences({ cameraEnabled: true });
 		const sidecar = createSidecar({ isCameraReady: false });

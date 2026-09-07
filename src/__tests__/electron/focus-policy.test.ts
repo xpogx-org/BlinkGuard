@@ -8,6 +8,7 @@ import {
 	normalizeQuietHoursTime,
 	parseQuietHoursMinutes,
 	resolveFocusPauseReason,
+	shouldFreezeTrackingForFocusPause,
 	shouldSuppressNotifications,
 	weekdayKeyFromDate,
 } from "../../../electron/domain/focus-policy";
@@ -208,6 +209,15 @@ describe("resolveFocusPauseReason", () => {
 				appRuleMatched: false,
 			}),
 		).toBe(false);
+	});
+});
+
+describe("shouldFreezeTrackingForFocusPause", () => {
+	it("freezes only for quiet hours", () => {
+		expect(shouldFreezeTrackingForFocusPause("quiet-hours")).toBe(true);
+		expect(shouldFreezeTrackingForFocusPause("fullscreen")).toBe(false);
+		expect(shouldFreezeTrackingForFocusPause("app-rule")).toBe(false);
+		expect(shouldFreezeTrackingForFocusPause(null)).toBe(false);
 	});
 });
 

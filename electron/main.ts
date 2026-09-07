@@ -297,6 +297,10 @@ function bootstrap(): void {
 		IPC_CHANNELS.focusPauseState,
 		focusEnvironment.supportsFullscreenDetection(),
 		osNotifications,
+		{
+			freeze: () => blinkStats.onTrackingStop(),
+			resume: () => blinkStats.onTrackingStart(),
+		},
 	);
 	gateHolder.current = focusPause;
 	focusPause.setPromptHushState(() => ({
@@ -576,6 +580,11 @@ function bootstrap(): void {
 			idleMonitor.start();
 		} else {
 			idleMonitor.stop();
+		}
+		// Start / Stop / cold-restore: re-apply quiet-hours freeze + camera, or
+		// clear the freeze flag so the next Start can freeze again.
+		focusPause.recompute();
+		if (!isTracking) {
 			focusPause.pushState();
 		}
 	});

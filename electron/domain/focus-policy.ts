@@ -219,3 +219,14 @@ export function shouldSuppressNotifications(
 ): boolean {
 	return resolveFocusPauseReason(input) !== null;
 }
+
+/**
+ * Quiet hours freezes the timer-mode tracking clock (and soft-pauses the
+ * camera). Fullscreen / app-rule pause prompts without freezing minutes —
+ * the user is still at the desk.
+ */
+export function shouldFreezeTrackingForFocusPause(
+	reason: FocusPauseReason,
+): boolean {
+	return reason === "quiet-hours";
+}

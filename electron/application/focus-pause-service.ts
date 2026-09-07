@@ -9,6 +9,7 @@ import {
 	foregroundMatchesAppRules,
 	isInQuietHoursForSchedule,
 	resolveFocusPauseReason,
+	shouldFreezeTrackingForFocusPause,
 	type FocusPauseReason,
 } from "../domain/focus-policy";
 import type {
@@ -25,6 +26,17 @@ import {
 
 export type { FocusPauseStatePayload };
 
+/** Soft-freeze / restore timer-mode tracking minutes (no Stop / recap). */
+export type FocusPauseTrackingClock = {
+	freeze: () => void;
+	resume: () => void;
+};
+
+const NO_OP_TRACKING_CLOCK: FocusPauseTrackingClock = {
+	freeze: () => {},
+	resume: () => {},
+};
+
 export interface FocusPauseWindowsPort {
 	closeReminder(): void;
 	closeExercise(): void;
@@ -40,6 +52,7 @@ export class FocusPauseService implements NotificationGate {
 	private sessionPauseMode: SessionPauseMode = "active";
 	private sessionIdleCause: SessionIdleCause | null = null;
 	private cameraPausedForFocus = false;
+	private trackingClockFrozen = false;
 	private foreground: FocusForegroundSnapshot = EMPTY_FOREGROUND_SNAPSHOT;
 	private lastExternal: PauseAppRule | null = null;
 	private quietHoursTimer: ReturnType<typeof setInterval> | null = null;
@@ -62,6 +75,7 @@ export class FocusPauseService implements NotificationGate {
 		private readonly focusPauseChannel: string,
 		private readonly fullscreenDetectionSupported: boolean,
 		private readonly osNotifications: OsNotificationPort = NO_OP_OS_NOTIFICATIONS,
+		private readonly trackingClock: FocusPauseTrackingClock = NO_OP_TRACKING_CLOCK,
 	) {}
 
 	setOnState(listener: (payload: FocusPauseStatePayload) => void): void {
@@ -171,13 +185,36 @@ export class FocusPauseService implements NotificationGate {
 			this.closeInterruptiveUi();
 		}
 
+		const freezeClock = shouldFreezeTrackingForFocusPause(next);
 		const cameraShouldPause =
+			freezeClock ||
 			(this.preferences.pauseOnFullscreen && this.foreground.isFullscreen) ||
 			appRuleMatched;
-		if (cameraShouldPause && !this.cameraPausedForFocus) {
+
+		// Always re-apply while paused: ReminderService.start() clears soft-pause
+		// reasons, so a one-shot flag would leave the LED on after Start overnight.
+		if (cameraShouldPause) {
 			this.pauseCameraForFocus();
-		} else if (!cameraShouldPause && this.cameraPausedForFocus) {
+		} else if (this.cameraPausedForFocus) {
 			this.resumeCameraAfterFocus();
+		}
+
+		const sessionInactive = this.sessionPauseMode === "inactive";
+		if (!this.preferences.isTracking) {
+			// Stop / disarm: drop the freeze flag so a later Start re-freezes.
+			this.trackingClockFrozen = false;
+		} else if (freezeClock && !sessionInactive) {
+			// Re-freeze after Start/cold-restore. Skip repeat calls while already
+			// frozen — onTrackingStop still schedules tray/BPM pushes when null.
+			if (!this.trackingClockFrozen) {
+				this.trackingClock.freeze();
+				this.trackingClockFrozen = true;
+			}
+		} else if (this.trackingClockFrozen) {
+			if (!sessionInactive) {
+				this.trackingClock.resume();
+			}
+			this.trackingClockFrozen = false;
 		}
 
 		const changed = next !== this.reason;

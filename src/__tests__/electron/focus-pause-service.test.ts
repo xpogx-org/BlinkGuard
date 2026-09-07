@@ -25,14 +25,17 @@ function makeService(
 	const pauseCameraForFocus = vi.fn();
 	const resumeCameraIfNeeded = vi.fn();
 	const dismissAll = vi.fn();
+	const freeze = vi.fn();
+	const resume = vi.fn();
+	const preferences = {
+		...DEFAULT_PREFERENCES,
+		quietHoursEnabled: false,
+		cameraEnabled: true,
+		isTracking: true,
+		...prefs,
+	};
 	const service = new FocusPauseService(
-		{
-			...DEFAULT_PREFERENCES,
-			quietHoursEnabled: false,
-			cameraEnabled: true,
-			isTracking: true,
-			...prefs,
-		},
+		preferences,
 		{
 			closeReminder,
 			closeExercise,
@@ -52,9 +55,11 @@ function makeService(
 			dismissAll,
 			setActivationHandlers: () => {},
 		},
+		{ freeze, resume },
 	);
 	return {
 		service,
+		preferences,
 		sendToMain,
 		closeReminder,
 		closeExercise,
@@ -62,6 +67,8 @@ function makeService(
 		pauseCameraForFocus,
 		resumeCameraIfNeeded,
 		dismissAll,
+		freeze,
+		resume,
 	};
 }
 
@@ -91,11 +98,17 @@ describe("FocusPauseService pushState", () => {
 });
 
 describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
-	it("pauses popups and camera on an app-rule match", () => {
-		const { service, closeReminder, hideAmbient, pauseCameraForFocus, sendToMain } =
-			makeService({
-				pauseAppRules: [{ processName: "Zoom.exe", windowTitle: "" }],
-			});
+	it("pauses popups and camera on an app-rule match without freezing the clock", () => {
+		const {
+			service,
+			closeReminder,
+			hideAmbient,
+			pauseCameraForFocus,
+			freeze,
+			sendToMain,
+		} = makeService({
+			pauseAppRules: [{ processName: "Zoom.exe", windowTitle: "" }],
+		});
 
 		service.setForeground({
 			isFullscreen: false,
@@ -108,6 +121,7 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 		expect(closeReminder).toHaveBeenCalled();
 		expect(hideAmbient).toHaveBeenCalled();
 		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
 		expect(sendToMain).toHaveBeenCalledWith(
 			"focus-pause-state",
 			pausePayload({ reason: "app-rule" }),
@@ -115,7 +129,7 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 	});
 
 	it("does not pause when the foreground misses the blocklist", () => {
-		const { service, closeReminder, pauseCameraForFocus } = makeService({
+		const { service, closeReminder, pauseCameraForFocus, freeze } = makeService({
 			pauseAppRules: [{ processName: "Zoom.exe", windowTitle: "" }],
 		});
 
@@ -129,19 +143,22 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 		expect(service.notificationsAllowed()).toBe(true);
 		expect(closeReminder).not.toHaveBeenCalled();
 		expect(pauseCameraForFocus).not.toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
 	});
 
 	it("resumes the camera when leaving an app-rule match", () => {
-		const { service, pauseCameraForFocus, resumeCameraIfNeeded } = makeService({
-			pauseAppRules: [{ processName: "zoom", windowTitle: "" }],
-		});
+		const { service, pauseCameraForFocus, resumeCameraIfNeeded, freeze } =
+			makeService({
+				pauseAppRules: [{ processName: "zoom", windowTitle: "" }],
+			});
 
 		service.setForeground({
 			isFullscreen: false,
 			processName: "Zoom.exe",
 			windowTitle: "",
 		});
-		expect(pauseCameraForFocus).toHaveBeenCalledTimes(1);
+		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
 
 		service.setForeground({
 			isFullscreen: false,
@@ -152,21 +169,163 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 		expect(service.pauseReason()).toBeNull();
 	});
 
-	it("keeps the camera running during quiet hours", () => {
+	it("pauses camera and freezes tracking during quiet hours without Stop", () => {
 		const { start, end } = hoursWindowContainingNow();
-		const { service, pauseCameraForFocus, closeReminder, dismissAll } =
-			makeService({
-				quietHoursEnabled: true,
-				quietHoursStart: start,
-				quietHoursEnd: end,
-			});
+		const {
+			service,
+			preferences,
+			pauseCameraForFocus,
+			closeReminder,
+			dismissAll,
+			freeze,
+			resume,
+		} = makeService({
+			quietHoursEnabled: true,
+			quietHoursStart: start,
+			quietHoursEnd: end,
+		});
 
 		service.recompute();
 
 		expect(service.pauseReason()).toBe("quiet-hours");
 		expect(closeReminder).toHaveBeenCalled();
 		expect(dismissAll).toHaveBeenCalled();
+		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).toHaveBeenCalled();
+		expect(resume).not.toHaveBeenCalled();
+		expect(preferences.isTracking).toBe(true);
+	});
+
+	it("resumes camera and tracking clock when leaving quiet hours", () => {
+		const prefs = {
+			...DEFAULT_PREFERENCES,
+			quietHoursEnabled: true,
+			quietHoursStart: "22:00",
+			quietHoursEnd: "08:00",
+			quietHoursByWeekday: {},
+			cameraEnabled: true,
+			isTracking: true,
+		};
+		const pauseCameraForFocus = vi.fn();
+		const resumeCameraIfNeeded = vi.fn();
+		const freeze = vi.fn();
+		const resume = vi.fn();
+		const service = new FocusPauseService(
+			prefs,
+			{
+				closeReminder: vi.fn(),
+				closeExercise: vi.fn(),
+				closeLookAway: vi.fn(),
+				hideNoFace: vi.fn(),
+				hideAmbient: vi.fn(),
+				hideCalibrationNudge: vi.fn(),
+				sendToMain: vi.fn(),
+			},
+			{ pauseCameraForFocus, resumeCameraIfNeeded } as never,
+			"focus-pause-state",
+			true,
+			{
+				isSupported: () => false,
+				show: () => ({ shown: false }),
+				dismiss: () => {},
+				dismissAll: vi.fn(),
+				setActivationHandlers: () => {},
+			},
+			{ freeze, resume },
+		);
+
+		const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+		const todayIndex = new Date().getDay();
+		const today = dayKeys[todayIndex] ?? "mon";
+		const yesterday = dayKeys[(todayIndex + 6) % 7] ?? "sun";
+		const { start, end } = hoursWindowContainingNow();
+
+		prefs.quietHoursByWeekday = {
+			[today]: { mode: "custom", start, end },
+		};
+		service.recompute();
+		expect(service.pauseReason()).toBe("quiet-hours");
+		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).toHaveBeenCalled();
+
+		pauseCameraForFocus.mockClear();
+		freeze.mockClear();
+		prefs.quietHoursByWeekday = {
+			[today]: { mode: "off" },
+			[yesterday]: { mode: "off" },
+		};
+		service.recompute();
+
+		expect(service.pauseReason()).toBeNull();
+		expect(resumeCameraIfNeeded).toHaveBeenCalledTimes(1);
+		expect(resume).toHaveBeenCalledTimes(1);
+		expect(prefs.isTracking).toBe(true);
 		expect(pauseCameraForFocus).not.toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
+	});
+
+	it("does not freeze when weekday override is off", () => {
+		const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+		const todayIndex = new Date().getDay();
+		const today = dayKeys[todayIndex] ?? "mon";
+		const yesterday = dayKeys[(todayIndex + 6) % 7] ?? "sun";
+		const { service, pauseCameraForFocus, freeze } = makeService({
+			quietHoursEnabled: true,
+			quietHoursStart: "00:00",
+			quietHoursEnd: "23:59",
+			quietHoursByWeekday: {
+				[today]: { mode: "off" },
+				[yesterday]: { mode: "off" },
+			},
+		});
+
+		service.recompute();
+
+		expect(service.pauseReason()).toBeNull();
+		expect(pauseCameraForFocus).not.toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
+	});
+
+	it("re-applies camera pause and freeze when tracking starts during quiet hours", () => {
+		const { start, end } = hoursWindowContainingNow();
+		const { service, preferences, pauseCameraForFocus, freeze } = makeService({
+			quietHoursEnabled: true,
+			quietHoursStart: start,
+			quietHoursEnd: end,
+			isTracking: false,
+		});
+
+		service.recompute();
+		expect(pauseCameraForFocus).not.toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
+
+		preferences.isTracking = true;
+		service.recompute();
+
+		expect(service.pauseReason()).toBe("quiet-hours");
+		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).toHaveBeenCalled();
+	});
+
+	it("re-freezes after Stop then Start during quiet hours", () => {
+		const { start, end } = hoursWindowContainingNow();
+		const { service, preferences, freeze } = makeService({
+			quietHoursEnabled: true,
+			quietHoursStart: start,
+			quietHoursEnd: end,
+			isTracking: true,
+		});
+
+		service.recompute();
+		expect(freeze).toHaveBeenCalledTimes(1);
+
+		preferences.isTracking = false;
+		service.recompute();
+		freeze.mockClear();
+
+		preferences.isTracking = true;
+		service.recompute();
+		expect(freeze).toHaveBeenCalledTimes(1);
 	});
 
 	it("runs prompt dismissers so native-only showing flags can clear", () => {
@@ -189,18 +348,19 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 		expect(dismissAll).toHaveBeenCalled();
 	});
 
-	it("soft-pauses the camera on fullscreen", () => {
-		const { service, pauseCameraForFocus } = makeService();
+	it("soft-pauses the camera on fullscreen without freezing the clock", () => {
+		const { service, pauseCameraForFocus, freeze } = makeService();
 
 		service.setFullscreen(true);
 
 		expect(service.pauseReason()).toBe("fullscreen");
 		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
 	});
 
 	it("overlays session-idle on top of other pause reasons", () => {
 		const { start, end } = hoursWindowContainingNow();
-		const { service, sendToMain, closeReminder } = makeService({
+		const { service, sendToMain, closeReminder, resume } = makeService({
 			quietHoursEnabled: true,
 			quietHoursStart: start,
 			quietHoursEnd: end,
@@ -225,6 +385,71 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 		service.setSessionOverlay({ mode: "active", cause: null });
 		expect(service.pauseReason()).toBe("quiet-hours");
 		expect(service.notificationsAllowed()).toBe(false);
+
+		// Quiet hours still active while session wakes — do not resume clock
+		// from the overlay flip alone (recompute owns freeze/resume).
+		resume.mockClear();
+		service.recompute();
+		expect(resume).not.toHaveBeenCalled();
+	});
+
+	it("skips clock resume when quiet hours end while session is inactive", () => {
+		const prefs = {
+			...DEFAULT_PREFERENCES,
+			quietHoursEnabled: true,
+			quietHoursStart: "22:00",
+			quietHoursEnd: "08:00",
+			quietHoursByWeekday: {} as typeof DEFAULT_PREFERENCES.quietHoursByWeekday,
+			cameraEnabled: true,
+			isTracking: true,
+		};
+		const freeze = vi.fn();
+		const resume = vi.fn();
+		const service = new FocusPauseService(
+			prefs,
+			{
+				closeReminder: vi.fn(),
+				closeExercise: vi.fn(),
+				closeLookAway: vi.fn(),
+				hideNoFace: vi.fn(),
+				hideAmbient: vi.fn(),
+				hideCalibrationNudge: vi.fn(),
+				sendToMain: vi.fn(),
+			},
+			{
+				pauseCameraForFocus: vi.fn(),
+				resumeCameraIfNeeded: vi.fn(),
+			} as never,
+			"focus-pause-state",
+			true,
+			undefined,
+			{ freeze, resume },
+		);
+
+		const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+		const todayIndex = new Date().getDay();
+		const today = dayKeys[todayIndex] ?? "mon";
+		const yesterday = dayKeys[(todayIndex + 6) % 7] ?? "sun";
+		const { start, end } = hoursWindowContainingNow();
+
+		prefs.quietHoursByWeekday = {
+			[today]: { mode: "custom", start, end },
+		};
+		service.recompute();
+		expect(freeze).toHaveBeenCalled();
+
+		service.setSessionOverlay({ mode: "inactive", cause: "lock" });
+		service.recompute();
+
+		prefs.quietHoursByWeekday = {
+			[today]: { mode: "off" },
+			[yesterday]: { mode: "off" },
+		};
+		resume.mockClear();
+		service.recompute();
+
+		expect(service.pauseReason()).toBe("session-idle");
+		expect(resume).not.toHaveBeenCalled();
 	});
 
 	it("surfaces camera-only lid without blocking notifications", () => {
@@ -350,6 +575,7 @@ describe("FocusPauseService recompute after rule assignment", () => {
 		const sendToMain = vi.fn();
 		const closeReminder = vi.fn();
 		const pauseCameraForFocus = vi.fn();
+		const freeze = vi.fn();
 		const preferences = {
 			...DEFAULT_PREFERENCES,
 			quietHoursEnabled: false,
@@ -371,6 +597,8 @@ describe("FocusPauseService recompute after rule assignment", () => {
 			{ pauseCameraForFocus, resumeCameraIfNeeded: vi.fn() } as never,
 			"focus-pause-state",
 			true,
+			undefined,
+			{ freeze, resume: vi.fn() },
 		);
 
 		service.setForeground({
@@ -386,6 +614,7 @@ describe("FocusPauseService recompute after rule assignment", () => {
 		expect(service.pauseReason()).toBe("app-rule");
 		expect(closeReminder).toHaveBeenCalled();
 		expect(pauseCameraForFocus).toHaveBeenCalled();
+		expect(freeze).not.toHaveBeenCalled();
 	});
 });
 
