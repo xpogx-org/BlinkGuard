@@ -597,6 +597,9 @@ export const uk: MessageCatalog = {
 	"shortcut.action.openCameraPreview": "Перегляд камери",
 	"shortcut.action.openCameraPreviewDesc":
 		"Відкрити вікно перегляду камери (за потреби вмикає камеру).",
+	"shortcut.action.lookAwayNow": "Погляд вдалину зараз",
+	"shortcut.action.lookAwayNowDesc":
+		"Одразу почати перерву «погляд вдалину» (як у треї). Усе одно враховує приглушення, тихі години та правила паузи.",
 
 	// Onboarding
 	"onboarding.welcome": "Ласкаво просимо до BlinkGuard",
@@ -815,6 +818,7 @@ export const uk: MessageCatalog = {
 
 	// Tray / window titles
 	"tray.show": "Показати BlinkGuard",
+	"tray.lookAwayNow": "Погляд вдалину зараз",
 	"tray.pauseApp": "Пауза для цієї програми",
 	"tray.pauseAppNamed": "Пауза для {name}",
 	"tray.snooze": "Відкласти",

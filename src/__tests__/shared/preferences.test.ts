@@ -455,6 +455,7 @@ describe("keyboardShortcuts sanitize", () => {
 			snoozeWithToken: "",
 			openSettings: "",
 			openCameraPreview: "",
+			lookAwayNow: "",
 		});
 	});
 
@@ -474,6 +475,7 @@ describe("keyboardShortcuts sanitize", () => {
 				snoozeWithToken: "",
 				openSettings: "",
 				openCameraPreview: "",
+				lookAwayNow: "",
 			}).sort(),
 		).toEqual(["snoozeAll", "trackingToggle"]);
 		expect(

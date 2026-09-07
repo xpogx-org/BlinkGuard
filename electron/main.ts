@@ -558,6 +558,9 @@ function bootstrap(): void {
 			promptHushUntilResume: state.promptHushUntilResume,
 		}),
 		() => buildTrayMenuTheme(preferences.darkMode),
+		() => lookAway.promptNow(),
+		() => preferences.lookAwayEnabled,
+		() => notificationGate.notificationsAllowed(),
 	);
 	trayRef.current = tray;
 	const pushTrayGlance = () => {
@@ -657,6 +660,7 @@ function bootstrap(): void {
 		onSnoozeMinutesChanged: () => tray.rebuildMenu(),
 		onKeyboardShortcutsChanged: () => tray.rebuildMenu(),
 		onPauseAppRulesChanged: () => tray.rebuildMenu(),
+		onLookAwayEnabledChanged: () => tray.rebuildMenu(),
 		hushAllPrompts: hushAllPromptsMaybeToken,
 		endPromptHush: endHush,
 	});

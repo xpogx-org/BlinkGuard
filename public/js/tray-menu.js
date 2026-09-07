@@ -41,6 +41,8 @@
 			'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6"/><path d="M14 9v6"/></svg>',
 		pauseApp:
 			'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M10 9v6"/><path d="M14 9v6"/></svg>',
+		lookAway:
+			'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-5 10-5 10 5 10 5-3.5 5-10 5-10-5-10-5z"/><circle cx="12" cy="12" r="2.5"/><path d="M4 19h16"/></svg>',
 		snoozeItem:
 			'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="M9 12h6"/></svg>',
 	};
@@ -348,6 +350,19 @@
 						);
 					} else {
 						section.appendChild(statusRow(item.label, "pauseApp"));
+					}
+					break;
+				case "look-away-now":
+					if (item.enabled) {
+						section.appendChild(
+							actionRow(item.label, {
+								icon: "lookAway",
+								payload: { kind: "item", id: "look-away-now" },
+								accelerator: item.accelerator,
+							}),
+						);
+					} else {
+						section.appendChild(statusRow(item.label, "lookAway"));
 					}
 					break;
 				case "separator":

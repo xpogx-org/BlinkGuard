@@ -590,4 +590,188 @@ describe("LookAwayService", () => {
 			"completed",
 		);
 	});
+
+	it("promptNow shows immediately without waiting for the interval", () => {
+		const preferences = createPreferences({ lookAwayInterval: 20 });
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastLookAwayTime", Date.now());
+		const windows = createWindows();
+		const sound = createSound();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			store,
+			windows,
+			sound,
+		);
+
+		service.promptNow();
+
+		expect(sound.play).toHaveBeenCalledWith("lookAway");
+		expect(windows.showLookAway).toHaveBeenCalledTimes(1);
+		expect(state.isLookAwayShowing).toBe(true);
+	});
+
+	it("promptNow no-ops when look-away is disabled", () => {
+		const preferences = createPreferences({ lookAwayEnabled: false });
+		const state = new AppRuntimeState();
+		const store = createStore();
+		const windows = createWindows();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			store,
+			windows,
+			createSound(),
+		);
+
+		service.promptNow();
+
+		expect(windows.showLookAway).not.toHaveBeenCalled();
+		expect(state.isLookAwayShowing).toBe(false);
+	});
+
+	it("promptNow no-ops when already showing", () => {
+		const preferences = createPreferences();
+		const state = new AppRuntimeState();
+		const store = createStore();
+		const windows = createWindows();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			store,
+			windows,
+			createSound(),
+		);
+
+		service.promptNow();
+		expect(windows.showLookAway).toHaveBeenCalledTimes(1);
+
+		service.promptNow();
+		expect(windows.showLookAway).toHaveBeenCalledTimes(1);
+	});
+
+	it("promptNow no-ops while an exercise popup is open", () => {
+		const preferences = createPreferences();
+		const state = new AppRuntimeState();
+		state.isExerciseShowing = true;
+		const windows = createWindows();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			createStore(),
+			windows,
+			createSound(),
+		);
+
+		service.promptNow();
+
+		expect(windows.showLookAway).not.toHaveBeenCalled();
+	});
+
+	it("promptNow no-ops when the notification gate is closed", () => {
+		const preferences = createPreferences();
+		const state = new AppRuntimeState();
+		const windows = createWindows();
+		const sound = createSound();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			createStore(),
+			windows,
+			sound,
+			{
+				notificationsAllowed: () => false,
+				pauseReason: () => "quiet-hours",
+			},
+		);
+
+		service.promptNow();
+
+		expect(windows.showLookAway).not.toHaveBeenCalled();
+		expect(sound.play).not.toHaveBeenCalled();
+		expect(state.isLookAwayShowing).toBe(false);
+	});
+
+	it("promptNow records completed when the countdown finishes", () => {
+		const stats = { recordEyeCare: vi.fn() } satisfies EyeCareStatsRecorder;
+		const preferences = createPreferences({ lookAwayDuration: 5 });
+		const state = new AppRuntimeState();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			createStore(),
+			createWindows(),
+			createSound(),
+			undefined,
+			undefined,
+			stats,
+		);
+
+		service.promptNow();
+		expect(stats.recordEyeCare).not.toHaveBeenCalled();
+		vi.advanceTimersByTime(5_000);
+		expect(stats.recordEyeCare).toHaveBeenCalledWith("lookAway", "completed");
+	});
+
+	it("promptNow skip and snooze still record stats", () => {
+		const stats = { recordEyeCare: vi.fn() } satisfies EyeCareStatsRecorder;
+		const preferences = createPreferences();
+		const state = new AppRuntimeState();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			createStore(),
+			createWindows(),
+			createSound(),
+			undefined,
+			undefined,
+			stats,
+		);
+
+		service.promptNow();
+		service.skip();
+		expect(stats.recordEyeCare).toHaveBeenCalledWith("lookAway", "skipped");
+
+		stats.recordEyeCare.mockClear();
+		service.promptNow();
+		service.snooze();
+		expect(stats.recordEyeCare).toHaveBeenCalledWith("lookAway", "snoozed");
+	});
+
+	it("promptNow cancels a pending snooze so it does not re-show after complete", () => {
+		const preferences = createPreferences({
+			lookAwayInterval: 20,
+			lookAwayDuration: 5,
+			snoozeMinutes: 10,
+		});
+		const state = new AppRuntimeState();
+		const store = createStore();
+		store.set("lastLookAwayTime", Date.now() - 21 * 60 * 1000);
+		const windows = createWindows();
+		const service = new LookAwayService(
+			preferences,
+			state,
+			store,
+			windows,
+			createSound(),
+		);
+
+		service.start();
+		vi.advanceTimersByTime(60_000);
+		expect(windows.showLookAway).toHaveBeenCalledTimes(1);
+
+		service.snooze();
+		expect(state.isLookAwayShowing).toBe(false);
+
+		service.promptNow();
+		expect(windows.showLookAway).toHaveBeenCalledTimes(2);
+
+		vi.advanceTimersByTime(5_000);
+		expect(state.isLookAwayShowing).toBe(false);
+
+		vi.advanceTimersByTime(10 * 60 * 1000);
+		expect(windows.showLookAway).toHaveBeenCalledTimes(2);
+	});
 });

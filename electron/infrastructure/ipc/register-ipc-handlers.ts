@@ -96,6 +96,8 @@ interface IpcDependencies {
 	onKeyboardShortcutsChanged?: () => void;
 	/** Tray pause-app row refresh when blocklist changes from Settings. */
 	onPauseAppRulesChanged?: () => void;
+	/** Tray look-away-now row when lookAwayEnabled toggles. */
+	onLookAwayEnabledChanged?: () => void;
 	hushAllPrompts: (options: SanitizedSnoozeAllOptions) => void;
 	endPromptHush: () => void;
 	settingsProfiles: SettingsProfilesService;
@@ -124,6 +126,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		onSnoozeMinutesChanged,
 		onKeyboardShortcutsChanged,
 		onPauseAppRulesChanged,
+		onLookAwayEnabledChanged,
 		hushAllPrompts,
 		endPromptHush,
 		settingsProfiles,
@@ -317,6 +320,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		preferences.set("lookAwayEnabled", enabled as boolean);
 		if (!enabled) {
 			lookAway.stop();
+			onLookAwayEnabledChanged?.();
 			return;
 		}
 		if (
@@ -325,6 +329,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		) {
 			lookAway.start();
 		}
+		onLookAwayEnabledChanged?.();
 	});
 	on(IPC_CHANNELS.updateLookAwayInterval, (_event, interval: unknown) => {
 		preferences.set("lookAwayInterval", interval as number);

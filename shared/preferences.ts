@@ -247,6 +247,7 @@ export const SHORTCUT_ACTIONS = [
 	"snoozeWithToken",
 	"openSettings",
 	"openCameraPreview",
+	"lookAwayNow",
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
@@ -269,6 +270,7 @@ export const DEFAULT_KEYBOARD_SHORTCUTS: Readonly<KeyboardShortcuts> = {
 	snoozeWithToken: "",
 	openSettings: "",
 	openCameraPreview: "",
+	lookAwayNow: "",
 };
 
 export function sameKeyboardShortcuts(

@@ -147,6 +147,14 @@ export class ShortcutController {
 					detail: { shortcut },
 				});
 				return;
+			case "lookAwayNow":
+				this.lookAway.promptNow();
+				this.interactions?.append({
+					source: "shortcut",
+					action: "look-away-now",
+					detail: { shortcut },
+				});
+				return;
 		}
 	}
 

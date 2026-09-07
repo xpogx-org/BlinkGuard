@@ -110,10 +110,20 @@ export class LookAwayService {
 		this.store.set("lastLookAwayTime", Date.now());
 	}
 
+	/** Manual start from tray / shortcut — respects gate and mutual exclusion. */
+	promptNow(): void {
+		if (!this.preferences.lookAwayEnabled) return;
+		this.show();
+	}
+
 	private show(): void {
 		if (this.state.isLookAwayShowing) return;
 		if (this.state.isExerciseShowing) return;
 		if (!this.notificationGate.notificationsAllowed()) return;
+		if (this.state.lookAwaySnoozeTimeout) {
+			clearTimeout(this.state.lookAwaySnoozeTimeout);
+			this.state.lookAwaySnoozeTimeout = null;
+		}
 		this.sound.play("lookAway");
 		this.state.isLookAwayShowing = true;
 		this.store.set("lastLookAwayTime", Date.now());

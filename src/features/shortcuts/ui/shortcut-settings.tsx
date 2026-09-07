@@ -28,6 +28,7 @@ const ACTION_TITLE: Record<ShortcutAction, string> = {
 	snoozeWithToken: "shortcut.action.snoozeWithToken",
 	openSettings: "shortcut.action.openSettings",
 	openCameraPreview: "shortcut.action.openCameraPreview",
+	lookAwayNow: "shortcut.action.lookAwayNow",
 };
 
 const ACTION_DESC: Record<ShortcutAction, string> = {
@@ -36,6 +37,7 @@ const ACTION_DESC: Record<ShortcutAction, string> = {
 	snoozeWithToken: "shortcut.action.snoozeWithTokenDesc",
 	openSettings: "shortcut.action.openSettingsDesc",
 	openCameraPreview: "shortcut.action.openCameraPreviewDesc",
+	lookAwayNow: "shortcut.action.lookAwayNowDesc",
 };
 
 export function ShortcutSettings({

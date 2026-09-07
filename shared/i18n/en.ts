@@ -583,6 +583,9 @@ export const en: MessageCatalog = {
 	"shortcut.action.openCameraPreview": "Camera preview",
 	"shortcut.action.openCameraPreviewDesc":
 		"Open the camera preview window (enables the camera if needed).",
+	"shortcut.action.lookAwayNow": "Look away now",
+	"shortcut.action.lookAwayNowDesc":
+		"Start a look-away break immediately (same as the tray). Still respects hush, quiet hours, and pause rules.",
 
 	// Onboarding
 	"onboarding.welcome": "Welcome to BlinkGuard",
@@ -801,6 +804,7 @@ export const en: MessageCatalog = {
 
 	// Tray / window titles
 	"tray.show": "Show BlinkGuard",
+	"tray.lookAwayNow": "Look away now",
 	"tray.pauseApp": "Pause this app",
 	"tray.pauseAppNamed": "Pause for {name}",
 	"tray.snooze": "Snooze",

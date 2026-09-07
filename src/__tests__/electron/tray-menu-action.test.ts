@@ -27,6 +27,7 @@ function deps(overrides: Partial<ReturnType<typeof createTrayMenuActionDeps>> = 
 		onHushDuration: vi.fn(),
 		onHushUntilResume: vi.fn(),
 		onPauseApp: vi.fn(() => false),
+		onLookAwayNow: vi.fn(),
 		...overrides,
 	});
 }
@@ -131,5 +132,16 @@ describe("handleTrayMenuAction", () => {
 		const noop = deps({ onPauseApp: vi.fn(() => false) });
 		handleTrayMenuAction({ kind: "item", id: "pause-app" }, noop);
 		expect(noop.interactions?.append).not.toHaveBeenCalled();
+	});
+
+	it("routes look-away-now and logs", () => {
+		const onLookAwayNow = vi.fn();
+		const d = deps({ onLookAwayNow });
+		handleTrayMenuAction({ kind: "item", id: "look-away-now" }, d);
+		expect(onLookAwayNow).toHaveBeenCalledOnce();
+		expect(d.interactions?.append).toHaveBeenCalledWith({
+			source: "tray",
+			action: "menu-look-away-now",
+		});
 	});
 });

@@ -93,6 +93,9 @@ export class TrayController {
 			colors: { background: "#0f172a", text: "#f8fafc" },
 			transparency: 0.15,
 		}),
+		private readonly onLookAwayNow: (() => void) | null = null,
+		private readonly getLookAwayEnabled: () => boolean = () => false,
+		private readonly getNotificationsAllowed: () => boolean = () => true,
 	) {}
 
 	create(): void {
@@ -190,6 +193,7 @@ export class TrayController {
 				onHushDuration: this.onHushDuration,
 				onHushUntilResume: this.onHushUntilResume,
 				onPauseApp: this.onPauseApp,
+				onLookAwayNow: this.onLookAwayNow,
 			}),
 		);
 	}
@@ -212,6 +216,7 @@ export class TrayController {
 		const glanceLabel = formatTraySessionGlance(locale, this.sessionGlance);
 		const theme = this.getTheme();
 		const hushTiming = this.getPromptHushTiming();
+		const lookAwayEnabled = this.getLookAwayEnabled();
 		return {
 			spec: buildTrayMenuSpec({
 				locale,
@@ -237,6 +242,10 @@ export class TrayController {
 				activeSetupId: setups.activeSetupId,
 				pauseAppRules: [...this.getPauseAppRules()],
 				lastExternal: this.getLastExternalForeground(),
+				includeLookAwayNow: lookAwayEnabled,
+				lookAwayNowEnabled:
+					lookAwayEnabled && this.getNotificationsAllowed(),
+				lookAwayNowAccelerator: shortcuts.lookAwayNow,
 			}),
 			darkMode: theme.darkMode,
 			colors: theme.colors,

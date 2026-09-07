@@ -27,6 +27,7 @@ export type TrayMenuActionDeps = {
 	onHushDuration: ((minutes: number) => void) | null;
 	onHushUntilResume: (() => void) | null;
 	onPauseApp: (() => boolean) | null;
+	onLookAwayNow: (() => void) | null;
 };
 
 export function handleTrayMenuAction(
@@ -96,6 +97,13 @@ function handleTrayMenuItemAction(
 			}
 			return;
 		}
+		case "look-away-now":
+			deps.interactions?.append({
+				source: "tray",
+				action: "menu-look-away-now",
+			});
+			deps.onLookAwayNow?.();
+			return;
 		case "check-for-updates":
 			deps.interactions?.append({
 				source: "tray",

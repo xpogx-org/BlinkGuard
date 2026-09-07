@@ -407,6 +407,7 @@ describe("settings shell", () => {
 			snoozeWithToken: "",
 			openSettings: "",
 			openCameraPreview: "",
+			lookAwayNow: "",
 		});
 	});
 

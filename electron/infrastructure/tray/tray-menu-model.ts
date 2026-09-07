@@ -63,6 +63,9 @@ export type BuildTrayMenuSpecInput = {
 	activeSetupId?: string | null;
 	pauseAppRules?: PauseAppRule[];
 	lastExternal?: PauseAppRule | null;
+	includeLookAwayNow?: boolean;
+	lookAwayNowEnabled?: boolean;
+	lookAwayNowAccelerator?: string;
 };
 
 /** Tray click on the already-active radio is a no-op (do not re-apply). */
@@ -147,6 +150,14 @@ export function buildTrayMenuSpec(
 				});
 			}
 		}
+	}
+	if (input.includeLookAwayNow) {
+		items.push({
+			id: "look-away-now",
+			label: t(locale, "tray.lookAwayNow"),
+			enabled: input.lookAwayNowEnabled !== false,
+			...optionalAccelerator(input.lookAwayNowAccelerator ?? ""),
+		});
 	}
 	items.push({ id: "separator" });
 	items.push({

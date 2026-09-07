@@ -395,6 +395,72 @@ describe("buildTrayMenuSpec", () => {
 			SETTINGS_PROFILE_CAP,
 		);
 	});
+
+	it("omits look-away-now unless includeLookAwayNow is set", () => {
+		expect(spec().some((item) => item.id === "look-away-now")).toBe(false);
+		expect(
+			spec({ includeLookAwayNow: true }).find(
+				(item) => item.id === "look-away-now",
+			),
+		).toEqual({
+			id: "look-away-now",
+			label: t("en", "tray.lookAwayNow"),
+			enabled: true,
+		});
+	});
+
+	it("places look-away-now after hush and before the camera separator", () => {
+		const ids = itemIds(
+			spec({ includeHush: true, includeLookAwayNow: true }),
+		);
+		const hushIdx = ids.indexOf("hush");
+		const lookAwayIdx = ids.indexOf("look-away-now");
+		const cameraIdx = ids.indexOf("camera");
+		expect(lookAwayIdx).toBeGreaterThan(hushIdx);
+		expect(cameraIdx).toBeGreaterThan(lookAwayIdx);
+		expect(ids).toEqual([
+			"show",
+			"tracking",
+			"hush",
+			"hush-longer",
+			"look-away-now",
+			"separator",
+			"camera",
+			"pause-app",
+			"separator",
+			"snooze",
+			"check-for-updates",
+			"separator",
+			"quit",
+		]);
+	});
+
+	it("disables look-away-now when lookAwayNowEnabled is false", () => {
+		expect(
+			spec({
+				includeLookAwayNow: true,
+				lookAwayNowEnabled: false,
+			}).find((item) => item.id === "look-away-now"),
+		).toEqual({
+			id: "look-away-now",
+			label: t("en", "tray.lookAwayNow"),
+			enabled: false,
+		});
+	});
+
+	it("attaches look-away-now accelerator when bound", () => {
+		expect(
+			spec({
+				includeLookAwayNow: true,
+				lookAwayNowAccelerator: "Ctrl+Shift+L",
+			}).find((item) => item.id === "look-away-now"),
+		).toEqual({
+			id: "look-away-now",
+			label: t("en", "tray.lookAwayNow"),
+			enabled: true,
+			accelerator: "Ctrl+Shift+L",
+		});
+	});
 });
 
 describe("shouldSwitchTraySetup", () => {
