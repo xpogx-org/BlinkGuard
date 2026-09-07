@@ -4,8 +4,8 @@ import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
 import { useBlinkStats } from "@/features/statistics/model/use-blink-stats";
 import { useI18n } from "@/i18n";
-import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import { cn } from "@/lib/utils";
+import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import type {
 	BlinkRewardId,
 	RewardCategory,
@@ -172,7 +172,7 @@ export function RewardsShopPanel() {
 	const { t } = useI18n();
 	const { snapshot, purchaseReward, equipCheerTheme, equipPopupPreset } =
 		useBlinkStats();
-	const { totals, rewards } = snapshot;
+	const { shopBalance, rewards } = snapshot;
 	const [flashId, setFlashId] = useState<BlinkRewardId | null>(null);
 
 	useEffect(() => {
@@ -215,7 +215,7 @@ export function RewardsShopPanel() {
 								{t("stats.available")}
 							</p>
 							<p className="mt-0.5 text-lg font-semibold tabular-nums tracking-tight">
-								{totals.available}
+								{shopBalance.available}
 							</p>
 						</div>
 						<div className="rounded-md border border-border bg-background px-3 py-2">
@@ -223,7 +223,7 @@ export function RewardsShopPanel() {
 								{t("stats.spent")}
 							</p>
 							<p className="mt-0.5 text-lg font-semibold tabular-nums tracking-tight">
-								{totals.spent}
+								{shopBalance.spent}
 							</p>
 						</div>
 						<div className="rounded-md border border-border bg-background px-3 py-2">
@@ -231,7 +231,7 @@ export function RewardsShopPanel() {
 								{t("stats.total")}
 							</p>
 							<p className="mt-0.5 text-lg font-semibold tabular-nums tracking-tight">
-								{totals.total}
+								{shopBalance.total}
 							</p>
 						</div>
 					</div>

@@ -51,6 +51,8 @@ import {
 	goalProgress,
 	rewardOffers,
 	weekEyeCareTotals,
+	shopTotalsSummary,
+	creditOfflineFromTrackingMs,
 } from "../../shared/blink-stats";
 import {
 	achievementSnapshotFields,
@@ -549,6 +551,7 @@ export class BlinkStatsService {
 		return {
 			today: todaySummary(this.state, today),
 			totals: totalsSummary(this.state),
+			shopBalance: shopTotalsSummary(this.state),
 			weekEyeCare: weekEyeCareTotals(this.state, today),
 			...this.cachedCharts,
 			blinksPerMinute,
@@ -898,6 +901,9 @@ export class BlinkStatsService {
 		this.trackingStartedAt = nowMs;
 		if (elapsed <= 0) return;
 		this.state = addTrackingMs(this.state, elapsed, now);
+		if (!this.getCameraEnabled()) {
+			this.state = creditOfflineFromTrackingMs(this.state, elapsed);
+		}
 		this.persist();
 		this.reconcileAchievements({ celebrate: "live" }, now);
 	}

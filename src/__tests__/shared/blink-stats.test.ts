@@ -9,30 +9,36 @@ import {
 	addTrackingMs,
 	applyRewardPurchase,
 	availableBlinks,
+	availableOffline,
 	computeStreak,
 	consumeSnoozeToken,
-	dayMeetsDailyGoals,
-	equipCheerTheme,
-	equipPopupPreset,
+	creditOfflineFromTrackingMs,
 	DEFAULT_BLINK_STATS,
+	dayMeetsDailyGoals,
 	EMPTY_EYE_CARE_COUNTS,
 	emptyDayStats,
+	equipCheerTheme,
+	equipPopupPreset,
 	formatTrackingDuration,
 	goalProgress,
 	localDateKey,
 	localHour,
 	normalizeBlinkStatsState,
+	OFFLINE_MS_PER_POINT,
 	pruneDays,
 	recordBlink,
 	recordEyeCareOutcome,
 	recordSessionStart,
 	rewardOffers,
 	shiftDateKey,
+	shopAvailable,
+	shopTotalsSummary,
 	spendBlinks,
-	tokenSnoozeMinutes,
+	spendShopBalance,
 	toBlinkStatsSnapshot,
 	toDayChart,
 	todaySummary,
+	tokenSnoozeMinutes,
 	toMonthChart,
 	totalsSummary,
 	toWeekChart,
@@ -311,6 +317,9 @@ describe("blink-stats helpers", () => {
 		expect(normalized.days[0]?.hourlyBlinks[1]).toBe(0);
 		expect(normalized.totalBlinks).toBe(2);
 		expect(normalized.spentBlinks).toBe(0);
+		expect(normalized.totalOfflinePoints).toBe(0);
+		expect(normalized.spentOfflinePoints).toBe(0);
+		expect(normalized.offlineCreditRemainderMs).toBe(0);
 		expect(normalized.unlockedRewardIds).toEqual([]);
 		expect(normalized.unlockedAchievementIds).toEqual([]);
 		expect(normalized.streakShieldCharges).toBe(0);
@@ -321,6 +330,111 @@ describe("blink-stats helpers", () => {
 		expect(normalized.unlockedPopupPresetIds).toEqual([]);
 		expect(normalized.equippedPopupPresetId).toBeNull();
 		expect(normalized.snoozeTokenCharges).toBe(0);
+	});
+
+	it("credits offline points from tracking ms without inflating blink totals", () => {
+		let state = creditOfflineFromTrackingMs(DEFAULT_BLINK_STATS, 25_000);
+		expect(state.totalOfflinePoints).toBe(2);
+		expect(state.offlineCreditRemainderMs).toBe(5_000);
+		expect(state.totalBlinks).toBe(0);
+		expect(totalsSummary(state).available).toBe(0);
+		expect(availableOffline(state)).toBe(2);
+		expect(shopAvailable(state)).toBe(2);
+
+		state = creditOfflineFromTrackingMs(state, 6_000);
+		expect(state.totalOfflinePoints).toBe(3);
+		expect(state.offlineCreditRemainderMs).toBe(1_000);
+
+		state = creditOfflineFromTrackingMs(state, 0);
+		expect(state.totalOfflinePoints).toBe(3);
+		expect(OFFLINE_MS_PER_POINT).toBe(10_000);
+	});
+
+	it("spends shop balance offline-first then blinks", () => {
+		const state = {
+			...DEFAULT_BLINK_STATS,
+			totalBlinks: 10,
+			totalOfflinePoints: 7,
+		};
+		const spent = spendShopBalance(state, 10);
+		expect(spent?.spentOfflinePoints).toBe(7);
+		expect(spent?.spentBlinks).toBe(3);
+		expect(availableOffline(spent ?? state)).toBe(0);
+		expect(availableBlinks(spent ?? state)).toBe(7);
+		expect(shopAvailable(spent ?? state)).toBe(7);
+		expect(shopTotalsSummary(spent ?? state)).toEqual({
+			total: 17,
+			spent: 10,
+			available: 7,
+		});
+		expect(spendShopBalance(spent ?? state, 8)).toBeNull();
+		expect(spendShopBalance(state, 0)).toBeNull();
+	});
+
+	it("purchases with offline-only, blinks-only, or mixed shop balance", () => {
+		const cheerCost = BLINK_REWARDS.cheer.cost;
+		const offlineOnly = applyRewardPurchase(
+			{ ...DEFAULT_BLINK_STATS, totalOfflinePoints: cheerCost },
+			"cheer",
+		);
+		expect(offlineOnly?.spentOfflinePoints).toBe(cheerCost);
+		expect(offlineOnly?.spentBlinks).toBe(0);
+		expect(offlineOnly?.totalBlinks).toBe(0);
+
+		const blinksOnly = applyRewardPurchase(
+			{ ...DEFAULT_BLINK_STATS, totalBlinks: cheerCost },
+			"cheer",
+		);
+		expect(blinksOnly?.spentBlinks).toBe(cheerCost);
+		expect(blinksOnly?.spentOfflinePoints).toBe(0);
+
+		const mixed = applyRewardPurchase(
+			{
+				...DEFAULT_BLINK_STATS,
+				totalOfflinePoints: 100,
+				totalBlinks: cheerCost - 100,
+			},
+			"cheer",
+		);
+		expect(mixed?.spentOfflinePoints).toBe(100);
+		expect(mixed?.spentBlinks).toBe(cheerCost - 100);
+
+		const offers = rewardOffers({
+			...DEFAULT_BLINK_STATS,
+			totalOfflinePoints: cheerCost,
+		});
+		expect(offers.find((offer) => offer.id === "cheer")?.canBuy).toBe(true);
+		expect(
+			rewardOffers(DEFAULT_BLINK_STATS).find((offer) => offer.id === "cheer")
+				?.canBuy,
+		).toBe(false);
+	});
+
+	it("includes shopBalance on snapshot and preserves offline on normalize", () => {
+		const state = {
+			...DEFAULT_BLINK_STATS,
+			totalBlinks: 20,
+			spentBlinks: 5,
+			totalOfflinePoints: 12,
+			spentOfflinePoints: 2,
+			offlineCreditRemainderMs: 4_000,
+		};
+		const snapshot = toBlinkStatsSnapshot(state);
+		expect(snapshot.totals).toEqual({ total: 20, spent: 5, available: 15 });
+		expect(snapshot.shopBalance).toEqual({
+			total: 32,
+			spent: 7,
+			available: 25,
+		});
+		const normalized = normalizeBlinkStatsState({
+			days: [],
+			totalOfflinePoints: 12,
+			spentOfflinePoints: 99,
+			offlineCreditRemainderMs: 50_000,
+		});
+		expect(normalized.totalOfflinePoints).toBe(12);
+		expect(normalized.spentOfflinePoints).toBe(12);
+		expect(normalized.offlineCreditRemainderMs).toBe(OFFLINE_MS_PER_POINT - 1);
 	});
 
 	it("keeps valid achievement ids on normalize and snapshot", () => {

@@ -101,12 +101,24 @@ export type DayBlinkStats = {
 	hourlyBlinks: number[];
 } & EyeCareDayCounts;
 
+/** Tracking ms required to mint one offline shop point (1 per 10s). */
+export const OFFLINE_MS_PER_POINT = 10_000;
+
 export type BlinkStatsState = {
 	days: DayBlinkStats[];
 	/** Lifetime credited blinks (survives day retention prune). */
 	totalBlinks: number;
 	/** Blinks spent on rewards. */
 	spentBlinks: number;
+	/**
+	 * Lifetime timer-mode shop points (camera off). Does not inflate blink
+	 * totals, XP, or blink-count achievements.
+	 */
+	totalOfflinePoints: number;
+	/** Offline points spent on rewards. */
+	spentOfflinePoints: number;
+	/** Partial tracking ms toward the next offline point (0…OFFLINE_MS_PER_POINT-1). */
+	offlineCreditRemainderMs: number;
 	/** One-time reward unlocks (e.g. statsFlair). */
 	unlockedRewardIds: BlinkRewardId[];
 	/** One-time achievement unlocks. */
@@ -212,6 +224,9 @@ export const DEFAULT_BLINK_STATS: BlinkStatsState = {
 	days: [],
 	totalBlinks: 0,
 	spentBlinks: 0,
+	totalOfflinePoints: 0,
+	spentOfflinePoints: 0,
+	offlineCreditRemainderMs: 0,
 	unlockedRewardIds: [],
 	unlockedAchievementIds: [],
 	streakShieldCharges: 0,
@@ -264,6 +279,9 @@ function cloneState(state: BlinkStatsState): BlinkStatsState {
 		days: state.days.map(cloneDay),
 		totalBlinks: state.totalBlinks,
 		spentBlinks: state.spentBlinks,
+		totalOfflinePoints: state.totalOfflinePoints ?? 0,
+		spentOfflinePoints: state.spentOfflinePoints ?? 0,
+		offlineCreditRemainderMs: state.offlineCreditRemainderMs ?? 0,
 		unlockedRewardIds: [...state.unlockedRewardIds],
 		unlockedAchievementIds: [...state.unlockedAchievementIds],
 		streakShieldCharges: state.streakShieldCharges,
@@ -303,6 +321,9 @@ export function pruneDays(
 			.sort((a, b) => a.date.localeCompare(b.date)),
 		totalBlinks: state.totalBlinks,
 		spentBlinks: state.spentBlinks,
+		totalOfflinePoints: state.totalOfflinePoints ?? 0,
+		spentOfflinePoints: state.spentOfflinePoints ?? 0,
+		offlineCreditRemainderMs: state.offlineCreditRemainderMs ?? 0,
 		unlockedRewardIds: state.unlockedRewardIds,
 		unlockedAchievementIds: state.unlockedAchievementIds,
 		streakShieldCharges: state.streakShieldCharges,
@@ -405,11 +426,35 @@ export function availableBlinks(state: BlinkStatsState): number {
 	return Math.max(0, state.totalBlinks - state.spentBlinks);
 }
 
+export function availableOffline(state: BlinkStatsState): number {
+	return Math.max(
+		0,
+		(state.totalOfflinePoints ?? 0) - (state.spentOfflinePoints ?? 0),
+	);
+}
+
+/** Combined shop balance (blinks + offline). Profile XP still uses blinks only. */
+export function shopAvailable(state: BlinkStatsState): number {
+	return availableBlinks(state) + availableOffline(state);
+}
+
 export function totalsSummary(state: BlinkStatsState): BlinkTotalsSummary {
 	return {
 		total: state.totalBlinks,
 		spent: state.spentBlinks,
 		available: availableBlinks(state),
+	};
+}
+
+/** Combined Available / Spent / Total for the rewards shop tiles. */
+export function shopTotalsSummary(state: BlinkStatsState): BlinkTotalsSummary {
+	const available = shopAvailable(state);
+	const spent =
+		(state.spentBlinks ?? 0) + (state.spentOfflinePoints ?? 0);
+	return {
+		total: available + spent,
+		spent,
+		available,
 	};
 }
 
@@ -426,6 +471,47 @@ export function spendBlinks(
 	if (spend > availableBlinks(state)) return null;
 	const next = cloneState(state);
 	next.spentBlinks += spend;
+	return next;
+}
+
+/**
+ * Mint offline shop points from timer-mode tracking ms.
+ * Does not touch day blinks / hourly / totalBlinks.
+ */
+export function creditOfflineFromTrackingMs(
+	state: BlinkStatsState,
+	elapsedMs: number,
+): BlinkStatsState {
+	if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) return state;
+	const next = cloneState(state);
+	const pooled =
+		(next.offlineCreditRemainderMs ?? 0) + Math.floor(elapsedMs);
+	const minted = Math.floor(pooled / OFFLINE_MS_PER_POINT);
+	next.offlineCreditRemainderMs = pooled % OFFLINE_MS_PER_POINT;
+	if (minted > 0) {
+		next.totalOfflinePoints = (next.totalOfflinePoints ?? 0) + minted;
+	}
+	return next;
+}
+
+/**
+ * Spend shop balance offline-first, then blinks.
+ * Returns null when amount is invalid or exceeds shopAvailable.
+ */
+export function spendShopBalance(
+	state: BlinkStatsState,
+	amount: number,
+): BlinkStatsState | null {
+	if (!Number.isFinite(amount) || amount <= 0) return null;
+	const spend = Math.floor(amount);
+	if (spend > shopAvailable(state)) return null;
+	const next = cloneState(state);
+	const fromOffline = Math.min(availableOffline(next), spend);
+	next.spentOfflinePoints += fromOffline;
+	const remainder = spend - fromOffline;
+	if (remainder > 0) {
+		next.spentBlinks += remainder;
+	}
 	return next;
 }
 
@@ -617,7 +703,7 @@ export function computeStreak(
 export function rewardOffers(
 	state: BlinkStatsState,
 ): RewardOffer[] {
-	const available = availableBlinks(state);
+	const available = shopAvailable(state);
 	const discountPercent = shopDiscountPercent(state.shopDiscountLevel);
 	const cheerCtx = {
 		unlockedCheerThemeIds: state.unlockedCheerThemeIds,
@@ -724,8 +810,9 @@ export function rewardOffers(
 }
 
 /**
- * Spend blinks and apply reward side effects (unlock / shield charge / discount).
- * Cheer only deducts balance. Returns null when purchase is invalid.
+ * Spend shop balance (offline first, then blinks) and apply reward side effects
+ * (unlock / shield charge / discount). Cheer only deducts balance.
+ * Returns null when purchase is invalid.
  */
 export function applyRewardPurchase(
 	state: BlinkStatsState,
@@ -771,7 +858,7 @@ export function applyRewardPurchase(
 			: discountedRewardCost(def.cost, discountPercent);
 	if (cost == null || cost <= 0) return null;
 
-	const spent = spendBlinks(state, cost);
+	const spent = spendShopBalance(state, cost);
 	if (!spent) return null;
 	const next = cloneState(spent);
 	if (def.oneTime) {
@@ -959,6 +1046,8 @@ export function toYearChart(
 export type BlinkStatsSnapshot = {
 	today: TodayBlinkSummary;
 	totals: BlinkTotalsSummary;
+	/** Combined blink + offline balance for the rewards shop. */
+	shopBalance: BlinkTotalsSummary;
 	dayChart: ChartBucket[];
 	weekChart: ChartBucket[];
 	monthChart: ChartBucket[];
@@ -1009,6 +1098,7 @@ export function toBlinkStatsSnapshot(
 	return {
 		today: todaySummary(state, today),
 		totals: totalsSummary(state),
+		shopBalance: shopTotalsSummary(state),
 		dayChart: toDayChart(state, today),
 		weekChart: toWeekChart(state, today, locale),
 		monthChart: toMonthChart(state, today),
@@ -1117,6 +1207,18 @@ export function normalizeBlinkStatsState(raw: unknown): BlinkStatsState {
 	let spentBlinks = nonNegativeInt(record.spentBlinks) ?? 0;
 	if (spentBlinks > totalBlinks) spentBlinks = totalBlinks;
 
+	const totalOfflinePoints = nonNegativeInt(record.totalOfflinePoints) ?? 0;
+	let spentOfflinePoints = nonNegativeInt(record.spentOfflinePoints) ?? 0;
+	if (spentOfflinePoints > totalOfflinePoints) {
+		spentOfflinePoints = totalOfflinePoints;
+	}
+	let offlineCreditRemainderMs =
+		nonNegativeInt(record.offlineCreditRemainderMs) ?? 0;
+	offlineCreditRemainderMs = Math.min(
+		OFFLINE_MS_PER_POINT - 1,
+		offlineCreditRemainderMs,
+	);
+
 	const unlockedRewardIds: BlinkRewardId[] = [];
 	if (Array.isArray(record.unlockedRewardIds)) {
 		for (const id of record.unlockedRewardIds) {
@@ -1198,6 +1300,9 @@ export function normalizeBlinkStatsState(raw: unknown): BlinkStatsState {
 		days,
 		totalBlinks: Math.max(totalBlinks, daysSum),
 		spentBlinks,
+		totalOfflinePoints,
+		spentOfflinePoints,
+		offlineCreditRemainderMs,
 		unlockedRewardIds,
 		unlockedAchievementIds,
 		streakShieldCharges,

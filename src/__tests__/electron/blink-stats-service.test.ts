@@ -258,6 +258,78 @@ describe("BlinkStatsService", () => {
 		service.dispose();
 	});
 
+	it("mints offline shop points while camera is off and tracking flushes", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(
+			store,
+			() => "en",
+			() => ({ ...DEFAULT_GOALS_CONFIG }),
+			() => false,
+			() => false,
+			() => false,
+		);
+
+		service.onTrackingStart();
+		vi.advanceTimersByTime(15_000);
+		expect(service.getSnapshot().shopBalance.available).toBe(1);
+		expect(service.getSnapshot().totals.available).toBe(0);
+
+		const persisted = store.get(BLINK_STATS_STORE_KEY) as {
+			totalOfflinePoints: number;
+			offlineCreditRemainderMs: number;
+		};
+		expect(persisted.totalOfflinePoints).toBe(1);
+		expect(persisted.offlineCreditRemainderMs).toBe(5_000);
+
+		service.onTrackingStop();
+		const available = service.getSnapshot().shopBalance.available;
+		vi.advanceTimersByTime(30_000);
+		expect(service.getSnapshot().shopBalance.available).toBe(available);
+		service.dispose();
+	});
+
+	it("does not mint offline points while camera is on", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(
+			store,
+			() => "en",
+			() => ({ ...DEFAULT_GOALS_CONFIG }),
+			() => false,
+			() => false,
+			() => true,
+		);
+
+		service.onTrackingStart();
+		vi.advanceTimersByTime(30_000);
+		expect(service.getSnapshot().shopBalance.available).toBe(0);
+		expect(service.getSnapshot().today.trackingMs).toBeGreaterThanOrEqual(
+			30_000,
+		);
+		service.dispose();
+	});
+
+	it("does not mint offline points on the face-coverage tracking path", () => {
+		const store = createStore();
+		const service = new BlinkStatsService(
+			store,
+			() => "en",
+			() => ({ ...DEFAULT_GOALS_CONFIG }),
+			() => false,
+			() => false,
+			() => false,
+		);
+
+		service.setFaceCoverageMode(true);
+		service.onTrackingStart();
+		service.onFaceVisibility(true);
+		vi.advanceTimersByTime(20_000);
+		expect(service.getSnapshot().today.trackingMs).toBeGreaterThanOrEqual(
+			15_000,
+		);
+		expect(service.getSnapshot().shopBalance.available).toBe(0);
+		service.dispose();
+	});
+
 	it("reset clears totals and history and restarts an active session", () => {
 		const store = createStore();
 		const service = new BlinkStatsService(store);
@@ -385,6 +457,9 @@ describe("BlinkStatsService", () => {
 			],
 			totalBlinks: 40,
 			spentBlinks: 5,
+			totalOfflinePoints: 0,
+			spentOfflinePoints: 0,
+			offlineCreditRemainderMs: 0,
 			unlockedRewardIds: ["statsFlair"],
 			unlockedAchievementIds: [],
 			streakShieldCharges: 1,

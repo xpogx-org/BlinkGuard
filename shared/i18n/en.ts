@@ -251,9 +251,9 @@ export const en: MessageCatalog = {
 	"camera.status.live": "Camera on",
 	"camera.status.error": "Error",
 	"camera.detectionDesc":
-		"Off — timer reminders only. Turn this on to unlock blink-aware reminders, live stats, coaching, and rewards.",
+		"Off — timer reminders only. Shop balance still fills slowly from tracking time. Turn this on for blink-aware reminders, live stats, coaching, and faster blinks.",
 	"camera.detectionDescOn":
-		"On — blink-aware reminders, live stats, coaching, and rewards are available. Open a preview with Show Camera.",
+		"On — blink-aware reminders, live stats, coaching, and faster blinks from camera tracking. Open a preview with Show Camera.",
 	"camera.toggleAria": "Toggle camera detection",
 	"camera.show": "Show Camera",
 	"camera.stopShowing": "Stop Showing",
@@ -612,7 +612,7 @@ export const en: MessageCatalog = {
 	"onboarding.cameraDesc":
 		"More accurate when you are at your desk — blink-aware timing, live stats, and coaching.",
 	"onboarding.modeCameraNote":
-		"Timer reminders and eye-care popups work in both modes. Camera adds blink-aware timing, live blink stats, coaching, and rewards.",
+		"Timer reminders and eye-care popups work in both modes. Tracking time fills the shop slowly without a camera. Camera adds blink-aware timing, live blink stats, coaching, and faster blinks.",
 	"onboarding.accuracyDesc":
 		"Optional: a quick calibration tunes detection to your face. You can skip and calibrate later in Camera → Setup.",
 	"onboarding.shortcutHint":
@@ -654,12 +654,12 @@ export const en: MessageCatalog = {
 	"stats.streak.shieldReady": "Shield ready",
 	"stats.streak.shieldEmpty": "No shield",
 	"stats.flair.badge": "Steady Eyes",
-	"rewards.balance": "Blink balance",
+	"rewards.balance": "Shop balance",
 	"rewards.balanceDesc":
-		"Available blinks come from lifetime credited blinks minus purchases.",
+		"Available points come from tracking time and credited blinks, minus purchases.",
 	"rewards.shop": "Shop",
 	"rewards.shopDesc":
-		"Costs are sized for a full workday of camera tracking — not pocket change. Shop discount lowers other prices.",
+		"Costs are sized for a full workday of camera tracking — timer mode earns more slowly. Shop discount lowers other prices.",
 	"rewards.buy": "Buy ({cost})",
 	"rewards.owned": "Unlocked",
 	"rewards.purchaseCount": "×{count}",

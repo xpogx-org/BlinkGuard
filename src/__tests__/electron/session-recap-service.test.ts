@@ -26,6 +26,7 @@ function makeSnapshot(
 			...overrides,
 		},
 		totals: { total: 100, spent: 0, available: 100 },
+		shopBalance: { total: 100, spent: 0, available: 100 },
 		weekEyeCare: {
 			lookAwayCompleted: 0,
 			lookAwaySkipped: 0,
