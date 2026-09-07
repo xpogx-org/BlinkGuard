@@ -193,7 +193,6 @@ BlinkGuard is a personal project by **Pavlo Dzhevaha** — built locally, from t
 Donations go toward release costs (code signing, notarization, CI). The app stays free, local, and open source — no paywalled features.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/X6B6250JKQ)
-[![Open Collective](https://img.shields.io/badge/Open%20Collective-BlinkGuard-7FADF2?style=for-the-badge&logo=open-collective&logoColor=white)](https://opencollective.com/xpogx)
 
 ---
 
