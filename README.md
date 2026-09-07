@@ -43,7 +43,7 @@
 - **Timer blink reminders** — micro-break cues every 15–120s with no camera; optional camera miss-gap (1–10s) when blink detection is on
 - **Blink prompt profiles** — Standard / Gentle / Strong (ambient glow → overlay → escalate)
 - **20-20-20 look-away** and **eye exercises** — independent timers; Skip / Snooze; exercises auto-close after 30 seconds
-- **Quiet hours, fullscreen, and per-app pause** — hide prompts during quiet time (optional per-weekday hours), fullscreen, or listed foreground apps
+- **Quiet hours, fullscreen, and per-app pause** — hide prompts during quiet time (optional per-weekday hours), fullscreen, or listed foreground apps; quiet hours also turn off the camera LED and pause tracking minutes
 - **Progress** — stats (blinks plus look-away/exercise), goals, levels, achievements, rewards shop (cheer themes, popup glow, snooze tokens), and a shareable card
 - **Session recap** — overlay summary when you stop or idle; native recap on lock/quit (toggle in Settings)
 - **Your overlay** — drag, resize, colors, transparency; layout remembered per display (kept if a monitor sleeps or unplugs); optional sounds and native OS toasts
