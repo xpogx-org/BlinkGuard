@@ -4,6 +4,23 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [2.19.0] - 2026-09-07
+
+### Added
+
+- Tray: themed popup menu replaces the native context menu
+- Tray: meeting-length and sticky hush (15 / 30 / 60 minutes or until End hush) without stopping tracking
+- Tray: one-click pause for the foreground app
+- Tray: start a look-away break from the menu
+- Goals: timer-only tracking counts toward daily goals, streak, and goal day when the camera is off
+- Rewards: earn offline shop points from timer tracking (1 point per 10s) without inflating blink totals or XP
+- Focus: quiet hours freeze tracking minutes and turn off the camera LED
+
+### Fixed
+
+- Popups: reserve a shadow gutter so CSS drop shadows are not clipped
+- Tray: trigger enter animation when the themed menu opens at the tray
+
 ## [2.18.0] - 2026-09-04
 
 ### Added

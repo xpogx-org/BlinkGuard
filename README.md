@@ -44,7 +44,7 @@
 - **Blink prompt profiles** — Standard / Gentle / Strong (ambient glow → overlay → escalate)
 - **20-20-20 look-away** and **eye exercises** — independent timers; Skip / Snooze; exercises auto-close after 30 seconds
 - **Quiet hours, fullscreen, and per-app pause** — hide prompts during quiet time (optional per-weekday hours), fullscreen, or listed foreground apps; quiet hours also turn off the camera LED and pause tracking minutes
-- **Progress** — stats (blinks plus look-away/exercise), goals, levels, achievements, rewards shop (cheer themes, popup glow, snooze tokens), and a shareable card
+- **Progress** — stats (blinks plus look-away/exercise), goals (timer-only or camera), levels, achievements, rewards shop (cheer themes, popup glow, snooze tokens; offline points while tracking without camera), and a shareable card
 - **Session recap** — overlay summary when you stop or idle; native recap on lock/quit (toggle in Settings)
 - **Your overlay** — drag, resize, colors, transparency; layout remembered per display (kept if a monitor sleeps or unplugs); optional sounds and native OS toasts
 - **Local by design** — preferences via `electron-store`; named Setups; backup/import JSON (includes saved Setups); English and Ukrainian; dark / light. Camera frames never leave the machine ([PRIVACY.md](PRIVACY.md))
@@ -55,7 +55,7 @@
 - **MGD mode** — timed popups even while blinking; the popup still closes on a detected blink
 - **Setup vs Tuning** — enable and calibrate on Setup; live preview (up to Ultra 30 FPS), capture-status chip, face hints (`head_too_low`, motion-stable overlay), nudge when EAR calibration is stale
 - **Sleep / lock / lid** — pauses with a distinct reason in Settings and the tray; resumes when the session is active again
-- **Tray** — Start/Stop tracking, Hush/End hush all prompts (extended hush with snooze tokens), snooze by kind, switch Setups, live BPM and today's goal in the tooltip, pause and capture status; idle vs tracking icon
+- **Tray** — themed popup menu; Start/Stop tracking; Hush/End hush all prompts (meeting-length or sticky hush, snooze tokens); snooze by kind; start a look-away break; pause the foreground app; switch Setups; live BPM and today's goal in the tooltip; capture status; idle vs tracking icon
 - **In-app updates** — GitHub Releases (Windows and macOS); About opens Release Notes
 - **Report a problem** — About exports local diagnostics and opens a structured GitHub bug report (attach the zip yourself; nothing uploads automatically)
 
