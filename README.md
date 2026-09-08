@@ -47,7 +47,7 @@
 - **Progress** — stats (blinks plus look-away/exercise), goals (timer-only or camera), levels, achievements, rewards shop (cheer themes, popup glow, snooze tokens; offline points while tracking without camera), and a shareable card
 - **Session recap** — overlay summary when you stop or idle; native recap on lock/quit (toggle in Settings)
 - **Your overlay** — drag, resize, colors, transparency; layout remembered per display (kept if a monitor sleeps or unplugs); optional sounds and native OS toasts
-- **Local by design** — preferences via `electron-store`; named Setups; backup/import JSON (includes saved Setups); English and Ukrainian; dark / light. Camera frames never leave the machine ([PRIVACY.md](PRIVACY.md))
+- **Local by design** — preferences via `electron-store`; named Setups; backup/import JSON (includes saved Setups); English and Ukrainian; Light / System / Night appearance (follow Windows). Camera frames never leave the machine ([PRIVACY.md](PRIVACY.md))
 
 ### Camera and power users
 

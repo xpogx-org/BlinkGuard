@@ -4,6 +4,12 @@ All notable changes to BlinkGuard are documented here. The format is based on [K
 
 ## [Unreleased]
 
+## [2.20.0] - 2026-09-09
+
+### Added
+
+- Settings: Light / System / Night appearance (follow Windows)
+
 ## [2.19.0] - 2026-09-07
 
 ### Added
