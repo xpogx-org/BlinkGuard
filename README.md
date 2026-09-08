@@ -109,7 +109,7 @@ Signed + notarized builds do not need this step.
 
 The desktop app runs **without** the camera sidecar. Reminders, exercises, look-away, progress, and settings all work with Node/npm only. Camera blink detection is optional and off by default; when you enable it, frames stay on-device (see [PRIVACY.md](PRIVACY.md)).
 
-Layout and IPC traps: [docs/architecture.md](docs/architecture.md), [docs/ipc-and-preferences.md](docs/ipc-and-preferences.md). Cursor Cloud notes: [AGENTS.md](AGENTS.md).
+Layout and IPC traps: [docs/architecture.md](docs/architecture.md), [docs/ipc-and-preferences.md](docs/ipc-and-preferences.md). Agent router: [AGENTS.md](AGENTS.md). Cursor Cloud notes: [docs/harness/indexes/tooling.md](docs/harness/indexes/tooling.md).
 
 ### Stack
 

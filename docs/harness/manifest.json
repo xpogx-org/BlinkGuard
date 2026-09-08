@@ -1,0 +1,23 @@
+{
+	"harnessSkillVersion": "1.0.0",
+	"verifyCommand": "npm run verify",
+	"layer1Commands": [
+		"npx @biomejs/biome check src",
+		"npm run build:electron"
+	],
+	"layer2Commands": [
+		"npm run coverage"
+	],
+	"layer3Command": null,
+	"layer3Status": "missing",
+	"locale": "en",
+	"irreversibleActions": [
+		"git push",
+		"publish",
+		"migrate",
+		"delete data",
+		"/deploy"
+	],
+	"createdAt": "2026-09-08T20:20:43.163Z",
+	"updatedAt": "2026-09-08T20:20:43.163Z"
+}

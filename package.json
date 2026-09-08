@@ -31,6 +31,7 @@
 		"remove-quarantine": "node scripts/remove-quarantine.js",
 		"remove-quarantine:dmg": "node scripts/remove-quarantine.js --clean-dmg",
 		"lint": "npx @biomejs/biome check --write src",
+		"verify": "node scripts/harness-verify.mjs",
 		"preview": "vite preview",
 		"test": "vitest",
 		"test:ui": "vitest --ui",
