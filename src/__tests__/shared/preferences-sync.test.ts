@@ -8,7 +8,7 @@ import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 
 vi.mock("@/shared/ipc/renderer-ipc", () => ({
 	rendererIpc: {
-		updateDarkMode: vi.fn(),
+		updateAppearance: vi.fn(),
 		updateMicroBreakInterval: vi.fn(),
 		updateBlinkPromptProfile: vi.fn(),
 		updateCameraEnabled: vi.fn(),
@@ -168,6 +168,16 @@ describe("sameRendererPrefs", () => {
 		).toBe(false);
 	});
 
+	it("detects appearance preference changes", () => {
+		const base = { ...DEFAULT_RENDERER_PREFERENCES };
+		expect(
+			sameRendererPrefs(base, {
+				...base,
+				appearance: "light",
+			}),
+		).toBe(false);
+	});
+
 	it("detects keyboardShortcuts map changes", () => {
 		const base = { ...DEFAULT_RENDERER_PREFERENCES };
 		expect(
@@ -214,17 +224,20 @@ describe("pushPreferenceDiff", () => {
 	});
 
 	it("pushes only the fields that changed", () => {
-		const previous = { ...DEFAULT_RENDERER_PREFERENCES, darkMode: true };
+		const previous = {
+			...DEFAULT_RENDERER_PREFERENCES,
+			appearance: "dark" as const,
+		};
 		const next = {
 			...previous,
-			darkMode: false,
+			appearance: "light" as const,
 			soundEnabled: true,
 			locale: "uk" as const,
 		};
 
 		pushPreferenceDiff(previous, next);
 
-		expect(rendererIpc.updateDarkMode).toHaveBeenCalledWith(false);
+		expect(rendererIpc.updateAppearance).toHaveBeenCalledWith("light");
 		expect(rendererIpc.updateSoundEnabled).toHaveBeenCalledWith(true);
 		expect(rendererIpc.updateLocale).toHaveBeenCalledWith("uk");
 		expect(rendererIpc.updateCameraEnabled).not.toHaveBeenCalled();
@@ -236,6 +249,19 @@ describe("pushPreferenceDiff", () => {
 		expect(rendererIpc.updateQuietHoursByWeekday).not.toHaveBeenCalled();
 		expect(rendererIpc.updateQuietHoursStart).not.toHaveBeenCalled();
 		expect(rendererIpc.updateQuietHoursEnd).not.toHaveBeenCalled();
+	});
+
+	it("pushes only appearance when it changes", () => {
+		const previous = {
+			...DEFAULT_RENDERER_PREFERENCES,
+			appearance: "system" as const,
+		};
+		const next = { ...previous, appearance: "light" as const };
+
+		pushPreferenceDiff(previous, next);
+
+		expect(rendererIpc.updateAppearance).toHaveBeenCalledWith("light");
+		expect(rendererIpc.updateLocale).not.toHaveBeenCalled();
 	});
 
 	it("does not push IPC when only popupPositionsByDisplayId changes", () => {
@@ -275,7 +301,7 @@ describe("pushPreferenceDiff", () => {
 		expect(rendererIpc.updateQuietHoursEnabled).toHaveBeenCalledWith(false);
 		expect(rendererIpc.updateMgdMode).toHaveBeenCalledWith(true);
 		expect(rendererIpc.updateLocale).not.toHaveBeenCalled();
-		expect(rendererIpc.updateDarkMode).not.toHaveBeenCalled();
+		expect(rendererIpc.updateAppearance).not.toHaveBeenCalled();
 	});
 
 	it("pushes only auto-stop no-face fields when they change", () => {
@@ -332,7 +358,7 @@ describe("pushPreferenceDiff", () => {
 		expect(rendererIpc.updateMicroBreakInterval).toHaveBeenCalledWith(45);
 		expect(rendererIpc.updateBlinkPromptProfile).not.toHaveBeenCalled();
 		expect(rendererIpc.updateLocale).not.toHaveBeenCalled();
-		expect(rendererIpc.updateDarkMode).not.toHaveBeenCalled();
+		expect(rendererIpc.updateAppearance).not.toHaveBeenCalled();
 	});
 
 	it("pushes only blinkPromptProfile when it changes", () => {

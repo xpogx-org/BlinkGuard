@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { rendererIpc } from "@/shared/ipc/renderer-ipc";
-import type { RendererPreferences } from "../../../../shared/preferences";
+import {
+	type AppearancePreference,
+	type RendererPreferences,
+	resolveDarkMode,
+} from "../../../../shared/preferences";
 import {
 	DEFAULT_RENDERER_PREFERENCES,
 	type SettingsPreferences,
@@ -10,6 +14,20 @@ import { pushPreferenceDiff, sameRendererPrefs } from "./preferences-sync";
 export type SetPreferences = React.Dispatch<
 	React.SetStateAction<SettingsPreferences>
 >;
+
+const PREFERS_DARK = "(prefers-color-scheme: dark)";
+
+function osPrefersDark(): boolean {
+	if (typeof window.matchMedia !== "function") return false;
+	return window.matchMedia(PREFERS_DARK).matches;
+}
+
+function applyAppearanceClass(appearance: AppearancePreference): void {
+	document.documentElement.classList.toggle(
+		"dark",
+		resolveDarkMode(appearance, osPrefersDark()),
+	);
+}
 
 export function usePreferences() {
 	const [preferences, setPreferences] = useState<SettingsPreferences>(
@@ -46,8 +64,6 @@ export function usePreferences() {
 		// (e.g. hasCompletedOnboarding: false) or bounce sendPreferences loops.
 		if (!prefsHydrated) return;
 
-		document.documentElement.classList.toggle("dark", preferences.darkMode);
-
 		const previous = lastSyncedRef.current;
 		if (!previous) {
 			// First hydrate: main already persisted these values — do not echo-write.
@@ -61,6 +77,18 @@ export function usePreferences() {
 		lastSyncedRef.current = preferences;
 		pushPreferenceDiff(previous, preferences);
 	}, [preferences, prefsHydrated]);
+
+	useEffect(() => {
+		// Splash / `?dark=` owns html.dark until hydrate so DEFAULT System
+		// does not flash over an existing explicit Dark/Light store.
+		if (!prefsHydrated) return;
+		applyAppearanceClass(preferences.appearance);
+		if (typeof window.matchMedia !== "function") return;
+		const media = window.matchMedia(PREFERS_DARK);
+		const onChange = () => applyAppearanceClass(preferences.appearance);
+		media.addEventListener("change", onChange);
+		return () => media.removeEventListener("change", onChange);
+	}, [prefsHydrated, preferences.appearance]);
 
 	useEffect(() => {
 		// Same hydrate gate as the prefs sync above — otherwise the default

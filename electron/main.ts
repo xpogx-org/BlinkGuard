@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, nativeTheme } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { AppRuntimeState } from "./application/app-runtime-state";
@@ -98,6 +98,7 @@ function bootstrap(): void {
 	});
 	const preferencesService = new PreferencesService(store);
 	const preferences = preferencesService.current;
+	nativeTheme.themeSource = preferences.appearance;
 	const blinkStats = new BlinkStatsService(
 		statsStore,
 		() => preferences.locale,
@@ -557,7 +558,7 @@ function bootstrap(): void {
 			promptSuppressUntil: state.promptSuppressUntil,
 			promptHushUntilResume: state.promptHushUntilResume,
 		}),
-		() => buildTrayMenuTheme(preferences.darkMode),
+		() => buildTrayMenuTheme(nativeTheme.shouldUseDarkColors),
 		() => lookAway.promptNow(),
 		() => preferences.lookAwayEnabled,
 		() => notificationGate.notificationsAllowed(),
@@ -661,6 +662,11 @@ function bootstrap(): void {
 		onKeyboardShortcutsChanged: () => tray.rebuildMenu(),
 		onPauseAppRulesChanged: () => tray.rebuildMenu(),
 		onLookAwayEnabledChanged: () => tray.rebuildMenu(),
+		onAppearanceChanged: () => {
+			nativeTheme.themeSource = preferences.appearance;
+			windows.syncMainBackgroundColor();
+			tray.rebuildMenu();
+		},
 		hushAllPrompts: hushAllPromptsMaybeToken,
 		endPromptHush: endHush,
 	});
@@ -688,6 +694,11 @@ function bootstrap(): void {
 
 		tray.create();
 		pushTrayGlance();
+		nativeTheme.on("updated", () => {
+			if (preferences.appearance !== "system") return;
+			windows.syncMainBackgroundColor();
+			tray.rebuildMenu();
+		});
 		focusPause.setOnState((payload) => tray.setPauseState(payload));
 		captureStatus.setOnState((payload) => tray.setCaptureState(payload));
 		autoUpdates.start();

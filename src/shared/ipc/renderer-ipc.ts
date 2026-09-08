@@ -32,6 +32,7 @@ import {
 } from "../../../shared/ipc-channels";
 import type { NotificationStyle } from "../../../shared/notification-style";
 import {
+	type AppearancePreference,
 	type BlinkPromptProfile,
 	type CameraQuality,
 	emptyPauseAppPicker,
@@ -118,8 +119,8 @@ export const rendererIpc = {
 		send(IPC_CHANNELS.updateMicroBreakInterval, intervalSeconds * 1000),
 	updateBlinkPromptProfile: (profile: BlinkPromptProfile) =>
 		send(IPC_CHANNELS.updateBlinkPromptProfile, profile),
-	updateDarkMode: (enabled: boolean) =>
-		send(IPC_CHANNELS.updateDarkMode, enabled),
+	updateAppearance: (appearance: AppearancePreference) =>
+		send(IPC_CHANNELS.updateAppearance, appearance),
 	updateCameraEnabled: (enabled: boolean) =>
 		send(IPC_CHANNELS.updateCameraEnabled, enabled),
 	updateCameraQuality: (quality: CameraQuality) =>

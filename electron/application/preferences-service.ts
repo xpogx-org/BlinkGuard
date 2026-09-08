@@ -18,6 +18,7 @@ import {
 	sanitizeKeyboardShortcuts,
 	sanitizeLookAwayHint,
 	sanitizeLookAwayTitle,
+	sanitizeAppearance,
 	sanitizePauseAppRules,
 	sanitizePersistedPreferences,
 	sanitizePopupPositionsByDisplayId,
@@ -142,6 +143,19 @@ export class PreferencesService {
 				}
 				continue;
 			}
+			if (key === "appearance") {
+				// Omit default System when absent so sanitize can map legacy
+				// `darkMode` boolean (true→Dark, false→Light).
+				if (this.store.has("appearance")) {
+					loaded.appearance = this.store.get(
+						"appearance",
+						DEFAULT_PREFERENCES.appearance,
+					);
+				} else {
+					delete loaded.appearance;
+				}
+				continue;
+			}
 			loaded[key] = this.store.get(key, DEFAULT_PREFERENCES[key]);
 		}
 		if (
@@ -149,6 +163,9 @@ export class PreferencesService {
 			this.store.has("keyboardShortcut")
 		) {
 			loaded.keyboardShortcut = this.store.get("keyboardShortcut", "");
+		}
+		if (!this.store.has("appearance") && this.store.has("darkMode")) {
+			loaded.darkMode = this.store.get("darkMode");
 		}
 		const persisted = sanitizePersistedPreferences(loaded);
 
@@ -158,7 +175,9 @@ export class PreferencesService {
 				PERSISTED_KEYS.some(
 					(key) =>
 						key !== "hasCompletedOnboarding" && this.store.has(key),
-				) || this.store.has("keyboardShortcut");
+				) ||
+				this.store.has("keyboardShortcut") ||
+				this.store.has("darkMode");
 			if (looksLikeExistingUser) {
 				persisted.hasCompletedOnboarding = true;
 				this.store.set("hasCompletedOnboarding", true);
@@ -174,6 +193,10 @@ export class PreferencesService {
 		) {
 			this.store.set("keyboardShortcuts", persisted.keyboardShortcuts);
 		}
+		if (!this.store.has("appearance") && this.store.has("darkMode")) {
+			this.store.set("appearance", persisted.appearance);
+			this.store.delete?.("darkMode");
+		}
 
 		this.current = { ...persisted };
 	}
@@ -185,6 +208,8 @@ export class PreferencesService {
 		let next = value;
 		if (key === "locale") {
 			next = sanitizeLocale(value) as PersistedPreferences[K];
+		} else if (key === "appearance") {
+			next = sanitizeAppearance(value) as PersistedPreferences[K];
 		} else if (key === "notificationStyle") {
 			next = sanitizeNotificationStyle(value) as PersistedPreferences[K];
 		} else if (key === "exercisePrompts") {

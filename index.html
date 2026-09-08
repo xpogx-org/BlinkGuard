@@ -11,13 +11,27 @@
       (function () {
         var params = new URLSearchParams(location.search);
         var darkParam = params.get("dark");
-        var dark = darkParam === null ? true : darkParam !== "0";
-        document.documentElement.classList.toggle("dark", dark);
+        var media =
+          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+        function apply(dark) {
+          document.documentElement.classList.toggle("dark", dark);
+        }
+        if (darkParam === null) {
+          apply(Boolean(media && media.matches));
+          // Follow OS only when main did not pin ?dark= (explicit Light/Dark).
+          if (media && media.addEventListener) {
+            media.addEventListener("change", function () {
+              apply(media.matches);
+            });
+          }
+        } else {
+          apply(darkParam !== "0");
+        }
         window.__bootSplashShownAt = performance.now();
       })();
     </script>
     <style>
-      /* Match shared/preferences DEFAULT darkMode + index.css --background tokens. */
+      /* Match shared/theme --background tokens; html.dark is set by ?dark= / matchMedia. */
       html,
       body,
       #root {

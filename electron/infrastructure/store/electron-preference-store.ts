@@ -22,6 +22,10 @@ export class ElectronPreferenceStore implements PreferenceStore {
 		return this.store.has(key);
 	}
 
+	delete(key: string): void {
+		this.store.delete(key);
+	}
+
 	clear(): void {
 		this.store.clear();
 	}

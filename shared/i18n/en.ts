@@ -149,10 +149,11 @@ export const en: MessageCatalog = {
 	"debug.trace.cancelled": "Save cancelled",
 	"debug.trace.error": "Trace recording failed",
 
-	// Dark mode / common
-	"common.darkMode": "Dark mode",
-	"common.lightMode": "Light mode",
-	"common.toggleDarkMode": "Toggle dark mode",
+	// Appearance / common
+	"common.appearance.aria": "Appearance",
+	"common.appearance.light": "Light",
+	"common.appearance.system": "System",
+	"common.appearance.night": "Night",
 	"common.cancel": "Cancel",
 	"common.save": "Save",
 	"common.reset": "Reset",

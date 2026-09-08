@@ -1,4 +1,4 @@
-import { BrowserWindow, screen, type Display } from "electron";
+import { BrowserWindow, nativeTheme, screen, type Display } from "electron";
 import path from "node:path";
 import {
 	achievementTitleKey,
@@ -75,6 +75,8 @@ type ForceShowOptions = { force?: boolean; message?: string };
 const DISPLAY_RECOVER_DEBOUNCE_MS = 150;
 /** Short debug previews (ambient glow, no-face) auto-hide after this. */
 const DEBUG_PREVIEW_SHORT_DISMISS_MS = 3_000;
+const MAIN_BACKGROUND_DARK = "#0B1220";
+const MAIN_BACKGROUND_LIGHT = "#F4F7F9";
 
 export type PopupPlacementPersist = {
 	map: Record<string, Point>;
@@ -123,6 +125,22 @@ export class WindowManager {
 		this.onMainLoaded = handler;
 	}
 
+	/** Live Settings window chrome; does not reload `?dark=` or send prefs. */
+	syncMainBackgroundColor(): void {
+		if (!this.main || this.main.isDestroyed()) return;
+		this.main.setBackgroundColor(this.mainBackgroundColor());
+	}
+
+	private resolvedMainDark(): boolean {
+		return nativeTheme.shouldUseDarkColors;
+	}
+
+	private mainBackgroundColor(): string {
+		return this.resolvedMainDark()
+			? MAIN_BACKGROUND_DARK
+			: MAIN_BACKGROUND_LIGHT;
+	}
+
 	private sendI18n(window: BrowserWindow): void {
 		const locale = this.preferences.locale === "uk" ? "uk" : "en";
 		const n = this.preferences.snoozeMinutes;
@@ -146,7 +164,7 @@ export class WindowManager {
 		options: { showOnReady?: boolean } = {},
 	): BrowserWindow {
 		const showOnReady = options.showOnReady ?? true;
-		const darkMode = this.preferences.darkMode !== false;
+		const darkMode = this.resolvedMainDark();
 		const window = new BrowserWindow({
 			width: 1024,
 			height: 768,
@@ -154,7 +172,7 @@ export class WindowManager {
 			minHeight: 520,
 			show: false,
 			// Match renderer boot splash / shell background for current theme.
-			backgroundColor: darkMode ? "#0B1220" : "#F4F7F9",
+			backgroundColor: this.mainBackgroundColor(),
 			icon: path.join(this.paths.root, "assets", "icons", "icon.png"),
 			autoHideMenuBar: true,
 			webPreferences: {

@@ -17,6 +17,7 @@ import type { PauseAppRule, Point, PopupColors, Size } from "../../../shared/pre
 import {
 	sameKeyboardShortcuts,
 	findDuplicateShortcutActions,
+	sanitizeAppearance,
 	sanitizeBlinkPromptProfile,
 	sanitizeGoalsConfig,
 	sanitizeKeyboardShortcuts,
@@ -98,6 +99,8 @@ interface IpcDependencies {
 	onPauseAppRulesChanged?: () => void;
 	/** Tray look-away-now row when lookAwayEnabled toggles. */
 	onLookAwayEnabledChanged?: () => void;
+	/** Tray / window chrome when Settings appearance changes (no prefs echo). */
+	onAppearanceChanged?: () => void;
 	hushAllPrompts: (options: SanitizedSnoozeAllOptions) => void;
 	endPromptHush: () => void;
 	settingsProfiles: SettingsProfilesService;
@@ -127,6 +130,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 		onKeyboardShortcutsChanged,
 		onPauseAppRulesChanged,
 		onLookAwayEnabledChanged,
+		onAppearanceChanged,
 		hushAllPrompts,
 		endPromptHush,
 		settingsProfiles,
@@ -194,8 +198,11 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
 	on(IPC_CHANNELS.updateBlinkPopupClickThrough, (_event, enabled: unknown) => {
 		preferences.set("blinkPopupClickThrough", Boolean(enabled));
 	});
-	on(IPC_CHANNELS.updateDarkMode, (_event, enabled: unknown) => {
-		preferences.set("darkMode", enabled as boolean);
+	on(IPC_CHANNELS.updateAppearance, (_event, value: unknown) => {
+		const appearance = sanitizeAppearance(value);
+		if (appearance === current.appearance) return;
+		preferences.set("appearance", appearance);
+		onAppearanceChanged?.();
 	});
 	on(IPC_CHANNELS.updateCameraEnabled, (_event, enabled: unknown) => {
 		const wasEnabled = current.cameraEnabled;

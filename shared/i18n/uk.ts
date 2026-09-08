@@ -150,10 +150,11 @@ export const uk: MessageCatalog = {
 	"debug.trace.cancelled": "Збереження скасовано",
 	"debug.trace.error": "Не вдалося записати трасу",
 
-	// Dark mode / common
-	"common.darkMode": "Темна тема",
-	"common.lightMode": "Світла тема",
-	"common.toggleDarkMode": "Перемкнути тему",
+	// Appearance / common
+	"common.appearance.aria": "Оформлення",
+	"common.appearance.light": "Світла",
+	"common.appearance.system": "Системна",
+	"common.appearance.night": "Нічна",
 	"common.cancel": "Скасувати",
 	"common.save": "Зберегти",
 	"common.reset": "Скинути",

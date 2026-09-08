@@ -24,6 +24,10 @@ class FakePreferenceStore implements PreferenceStore {
 		return this.data.has(key);
 	}
 
+	delete(key: string): void {
+		this.data.delete(key);
+	}
+
 	clear(): void {
 		this.data.clear();
 	}
@@ -41,7 +45,7 @@ describe("PreferencesService", () => {
 		expect(service.current.isTracking).toBe(false);
 		expect(service.current.launchAtLogin).toBe(false);
 		expect(service.current.hasCompletedOnboarding).toBe(false);
-		expect(service.current.darkMode).toBe(DEFAULT_PREFERENCES.darkMode);
+		expect(service.current.appearance).toBe(DEFAULT_PREFERENCES.appearance);
 		expect(service.current.cameraQuality).toBe(
 			DEFAULT_PREFERENCES.cameraQuality,
 		);
@@ -82,6 +86,36 @@ describe("PreferencesService", () => {
 
 		expect(service.current.hasCompletedOnboarding).toBe(false);
 		expect(store.has("hasCompletedOnboarding")).toBe(false);
+		expect(store.has("appearance")).toBe(false);
+		expect(service.current.appearance).toBe("system");
+	});
+
+	it("maps legacy darkMode true/false to Dark/Light and drops the boolean", () => {
+		const darkStore = new FakePreferenceStore();
+		darkStore.set("darkMode", true);
+		darkStore.set("hasCompletedOnboarding", true);
+		const darkService = new PreferencesService(darkStore);
+		expect(darkService.current.appearance).toBe("dark");
+		expect(darkStore.get("appearance")).toBe("dark");
+		expect(darkStore.has("darkMode")).toBe(false);
+
+		const lightStore = new FakePreferenceStore();
+		lightStore.set("darkMode", false);
+		lightStore.set("hasCompletedOnboarding", true);
+		const lightService = new PreferencesService(lightStore);
+		expect(lightService.current.appearance).toBe("light");
+		expect(lightStore.get("appearance")).toBe("light");
+		expect(lightStore.has("darkMode")).toBe(false);
+	});
+
+	it("does not overwrite a stored appearance with leftover darkMode", () => {
+		const store = new FakePreferenceStore();
+		store.set("appearance", "system");
+		store.set("darkMode", true);
+		store.set("hasCompletedOnboarding", true);
+		const service = new PreferencesService(store);
+		expect(service.current.appearance).toBe("system");
+		expect(store.has("darkMode")).toBe(true);
 	});
 
 	it("respects an explicit hasCompletedOnboarding false on upgrade-shaped stores", () => {
@@ -99,7 +133,7 @@ describe("PreferencesService", () => {
 		store.set("reminderInterval", 5000);
 		store.set("blinkPromptProfile", "gentle");
 		store.set("microBreakInterval", 60_000);
-		store.set("darkMode", false);
+		store.set("appearance", "light");
 		store.set("cameraQuality", "high");
 		store.set("earCalibration", 0.31);
 		store.set("launchAtLogin", true);
@@ -110,7 +144,7 @@ describe("PreferencesService", () => {
 		expect(service.current.reminderInterval).toBe(5000);
 		expect(service.current.blinkPromptProfile).toBe("gentle");
 		expect(service.current.microBreakInterval).toBe(60_000);
-		expect(service.current.darkMode).toBe(false);
+		expect(service.current.appearance).toBe("light");
 		expect(service.current.cameraQuality).toBe("high");
 		expect(service.current.earCalibration).toBe(0.31);
 		expect(service.current.calibrationAt).toBeNull();
@@ -327,13 +361,13 @@ describe("PreferencesService", () => {
 		const store = new FakePreferenceStore();
 		const service = new PreferencesService(store);
 
-		service.set("darkMode", DEFAULT_PREFERENCES.darkMode);
-		expect(store.setCounts.get("darkMode") ?? 0).toBe(0);
+		service.set("appearance", DEFAULT_PREFERENCES.appearance);
+		expect(store.setCounts.get("appearance") ?? 0).toBe(0);
 
-		service.set("darkMode", !DEFAULT_PREFERENCES.darkMode);
-		expect(store.setCounts.get("darkMode")).toBe(1);
-		service.set("darkMode", !DEFAULT_PREFERENCES.darkMode);
-		expect(store.setCounts.get("darkMode")).toBe(1);
+		service.set("appearance", "dark");
+		expect(store.setCounts.get("appearance")).toBe(1);
+		service.set("appearance", "dark");
+		expect(store.setCounts.get("appearance")).toBe(1);
 
 		service.set("exercisePrompts", [...service.current.exercisePrompts]);
 		expect(store.setCounts.get("exercisePrompts") ?? 0).toBe(0);
@@ -510,13 +544,13 @@ describe("PreferencesService", () => {
 
 	it("replaceFromBackup restores key prefs and forces isTracking false", () => {
 		const store = new FakePreferenceStore();
-		store.set("darkMode", true);
+		store.set("appearance", "dark");
 		store.set("locale", "en");
 		const service = new PreferencesService(store);
 
 		service.replaceFromBackup({
 			...DEFAULT_PREFERENCES,
-			darkMode: false,
+			appearance: "light",
 			locale: "uk",
 			reminderInterval: 7000,
 			keyboardShortcuts: {
@@ -529,7 +563,7 @@ describe("PreferencesService", () => {
 			dailyBlinkGoal: 100,
 		});
 
-		expect(service.current.darkMode).toBe(false);
+		expect(service.current.appearance).toBe("light");
 		expect(service.current.locale).toBe("uk");
 		expect(service.current.reminderInterval).toBe(7000);
 		expect(service.current.keyboardShortcuts.trackingToggle).toBe("Ctrl+B");
@@ -614,7 +648,7 @@ describe("PreferencesService", () => {
 		store.clear = vi.fn(store.clear.bind(store));
 		const service = new PreferencesService(store);
 		service.set("locale", "uk");
-		service.set("darkMode", false);
+		service.set("appearance", "light");
 		service.set("isTracking", true);
 		service.set("launchAtLogin", true);
 		service.set("hasCompletedOnboarding", true);
@@ -654,7 +688,7 @@ describe("PreferencesService", () => {
 		expect(service.current.cameraEnabled).toBe(true);
 		expect(service.current.earCalibration).toBe(0.3);
 		expect(service.current.locale).toBe("uk");
-		expect(service.current.darkMode).toBe(false);
+		expect(service.current.appearance).toBe("light");
 		expect(service.current.isTracking).toBe(true);
 		expect(service.current.launchAtLogin).toBe(true);
 		expect(service.current.hasCompletedOnboarding).toBe(true);

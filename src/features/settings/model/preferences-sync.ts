@@ -45,7 +45,7 @@ export function sameRendererPrefs(
 	b: SettingsPreferences,
 ): boolean {
 	return (
-		a.darkMode === b.darkMode &&
+		a.appearance === b.appearance &&
 		a.reminderInterval === b.reminderInterval &&
 		a.microBreakInterval === b.microBreakInterval &&
 		a.blinkPromptProfile === b.blinkPromptProfile &&
@@ -115,8 +115,8 @@ export function pushPreferenceDiff(
 	previous: SettingsPreferences | null,
 	next: SettingsPreferences,
 ): void {
-	if (!previous || previous.darkMode !== next.darkMode) {
-		rendererIpc.updateDarkMode(next.darkMode);
+	if (!previous || previous.appearance !== next.appearance) {
+		rendererIpc.updateAppearance(next.appearance);
 	}
 	if (!previous || previous.microBreakInterval !== next.microBreakInterval) {
 		rendererIpc.updateMicroBreakInterval(next.microBreakInterval);

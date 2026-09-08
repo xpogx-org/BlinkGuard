@@ -47,6 +47,40 @@ export interface PopupColors {
 
 export type CameraQuality = "performance" | "medium" | "high" | "ultra";
 
+export const APPEARANCE_PREFERENCES = ["system", "light", "dark"] as const;
+export type AppearancePreference = (typeof APPEARANCE_PREFERENCES)[number];
+
+export function isAppearancePreference(
+	value: unknown,
+): value is AppearancePreference {
+	return value === "system" || value === "light" || value === "dark";
+}
+
+/**
+ * Persist the user's Light / Dark / System choice.
+ * Valid `appearance` wins; otherwise map legacy boolean `darkMode`; else System.
+ */
+export function sanitizeAppearance(
+	appearance: unknown,
+	legacyDarkMode?: unknown,
+): AppearancePreference {
+	if (isAppearancePreference(appearance)) return appearance;
+	if (typeof legacyDarkMode === "boolean") {
+		return legacyDarkMode ? "dark" : "light";
+	}
+	return "system";
+}
+
+/** Resolved chrome dark: explicit light/dark ignore OS; system follows `osPrefersDark`. */
+export function resolveDarkMode(
+	appearance: AppearancePreference,
+	osPrefersDark: boolean,
+): boolean {
+	if (appearance === "light") return false;
+	if (appearance === "dark") return true;
+	return osPrefersDark;
+}
+
 /** Foreground match rule; empty fields are wildcards. Both empty is dropped. */
 export type PauseAppRule = {
 	processName: string;
@@ -526,7 +560,8 @@ export function sanitizeMicroBreakIntervalMs(input: unknown): number {
 }
 
 export interface PersistedPreferences {
-	darkMode: boolean;
+	/** User chrome choice; resolved dark is never persisted. */
+	appearance: AppearancePreference;
 	/** Camera miss-gap in ms; 1_000…10_000. */
 	reminderInterval: number;
 	/** Blink prompt intensity profile. */
@@ -690,7 +725,7 @@ export function sanitizeLookAwayHint(
 }
 
 export const DEFAULT_PREFERENCES: Readonly<PersistedPreferences> = {
-	darkMode: true,
+	appearance: "system",
 	reminderInterval: REMINDER_INTERVAL_MS_DEFAULT,
 	blinkPromptProfile: "standard",
 	microBreakInterval: MICRO_BREAK_INTERVAL_MS_DEFAULT,
@@ -1175,7 +1210,7 @@ export function sanitizePersistedPreferences(
 		: asBoolean(record.isTracking, defaults.isTracking);
 
 	return {
-		darkMode: asBoolean(record.darkMode, defaults.darkMode),
+		appearance: sanitizeAppearance(record.appearance, record.darkMode),
 		reminderInterval: sanitizeReminderIntervalMs(record.reminderInterval),
 		blinkPromptProfile: sanitizeBlinkPromptProfile(record.blinkPromptProfile),
 		microBreakInterval: sanitizeMicroBreakIntervalMs(record.microBreakInterval),

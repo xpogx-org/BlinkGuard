@@ -263,7 +263,7 @@ describe("PreferenceActions", () => {
 			preferences: {
 				...preferences.current,
 				locale: "uk",
-				darkMode: false,
+				appearance: "light",
 				launchAtLogin: true,
 				keyboardShortcuts: {
 					...preferences.current.keyboardShortcuts,
@@ -301,7 +301,7 @@ describe("PreferenceActions", () => {
 		expect(lookAway.stop).toHaveBeenCalledOnce();
 		expect(sidecar.cancelEarCalibration).toHaveBeenCalledOnce();
 		expect(preferences.current.locale).toBe("uk");
-		expect(preferences.current.darkMode).toBe(false);
+		expect(preferences.current.appearance).toBe("light");
 		expect(preferences.current.isTracking).toBe(false);
 		expect(applyLaunchAtLogin).toHaveBeenCalledWith(true);
 		expect(shortcuts.registerAll).toHaveBeenCalledWith({

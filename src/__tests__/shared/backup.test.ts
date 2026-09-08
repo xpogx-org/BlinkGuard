@@ -50,7 +50,7 @@ describe("backup document", () => {
 	it("round-trips preferences and statistics through build + parse", () => {
 		const preferences: PersistedPreferences = {
 			...DEFAULT_PREFERENCES,
-			darkMode: false,
+			appearance: "light",
 			locale: "uk",
 			reminderInterval: 5000,
 			isTracking: true,
@@ -97,7 +97,7 @@ describe("backup document", () => {
 		expect(parsed.ok).toBe(true);
 		if (!parsed.ok) return;
 
-		expect(parsed.value.preferences?.darkMode).toBe(false);
+		expect(parsed.value.preferences?.appearance).toBe("light");
 		expect(parsed.value.preferences?.locale).toBe("uk");
 		expect(parsed.value.preferences?.reminderInterval).toBe(5000);
 		expect(parsed.value.preferences?.isTracking).toBe(false);
@@ -148,13 +148,13 @@ describe("backup document", () => {
 		const document = buildBackupDocument({
 			scope: "preferences",
 			appVersion: "1.0.0",
-			preferences: { ...DEFAULT_PREFERENCES, darkMode: false },
+			preferences: { ...DEFAULT_PREFERENCES, appearance: "light" },
 		});
 		const parsed = parseBackupDocument(document, "preferences");
 		expect(parsed.ok).toBe(true);
 		if (!parsed.ok) return;
 		expect(parsed.value.settingsProfiles).toBeUndefined();
-		expect(parsed.value.preferences?.darkMode).toBe(false);
+		expect(parsed.value.preferences?.appearance).toBe("light");
 	});
 
 	it("extracts settingsProfiles when importing preferences from a both-scoped file", () => {

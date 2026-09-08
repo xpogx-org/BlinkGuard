@@ -21,9 +21,11 @@ import {
 	processOnlyPauseAppRule,
 	prunePopupPositionsByDisplayId,
 	prunePopupSizesByDisplayId,
+	resolveDarkMode,
 	samePopupPositionsByDisplayId,
 	samePopupSizesByDisplayId,
 	sameQuietHoursByWeekday,
+	sanitizeAppearance,
 	sanitizeAutoStopNoFaceMinutes,
 	sanitizeBlinkPromptProfile,
 	sanitizeBlinkRateThresholdPerMin,
@@ -80,6 +82,43 @@ describe("toRendererPreferences", () => {
 		expect(renderer.microBreakInterval).toBe(45);
 		expect(renderer.reminderInterval).toBe(3);
 		expect(renderer.blinkPromptProfile).toBe("standard");
+	});
+});
+
+describe("appearance preference", () => {
+	it("defaults to system when appearance and darkMode are missing", () => {
+		expect(DEFAULT_PREFERENCES.appearance).toBe("system");
+		expect(sanitizePersistedPreferences({}).appearance).toBe("system");
+		expect(sanitizeAppearance(undefined)).toBe("system");
+		expect(sanitizeAppearance("sepia")).toBe("system");
+	});
+
+	it("keeps a valid appearance and ignores leftover darkMode", () => {
+		expect(sanitizeAppearance("light", true)).toBe("light");
+		expect(
+			sanitizePersistedPreferences({
+				appearance: "system",
+				darkMode: true,
+			}).appearance,
+		).toBe("system");
+	});
+
+	it("maps legacy darkMode boolean when appearance is missing", () => {
+		expect(sanitizeAppearance(undefined, true)).toBe("dark");
+		expect(sanitizeAppearance(undefined, false)).toBe("light");
+		expect(sanitizePersistedPreferences({ darkMode: true }).appearance).toBe(
+			"dark",
+		);
+		expect(sanitizePersistedPreferences({ darkMode: false }).appearance).toBe(
+			"light",
+		);
+	});
+
+	it("resolveDarkMode follows OS only for system", () => {
+		expect(resolveDarkMode("system", true)).toBe(true);
+		expect(resolveDarkMode("system", false)).toBe(false);
+		expect(resolveDarkMode("light", true)).toBe(false);
+		expect(resolveDarkMode("dark", false)).toBe(true);
 	});
 });
 

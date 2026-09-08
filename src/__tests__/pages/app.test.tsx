@@ -48,6 +48,20 @@ function hydratePreferences(
 beforeEach(() => {
 	listeners.clear();
 	send.mockClear();
+	Object.defineProperty(window, "matchMedia", {
+		configurable: true,
+		writable: true,
+		value: vi.fn((query: string) => ({
+			matches: true,
+			media: query,
+			onchange: null,
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+			dispatchEvent: vi.fn(),
+		})),
+	});
 	Object.defineProperty(window, "ipcRenderer", {
 		configurable: true,
 		value: {
@@ -424,28 +438,31 @@ describe("settings shell", () => {
 		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateLocale, "uk");
 	});
 
-	it("toggles dark mode without re-pushing locale or looping on prefs echo", () => {
+	it("changes appearance without re-pushing locale or looping on prefs echo", () => {
 		render(<App />);
-		hydratePreferences({ hasCompletedOnboarding: true, darkMode: true });
+		hydratePreferences({ hasCompletedOnboarding: true, appearance: "dark" });
+		expect(document.documentElement.classList.contains("dark")).toBe(true);
 		send.mockClear();
 
-		fireEvent.click(
-			screen.getAllByRole("button", { name: "Toggle dark mode" })[0],
-		);
+		fireEvent.click(screen.getAllByRole("radio", { name: "Night" })[0]);
+		fireEvent.click(screen.getAllByRole("radio", { name: "Light" })[0]);
 
-		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateDarkMode, false);
+		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateAppearance, "light");
 		expect(
 			send.mock.calls.filter(
-				([channel]) => channel === IPC_CHANNELS.updateDarkMode,
+				([channel]) => channel === IPC_CHANNELS.updateAppearance,
 			),
 		).toHaveLength(1);
 		expect(send).not.toHaveBeenCalledWith(IPC_CHANNELS.updateLocale, "en");
+		expect(document.documentElement.classList.contains("dark")).toBe(false);
 
 		send.mockClear();
-		// Main used to bounce sendPreferences from updateLocale on every sync.
-		hydratePreferences({ hasCompletedOnboarding: true, darkMode: false });
+		hydratePreferences({ hasCompletedOnboarding: true, appearance: "light" });
 
-		expect(send).not.toHaveBeenCalledWith(IPC_CHANNELS.updateDarkMode, false);
+		expect(send).not.toHaveBeenCalledWith(
+			IPC_CHANNELS.updateAppearance,
+			"light",
+		);
 		expect(send).not.toHaveBeenCalledWith(IPC_CHANNELS.updateLocale, "en");
 	});
 
@@ -477,7 +494,10 @@ describe("settings shell", () => {
 		);
 		expect(send).toHaveBeenCalledWith(IPC_CHANNELS.updateSoundEnabled, true);
 		expect(send).not.toHaveBeenCalledWith(IPC_CHANNELS.updateLocale, "en");
-		expect(send).not.toHaveBeenCalledWith(IPC_CHANNELS.updateDarkMode, true);
+		expect(send).not.toHaveBeenCalledWith(
+			IPC_CHANNELS.updateAppearance,
+			"system",
+		);
 
 		fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 		send.mockClear();

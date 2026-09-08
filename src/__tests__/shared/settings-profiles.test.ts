@@ -16,7 +16,7 @@ import {
 const EXCLUDED_KEYS = [
 	"keyboardShortcuts",
 	"locale",
-	"darkMode",
+	"appearance",
 	"launchAtLogin",
 	"hasCompletedOnboarding",
 	"isTracking",
@@ -60,7 +60,7 @@ describe("settings-profiles shared helpers", () => {
 			calibrationAt: 1_700_000_000_000,
 			locale: "uk",
 			isTracking: true,
-			darkMode: false,
+			appearance: "light",
 			goalsEnabled: true,
 			dailyBlinkGoal: 999,
 		};
@@ -87,7 +87,7 @@ describe("settings-profiles shared helpers", () => {
 			snoozeMinutes: 10,
 			locale: "uk",
 			isTracking: true,
-			darkMode: false,
+			appearance: "light",
 		};
 		const captured = captureSettingsProfilePrefs(live);
 		const overlaid = overlaySettingsProfilePrefs(DEFAULT_PREFERENCES, captured);
@@ -95,7 +95,7 @@ describe("settings-profiles shared helpers", () => {
 		expect(sameSettingsProfilePrefs(captured, again)).toBe(true);
 		expect(overlaid.locale).toBe(DEFAULT_PREFERENCES.locale);
 		expect(overlaid.isTracking).toBe(DEFAULT_PREFERENCES.isTracking);
-		expect(overlaid.darkMode).toBe(DEFAULT_PREFERENCES.darkMode);
+		expect(overlaid.appearance).toBe(DEFAULT_PREFERENCES.appearance);
 	});
 
 	it("overlay keeps excluded live keys and drops unknown snapshot keys", () => {
@@ -103,7 +103,7 @@ describe("settings-profiles shared helpers", () => {
 			...DEFAULT_PREFERENCES,
 			locale: "uk",
 			isTracking: true,
-			darkMode: false,
+			appearance: "light",
 			hasCompletedOnboarding: true,
 			goalsEnabled: true,
 			dailyBlinkGoal: 50,
@@ -121,6 +121,7 @@ describe("settings-profiles shared helpers", () => {
 		expect(next.reminderInterval).toBe(2000);
 		expect(next.locale).toBe("uk");
 		expect(next.isTracking).toBe(true);
+		expect(next.appearance).toBe("light");
 		expect(next.hasCompletedOnboarding).toBe(true);
 		expect(next.goalsEnabled).toBe(true);
 		expect(next.dailyBlinkGoal).toBe(50);

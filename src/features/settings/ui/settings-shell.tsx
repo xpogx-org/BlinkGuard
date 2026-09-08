@@ -35,9 +35,9 @@ import { ProfilePanel } from "@/features/profile/ui/profile-panel";
 import { ReminderControls } from "@/features/reminders/ui/reminder-controls";
 import { RewardsShopPanel } from "@/features/rewards/ui/rewards-shop-panel";
 import type { usePreferences } from "@/features/settings/model/use-preferences";
+import { AppearanceSelect } from "@/features/settings/ui/appearance-select";
 import { BackupSettings } from "@/features/settings/ui/backup-settings";
 import { CheerSoundSettings } from "@/features/settings/ui/cheer-sound-settings";
-import { DarkModeToggle } from "@/features/settings/ui/dark-mode-toggle";
 import { GoalsSettings } from "@/features/settings/ui/goals-settings";
 import { LanguageSettings } from "@/features/settings/ui/language-settings";
 import { LaunchAtLoginSettings } from "@/features/settings/ui/launch-at-login-settings";
@@ -341,8 +341,8 @@ export function SettingsShell({
 				</nav>
 
 				<div className="hidden border-t border-border p-3 min-[820px]:block">
-					<DarkModeToggle
-						darkMode={preferences.darkMode}
+					<AppearanceSelect
+						appearance={preferences.appearance}
 						setPreferences={setPreferences}
 						variant="row"
 					/>
@@ -360,8 +360,8 @@ export function SettingsShell({
 						</p>
 					</div>
 					<div className="shrink-0 min-[820px]:hidden">
-						<DarkModeToggle
-							darkMode={preferences.darkMode}
+						<AppearanceSelect
+							appearance={preferences.appearance}
 							setPreferences={setPreferences}
 						/>
 					</div>
