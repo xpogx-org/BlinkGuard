@@ -3,9 +3,17 @@
 /**
  * Only process allowed to set status: verified on a harness task.
  * Requires gitignored .harness-last-verify.json from a green wrapper run.
+ * Also moves the id from **In progress** onto **Verified** in progress.md.
  */
 import fs from "fs";
 import path from "path";
+import {
+	harnessPaths,
+	loadProgressText,
+	loadTasksText,
+	markTaskVerifiedInText,
+	moveActiveToVerified,
+} from "./harness-tasks.mjs";
 
 const STAMP_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 
@@ -21,7 +29,7 @@ if (!taskId) {
 
 const root = process.cwd();
 const stampPath = path.join(root, ".harness-last-verify.json");
-const tasksPath = path.join(root, "docs", "harness", "tasks.md");
+const paths = harnessPaths(root);
 
 if (!fs.existsSync(stampPath)) {
 	fail("missing .harness-last-verify.json (run the verify wrapper first)");
@@ -46,47 +54,32 @@ if (Date.now() - Date.parse(stamp.at) > STAMP_MAX_AGE_MS) {
 	fail("last-verify stamp expired (re-run the wrapper)");
 }
 
-if (!fs.existsSync(tasksPath)) {
-	fail("missing docs/harness/tasks.md");
+let tasksText;
+let progressText;
+try {
+	tasksText = loadTasksText(root).text;
+	progressText = loadProgressText(root).text;
+} catch (error) {
+	fail(error.message);
 }
 
-const text = fs.readFileSync(tasksPath, "utf8");
-const parts = text.split(/(?=^## \[)/m);
-let found = false;
-let alreadyVerified = false;
-let notActive = false;
-
-const next = parts.map((part) => {
-	if (!part.startsWith("## [")) {
-		return part;
-	}
-	const match = part.match(/^## \[([^\]]+)\]/);
-	if (!match || match[1] !== taskId) {
-		return part;
-	}
-	found = true;
-	if (/^- status:\s*verified\s*$/m.test(part)) {
-		alreadyVerified = true;
-		return part;
-	}
-	if (!/^- status:\s*active\s*$/m.test(part)) {
-		notActive = true;
-		return part;
-	}
-	return part.replace(/^- status:\s*active\s*$/m, "- status: verified");
-});
-
-if (!found) {
-	fail(`no task heading ## [${taskId}] in docs/harness/tasks.md`);
-}
-if (alreadyVerified) {
-	fail(`task ${taskId} is already verified`);
-}
-if (notActive) {
-	fail(`task ${taskId} is not status: active`);
+let nextTasks;
+let title;
+try {
+	({ text: nextTasks, title } = markTaskVerifiedInText(tasksText, taskId));
+} catch (error) {
+	fail(error.message);
 }
 
-fs.writeFileSync(tasksPath, next.join(""));
+let nextProgress;
+try {
+	nextProgress = moveActiveToVerified(progressText, { id: taskId, title });
+} catch (error) {
+	fail(error.message);
+}
+
+fs.writeFileSync(paths.tasks, nextTasks);
+fs.writeFileSync(paths.progress, nextProgress);
 fs.unlinkSync(stampPath);
 console.log(`harness-mark-verified: ${taskId} -> verified`);
 process.exit(0);
