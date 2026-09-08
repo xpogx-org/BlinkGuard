@@ -15,15 +15,45 @@ Each task is the triple:
 
 If `sddSpec` is set, that path (`specs/active/<id>/`) is the planning SoT. Harness is the runtime loop. Do not replace SDD docs with harness state.
 
+## Intake
+
+If nothing is `active`, do not implement. Add or activate a row first:
+
+```
+node scripts/harness-start-task.mjs --add --next --title "..." --behavior "..." --proof "..."
+node scripts/harness-start-task.mjs --activate T-00N
+```
+
+`--activate` only from `not-started`. The script fails if any row is already `active`. You may write the triple by hand, then `--activate`.
+
+Sources: a user ask, a next-product-gaps brief (planning first), or SDD via `sddSpec`. Gitignored `specs/` is the planning SoT; the harness row is the runtime tracker.
+
+`proof` may name a scenario, but `harness-mark-verified.mjs` still requires a green wrapper stamp.
+
+After mark-verified, trust the script for the **Verified** and **In progress** bullets in `progress.md`. Refresh touched indexes. Run `/docs` only when prefs, IPC, UI, or sidecar contracts drifted (not a wrapper layer).
+
+Blocked: set `status: blocked` by hand and put the reason under **Blocked:** in `progress.md`. Then another task may start.
+
+Helpers: dual-ui / sidecar / tray / docs-auditor reviewers are allowed when that surface is in play. Still no one-subagent-per-index.
+
+Harness v1 does not add Cursor hooks. Do not delete existing repo hooks.
+
+Check the queue:
+
+```
+node scripts/harness-check-active.mjs
+node scripts/harness-check-active.mjs --need-active
+```
+
 ## Work
 
-1. Set (or keep) one task `active`. Do not start a second.
+1. If nothing is `active`, stop and use Intake (`harness-start-task.mjs`). Do not start a second `active`.
 2. Implement the behavior. Do not leave the tree half-broken. Clean up temps on exit.
 3. Refresh **touched** indexes under `docs/harness/indexes/` (what / where / when-to-open). "Done" is illegal without this.
-4. Update `progress.md` and any new `decisions.md` rows (choice, why, rejected, revisit).
+4. Update `progress.md` **Blocked** / **Next** by hand if needed, and any new `decisions.md` rows (choice, why, rejected, revisit). Do not hand-edit **Verified** / **In progress** after mark-verified.
 5. Run the verify command from `docs/harness/manifest.json` (`verifyCommand`). One wrapper, one verdict. Do not shop for a greener tool.
 6. If the wrapper exits non-zero: fix; do **not** edit status to `verified`.
-7. If the wrapper exits 0: `node scripts/harness-mark-verified.mjs <task-id>`. That script is the only writer of `verified`.
+7. If the wrapper exits 0: `node scripts/harness-mark-verified.mjs <task-id>`. That script is the only writer of `verified`. It also moves the id from **In progress** onto **Verified**.
 8. Do **not** commit unless the user asked.
 
 ## Forbidden
@@ -31,8 +61,8 @@ If `sddSpec` is set, that path (`specs/active/<id>/`) is the planning SoT. Harne
 - Writing `status: verified` (or saying "treat as verified")
 - Auto-commit
 - Refactor-only work while Layer 1 or Layer 2 of the wrapper is red
-- Irreversible/prod actions without a human (`git push`, publish, migrate, delete data, `/deploy`, plus any extras in the manifest `irreversibleActions`)
-- Cursor hooks, `CLAUDE.md`, git worktrees (v1)
+- Irreversible/prod actions without a human (stop and ask before every item in the manifest `irreversibleActions`)
+- Adding Cursor hooks, `CLAUDE.md`, or git worktrees (v1). Do not delete existing repo hooks.
 
 ## Language
 

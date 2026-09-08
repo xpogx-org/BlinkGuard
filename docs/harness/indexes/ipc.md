@@ -1,4 +1,3 @@
-<!-- harness-stock: true -->
 # Index: IPC / API
 
 - **What:** Contracts between main, preload, renderer, and popups (channels, payloads, `contextBridge`).

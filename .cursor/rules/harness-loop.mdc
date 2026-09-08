@@ -5,4 +5,4 @@ alwaysApply: true
 
 <!-- harness-stock: true -->
 
-Before claiming done: read `docs/harness/LOOP.md`. Run the verify wrapper from `docs/harness/manifest.json`. Never set task status to verified by hand. Commit only if the user asked. Stop and ask before git push, publish, migrate, deleting data, or `/deploy`.
+Before implementing: exactly one `active` task (`node scripts/harness-start-task.mjs` if none). Before claiming done: read `docs/harness/LOOP.md`. Run the verify wrapper from `docs/harness/manifest.json`. Never set task status to verified by hand. Commit only if the user asked. Stop and ask before actions listed in the manifest `irreversibleActions`.

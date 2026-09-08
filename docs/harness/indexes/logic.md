@@ -1,4 +1,3 @@
-<!-- harness-stock: true -->
 # Index: Logic
 
 - **What:** Domain rules, application orchestration, composition root. Thin `electron/main.ts` — extend existing services/adapters; do not invent extra layers.

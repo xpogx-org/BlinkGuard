@@ -1,4 +1,3 @@
-<!-- harness-stock: true -->
 # Index: Styles
 
 - **What:** Color/type tokens, themes, global CSS, design-system primitives.

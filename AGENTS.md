@@ -2,8 +2,8 @@
 
 Hard constraints (do not bury these):
 
-- One active harness task at a time (`docs/harness/tasks.md`).
-- Never write `status: verified` by hand. Run `npm run verify`, then `node scripts/harness-mark-verified.mjs <task-id>`.
+- One active harness task at a time (`docs/harness/tasks.md`). Before implementing: exactly one `active` task (`node scripts/harness-start-task.mjs` if none).
+- Never write `status: verified` by hand. Run `npm run verify`, then `node scripts/harness-mark-verified.mjs <task-id>` (updates `tasks.md` + progress bullets).
 - Commit only if the user asked.
 - Stop and ask before: `git push`, publish, migrate, delete data, `/deploy`.
 - Single Electron 44 + React 19 + Vite 8 desktop app. No backend, database, or Docker. Local state via `electron-store`.
@@ -29,7 +29,7 @@ Hard constraints (do not bury these):
 - Logic — `docs/harness/indexes/logic.md` — domain, application, composition root
 - Styles — `docs/harness/indexes/styles.md` — tokens, themes, CSS
 - IPC — `docs/harness/indexes/ipc.md` — channels, preload, security
-- Tooling — `docs/harness/indexes/tooling.md` — verify, lint/test/build, Cloud VM, `/deploy`
+- Tooling — `docs/harness/indexes/tooling.md` — verify, lint/test/build, Cloud VM, `/deploy`, harness CLIs
 - Sidecar — `docs/harness/indexes/sidecar.md` — optional camera detector
 - Tray — `docs/harness/indexes/tray.md` — tray menu, hush, pause
 

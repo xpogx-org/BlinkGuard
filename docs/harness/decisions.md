@@ -53,6 +53,13 @@ Format for each row:
 - **Rejected:** Keeping `.cursor/` local-only; committing session plan files.
 - **Revisit when:** Cursor starts writing secrets or large caches under `.cursor/`.
 
+## 2026-09-08 - harness intake + machine progress bullets
+
+- **Choice:** Shared `scripts/harness-tasks.mjs` parser; `harness-start-task.mjs` activates (and can add) a row; `harness-check-active.mjs` fails on two `active`; `harness-mark-verified.mjs` is still the only `verified` writer and now bumps **Verified** / **In progress**. One-active is enforced in scripts.
+- **Why:** After T-001 the queue was empty; agents could implement with no harness task. Mark-verified did not sync `progress.md` and did not fail on two `active`.
+- **Rejected:** Expanding the verify wrapper (no Python tests, no `check-docs.mjs` in the wrapper, no Layer 3) in this pass; `.ps1`/`.sh` twins for the new CLIs; wiring start/check into `npm run verify`.
+- **Revisit when:** Layer 3 exists, sidecar Python unittests join the wrapper, or CI should run `npm run verify`.
+
 ## 2026-09-08 - Layer 1 Biome + Layer 2 window-position tests
 
 - **Choice:** Biome `lineEnding: lf`, Tailwind CSS parser, exclude `src/assets/**` (Lottie + unused logos), `src/**` eol=lf in `.gitattributes`, `tsconfig` lib ES2022 for `Object.hasOwn`. Align window-position tests with shadow-inset clamp.

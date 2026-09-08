@@ -1,4 +1,3 @@
-<!-- harness-stock: true -->
 # Index: UI
 
 - **What:** User-visible screens, components, popups, copy. Dual UI: React settings vs vanilla `public/` popups — do not mix stacks.

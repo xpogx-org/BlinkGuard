@@ -70,7 +70,7 @@ Skip for typo-only, comment-only, or pure test-fixture tweaks that do not change
 - [ ] New user-facing copy covered by `i18n-en-uk` checklist when EN/UK strings changed
 - [ ] New/renamed/moved React or popup UI reflected in `ui-reuse/catalog.json` — run `check-catalog.mjs` when UI paths changed
 - [ ] Project agents / hooks / commands / skill `references/` still match this index (when those files exist under `.cursor/`)
-- [ ] Touched harness indexes still accurate (`tooling.md` for Cloud/verify/`/deploy`, `sidecar.md` for detector). Do not grow `AGENTS.md` with Cloud or sidecar essays.
+- [ ] Touched harness indexes still accurate (`tooling.md` for Cloud/verify/`/deploy`/harness start-task CLIs, `sidecar.md` for detector). Do not grow `AGENTS.md` with Cloud or sidecar essays.
 - [ ] After a `/next-product-gaps` brief **ships** on `development`, append one line to `.cursor/skills/next-product-gaps/shipped-drop.md`
 - [ ] README screenshot helpers stay in `scripts/screenshot_tools/` (not under `docs/screenshots/`) when that workflow changes; intro MP4 generator stays in `scripts/intro_video/` with outputs in `docs/intro/`
 

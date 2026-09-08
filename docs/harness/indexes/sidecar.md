@@ -1,4 +1,3 @@
-<!-- harness-stock: true -->
 # Index: Sidecar
 
 - **What:** Optional Python OpenCV/dlib blink-detector. Core app must work without `electron/resources/blink_detector`. Windows camera open path is field-locked.
