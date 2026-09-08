@@ -52,3 +52,10 @@ Keep fields exactly as `- key: value` lines so the harness scripts can parse the
 - proof: npm run verify
 - status: verified
 - sddSpec: (none)
+
+## [T-006] Document active development pause
+
+- behavior: README and harness docs state that after 2.20.0 active feature work is paused while issues and requests still get answers
+- proof: git show HEAD --stat includes README and docs/harness; wording matches the pause note
+- status: verified
+- sddSpec: (none)

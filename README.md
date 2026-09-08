@@ -182,7 +182,9 @@ Tradeoff: less driver AA for that app profile; in-app glass may look slightly le
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Pavlo%20Dzhevaha-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/pavlo-dzhevaha-342068105/)
 [![Email](https://img.shields.io/badge/Email-pavel19.1078%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:pavel19.1078@gmail.com)
 
-BlinkGuard is a personal project by **Pavlo Dzhevaha** — built locally, from the heart, after enough dry eyes from long coding sessions. Issues, ideas, and PRs are welcome.
+BlinkGuard is a personal project by **Pavlo Dzhevaha** — built locally, from the heart, after enough dry eyes from long coding sessions.
+
+**Status (after 2.20.0):** Active feature work is paused while focus shifts to another project. The shipped app stays supported — issues and requests still get answers. PRs remain welcome.
 
 **Bug reports:** In the app, **About → Report a problem** — export diagnostics, then **Open GitHub issue** and attach the zip. [Issue templates](https://github.com/xpogx-org/BlinkGuard/issues/new/choose) are also on GitHub. See [PRIVACY.md](PRIVACY.md).
 
@@ -198,7 +200,7 @@ Donations go toward release costs (code signing, notarization, CI). The app stay
 
 ## Star BlinkGuard
 
-If BlinkGuard helps your eyes on long screen days, a star helps others find it and keeps development going.
+If BlinkGuard helps your eyes on long screen days, a star helps others find it.
 
 **BlinkGuard** — a quiet, local companion for your eyes
 

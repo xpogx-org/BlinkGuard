@@ -11,6 +11,13 @@ Format for each row:
 - **Rejected:**
 - **Revisit when:**
 
+## 2026-09-09 - pause active feature work after 2.20.0
+
+- **Choice:** Stop planned feature ships for now; keep answering GitHub issues and requests; leave the door open for PRs and later resumes.
+- **Why:** Most intended product work is shipped; without user feedback loop, motivation for more features dropped; time goes to another project.
+- **Rejected:** Archiving the repo; closing issues; a hard “end of life” message.
+- **Revisit when:** Sustained feedback or personal bandwidth for blink / eye-care work returns.
+
 ## 2026-09-09 - icon appearance row
 
 - **Choice:** Replace the chrome theme `Select` with a round icon that fans into Light / System / Night. Neighbors slide out of the current icon (right from Light, both ways from System, left from Night) and slide back in on collapse. Opening from Light or Night also translates the cluster so System sits on the collapsed button (row recenters). Labels are long-press (and hover-delay) hints, not button text.
