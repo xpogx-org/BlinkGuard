@@ -2,12 +2,10 @@ import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { execMock } = vi.hoisted(() => ({
-	execMock: vi.fn(
-		(_cmd: string, cb: (err: Error | null) => void) => {
-			cb(null);
-			return { kill() {} };
-		},
-	),
+	execMock: vi.fn((_cmd: string, cb: (err: Error | null) => void) => {
+		cb(null);
+		return { kill() {} };
+	}),
 }));
 
 vi.mock("node:child_process", async (importOriginal) => {
@@ -83,9 +81,7 @@ describe("ProcessCleanup", () => {
 		const cleanup = new ProcessCleanup(processes);
 		await cleanup.run();
 		expect(child.stdin.end).toHaveBeenCalledWith('{"quit":true}\n');
-		expect(execCommands().some((cmd) => cmd.includes("/pid 4242"))).toBe(
-			false,
-		);
+		expect(execCommands().some((cmd) => cmd.includes("/pid 4242"))).toBe(false);
 		expect(
 			execCommands().some((cmd) =>
 				cmd.includes("taskkill /im blink_detector.exe"),
@@ -99,9 +95,7 @@ describe("ProcessCleanup", () => {
 		const child = createFakeChild(4242);
 		const processes = new ChildProcessRegistry();
 		processes.add(child as never);
-		const killSpy = vi
-			.spyOn(process, "kill")
-			.mockImplementation(() => true);
+		const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);
 		const cleanup = new ProcessCleanup(processes);
 		const running = cleanup.run();
 		await vi.advanceTimersByTimeAsync(GRACEFUL_SIDECAR_EXIT_MS);
@@ -109,9 +103,7 @@ describe("ProcessCleanup", () => {
 		expect(child.stdin.end).toHaveBeenCalledWith('{"quit":true}\n');
 		if (process.platform === "win32") {
 			expect(
-				execCommands().some((cmd) =>
-					cmd.includes("taskkill /pid 4242 /t /f"),
-				),
+				execCommands().some((cmd) => cmd.includes("taskkill /pid 4242 /t /f")),
 			).toBe(true);
 			expect(
 				execCommands().some((cmd) =>

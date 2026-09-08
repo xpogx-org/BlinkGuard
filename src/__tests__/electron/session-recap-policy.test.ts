@@ -3,14 +3,14 @@ import {
 	IDLE_POLL_INTERVAL_MS,
 	LOCK_SHORT_RETURN_MS,
 	NATIVE_LOCK_COOLDOWN_MS,
-	OVERLAY_COOLDOWN_MS,
-	RECAP_OVERLAY_DISMISS_MS,
-	SESSION_RECAP_IDLE_MS,
-	SESSION_RECAP_MIN_TRACKING_MS,
 	nativeLockCooldownAllows,
+	OVERLAY_COOLDOWN_MS,
 	overlayCooldownAllows,
 	qualifiesQuitToday,
 	qualifiesSession,
+	RECAP_OVERLAY_DISMISS_MS,
+	SESSION_RECAP_IDLE_MS,
+	SESSION_RECAP_MIN_TRACKING_MS,
 	shouldSuppressRecap,
 	streakLineEligible,
 } from "../../../electron/domain/session-recap-policy";
@@ -95,11 +95,7 @@ describe("session-recap-policy", () => {
 			nativeLockCooldownAllows(now, now - NATIVE_LOCK_COOLDOWN_MS, null),
 		).toBe(true);
 		expect(
-			nativeLockCooldownAllows(
-				now,
-				now - NATIVE_LOCK_COOLDOWN_MS + 1,
-				null,
-			),
+			nativeLockCooldownAllows(now, now - NATIVE_LOCK_COOLDOWN_MS + 1, null),
 		).toBe(false);
 		expect(
 			nativeLockCooldownAllows(

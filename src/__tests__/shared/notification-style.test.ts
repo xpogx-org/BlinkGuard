@@ -67,14 +67,15 @@ describe("resolvePromptSurfaces", () => {
 
 describe("withNativeFallback", () => {
 	it("shows overlay when native was requested but did not show", () => {
-		expect(
-			withNativeFallback({ overlay: false, native: true }, false),
-		).toEqual({ overlay: true, nativeShown: false });
+		expect(withNativeFallback({ overlay: false, native: true }, false)).toEqual(
+			{ overlay: true, nativeShown: false },
+		);
 	});
 
 	it("keeps both when native showed", () => {
-		expect(
-			withNativeFallback({ overlay: true, native: true }, true),
-		).toEqual({ overlay: true, nativeShown: true });
+		expect(withNativeFallback({ overlay: true, native: true }, true)).toEqual({
+			overlay: true,
+			nativeShown: true,
+		});
 	});
 });

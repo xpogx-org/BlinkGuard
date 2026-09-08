@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-	NdjsonBuffer,
 	encodeSidecarMessage,
+	NdjsonBuffer,
 	parseBaselineDriftNudge,
 } from "../../../electron/infrastructure/sidecar/protocol";
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	endHushLabel,
-	hushActiveLabel,
 	type FocusPauseStatePayload,
+	hushActiveLabel,
 	isPromptHushed,
 	overlayManualHush,
 	pauseStatusMessageKey,

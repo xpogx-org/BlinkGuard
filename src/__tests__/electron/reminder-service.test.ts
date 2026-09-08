@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRuntimeState } from "../../../electron/application/app-runtime-state";
 import type { PreferenceStore } from "../../../electron/application/ports/preference-store";
-import type {
-	BlinkDetectorPort,
-} from "../../../electron/application/ports/runtime-ports";
+import type { BlinkDetectorPort } from "../../../electron/application/ports/runtime-ports";
 import { ReminderService } from "../../../electron/application/reminder-service";
 import { stopTrackingSession } from "../../../electron/application/tracking-session";
 import {
@@ -17,14 +15,14 @@ import {
 	STREAK_CHEER_HEALTHY_MS,
 } from "../../../electron/domain/reminder-policy";
 import {
-	type AppPreferences,
-	DEFAULT_PREFERENCES,
-} from "../../../shared/preferences";
-import { defaultPopupMessage, t } from "../../../shared/i18n";
-import {
 	BLINK_CAMERA_MESSAGE_POOL_KEYS,
 	BLINK_TIMER_MESSAGE_POOL_KEYS,
 } from "../../../electron/domain/reminder-prompt-policy";
+import { defaultPopupMessage, t } from "../../../shared/i18n";
+import {
+	type AppPreferences,
+	DEFAULT_PREFERENCES,
+} from "../../../shared/preferences";
 
 function createStore(): PreferenceStore {
 	const data = new Map<string, unknown>();
@@ -111,10 +109,7 @@ function createWindows() {
 }
 
 function createStats(
-	overrides: {
-		blinksPerMinute?: number;
-		blinkRateReady?: boolean;
-	} = {},
+	overrides: { blinksPerMinute?: number; blinkRateReady?: boolean } = {},
 ) {
 	return {
 		recordBlink: vi.fn(),
@@ -1947,14 +1942,14 @@ describe("ReminderService FR-7 streak cheer", () => {
 		const { state, windows, stats, service } = startHealthyFaceAware();
 
 		advanceHealthyStreak(state, STREAK_CHEER_HEALTHY_MS - 2_000);
-		stats.getSnapshot!.mockReturnValue({
+		stats.getSnapshot.mockReturnValue({
 			blinksPerMinute: 2,
 			blinkRateReady: true,
 		});
 		advanceHealthyStreak(state, 3_000);
 		expect(windows.showCheerToast).not.toHaveBeenCalled();
 
-		stats.getSnapshot!.mockReturnValue({
+		stats.getSnapshot.mockReturnValue({
 			blinksPerMinute: 8,
 			blinkRateReady: true,
 		});

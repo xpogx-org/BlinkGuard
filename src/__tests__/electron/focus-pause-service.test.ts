@@ -129,9 +129,11 @@ describe("FocusPauseService app-rule / fullscreen / quiet hours", () => {
 	});
 
 	it("does not pause when the foreground misses the blocklist", () => {
-		const { service, closeReminder, pauseCameraForFocus, freeze } = makeService({
-			pauseAppRules: [{ processName: "Zoom.exe", windowTitle: "" }],
-		});
+		const { service, closeReminder, pauseCameraForFocus, freeze } = makeService(
+			{
+				pauseAppRules: [{ processName: "Zoom.exe", windowTitle: "" }],
+			},
+		);
 
 		service.setForeground({
 			isFullscreen: false,

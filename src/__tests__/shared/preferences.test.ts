@@ -10,36 +10,36 @@ import {
 } from "../../../shared/ear-calibration";
 import {
 	type AppPreferences,
+	appendProcessOnlyPauseAppRule,
+	capPopupPositionsByDisplayId,
+	capPopupSizesByDisplayId,
 	DEFAULT_EXERCISE_PROMPTS,
 	DEFAULT_KEYBOARD_SHORTCUTS,
 	DEFAULT_PREFERENCES,
 	findDuplicateShortcutActions,
-	capPopupPositionsByDisplayId,
-	capPopupSizesByDisplayId,
+	pauseAppProcessBasename,
+	processOnlyPauseAppRule,
 	prunePopupPositionsByDisplayId,
 	prunePopupSizesByDisplayId,
 	samePopupPositionsByDisplayId,
 	samePopupSizesByDisplayId,
 	sameQuietHoursByWeekday,
 	sanitizeAutoStopNoFaceMinutes,
+	sanitizeBlinkPromptProfile,
 	sanitizeBlinkRateThresholdPerMin,
 	sanitizeEpochMs,
 	sanitizeExercisePrompts,
 	sanitizeKeyboardShortcuts,
 	sanitizeLookAwayHint,
 	sanitizeLookAwayTitle,
+	sanitizeMicroBreakIntervalMs,
 	sanitizePauseAppCandidates,
 	sanitizePauseAppPickerPayload,
 	sanitizePauseAppRules,
-	appendProcessOnlyPauseAppRule,
-	pauseAppProcessBasename,
-	processOnlyPauseAppRule,
 	sanitizePersistedPreferences,
 	sanitizePopupPositionsByDisplayId,
 	sanitizePopupSizesByDisplayId,
 	sanitizeQuietHoursByWeekday,
-	sanitizeBlinkPromptProfile,
-	sanitizeMicroBreakIntervalMs,
 	sanitizeReminderIntervalMs,
 	sanitizeSnoozeMinutes,
 	sanitizeSoundVolume,
@@ -297,8 +297,14 @@ describe("sanitizeQuietHoursByWeekday", () => {
 		});
 		expect(
 			sameQuietHoursByWeekday(
-				{ sat: { mode: "off" }, fri: { mode: "custom", start: "22:00", end: "08:00" } },
-				{ fri: { mode: "custom", start: "22:00", end: "08:00" }, sat: { mode: "off" } },
+				{
+					sat: { mode: "off" },
+					fri: { mode: "custom", start: "22:00", end: "08:00" },
+				},
+				{
+					fri: { mode: "custom", start: "22:00", end: "08:00" },
+					sat: { mode: "off" },
+				},
 			),
 		).toBe(true);
 	});
@@ -630,10 +636,10 @@ describe("processOnlyPauseAppRule", () => {
 
 describe("appendProcessOnlyPauseAppRule", () => {
 	it("appends a process-only rule", () => {
-		const result = appendProcessOnlyPauseAppRule(
-			[],
-			{ processName: "Zoom.exe", windowTitle: "Host" },
-		);
+		const result = appendProcessOnlyPauseAppRule([], {
+			processName: "Zoom.exe",
+			windowTitle: "Host",
+		});
 		expect(result).toEqual({
 			ok: true,
 			rules: [{ processName: "Zoom.exe", windowTitle: "" }],

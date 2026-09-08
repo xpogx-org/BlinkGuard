@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
 	GITHUB_RELEASES_OWNER,
+	GITHUB_RELEASES_PAGE_URL,
 	GITHUB_RELEASES_REPO,
 	GITHUB_REPO_PAGE_URL,
-	GITHUB_RELEASES_PAGE_URL,
 	isAllowedExternalUrl,
 	mapGithubRelease,
 	mapGithubReleases,
@@ -14,7 +14,9 @@ describe("release-notes mapping", () => {
 	it("points GitHub constants at the org repository", () => {
 		expect(GITHUB_RELEASES_OWNER).toBe("xpogx-org");
 		expect(GITHUB_RELEASES_REPO).toBe("BlinkGuard");
-		expect(GITHUB_REPO_PAGE_URL).toBe("https://github.com/xpogx-org/BlinkGuard");
+		expect(GITHUB_REPO_PAGE_URL).toBe(
+			"https://github.com/xpogx-org/BlinkGuard",
+		);
 		expect(GITHUB_RELEASES_PAGE_URL).toBe(
 			"https://github.com/xpogx-org/BlinkGuard/releases",
 		);
@@ -110,9 +112,9 @@ describe("release-notes mapping", () => {
 	});
 
 	it("allows only https external urls", () => {
-		expect(isAllowedExternalUrl("https://github.com/xpogx-org/BlinkGuard")).toBe(
-			true,
-		);
+		expect(
+			isAllowedExternalUrl("https://github.com/xpogx-org/BlinkGuard"),
+		).toBe(true);
 		expect(isAllowedExternalUrl("http://example.com")).toBe(false);
 		expect(isAllowedExternalUrl("javascript:alert(1)")).toBe(false);
 		expect(isAllowedExternalUrl("not a url")).toBe(false);

@@ -1,8 +1,8 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, type ReactNode, useContext } from "react";
 import {
-	t as translate,
 	type Locale,
 	type TranslateVars,
+	t as translate,
 } from "../../shared/i18n";
 
 type TranslateFn = (key: string, vars?: TranslateVars) => string;
@@ -26,9 +26,7 @@ export function I18nProvider({
 		locale,
 		t: (key: string, vars?: TranslateVars) => translate(locale, key, vars),
 	};
-	return (
-		<I18nContext.Provider value={value}>{children}</I18nContext.Provider>
-	);
+	return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {

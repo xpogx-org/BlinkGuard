@@ -406,7 +406,9 @@ describe("BlinkDetectorSidecar NDJSON routing", () => {
 		callbacks.onError.mockClear();
 		errorChild.emit("error", new Error("spawn failed"));
 		expect(callbacks.onCameraCaptureChange).toHaveBeenCalledWith(false);
-		expect(callbacks.onError).toHaveBeenCalledWith("Process error: spawn failed");
+		expect(callbacks.onError).toHaveBeenCalledWith(
+			"Process error: spawn failed",
+		);
 		expect(sidecar.isCameraReady).toBe(false);
 	});
 

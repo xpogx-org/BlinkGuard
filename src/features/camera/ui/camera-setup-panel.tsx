@@ -106,9 +106,7 @@ export function CameraSetupPanel({
 									aria-hidden
 								/>
 								<span
-									className={cn(
-										cameraOn ? "text-primary" : "text-foreground",
-									)}
+									className={cn(cameraOn ? "text-primary" : "text-foreground")}
 								>
 									{t("camera.detection")}
 								</span>

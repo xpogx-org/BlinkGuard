@@ -318,7 +318,15 @@ describe("buildTrayMenuSpec", () => {
 					includeCheckForUpdates: false,
 				}),
 			),
-		).toEqual(["show", "tracking", "separator", "camera", "pause-app", "separator", "quit"]);
+		).toEqual([
+			"show",
+			"tracking",
+			"separator",
+			"camera",
+			"pause-app",
+			"separator",
+			"quit",
+		]);
 	});
 
 	it("attaches accelerators only when they are non-empty", () => {
@@ -410,9 +418,7 @@ describe("buildTrayMenuSpec", () => {
 	});
 
 	it("places look-away-now after hush and before the camera separator", () => {
-		const ids = itemIds(
-			spec({ includeHush: true, includeLookAwayNow: true }),
-		);
+		const ids = itemIds(spec({ includeHush: true, includeLookAwayNow: true }));
 		const hushIdx = ids.indexOf("hush");
 		const lookAwayIdx = ids.indexOf("look-away-now");
 		const cameraIdx = ids.indexOf("camera");

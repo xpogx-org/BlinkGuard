@@ -72,7 +72,7 @@ describe("settings-profiles shared helpers", () => {
 		expect(captured.blinkPromptProfile).toBe("strong");
 		expect(captured.earCalibration).toBe(0.28);
 		for (const key of EXCLUDED_KEYS) {
-			expect(Object.prototype.hasOwnProperty.call(captured, key)).toBe(false);
+			expect(Object.hasOwn(captured, key)).toBe(false);
 		}
 	});
 
@@ -125,7 +125,7 @@ describe("settings-profiles shared helpers", () => {
 		expect(next.goalsEnabled).toBe(true);
 		expect(next.dailyBlinkGoal).toBe(50);
 		expect(next.popupMessage).toBe("Custom");
-		expect(Object.prototype.hasOwnProperty.call(next, "unknownKey")).toBe(false);
+		expect(Object.hasOwn(next, "unknownKey")).toBe(false);
 	});
 
 	it("sanitizeSettingsProfilesState drops unknown envelope keys and caps at 5", () => {
@@ -146,7 +146,7 @@ describe("settings-profiles shared helpers", () => {
 		expect(state.version).toBe(1);
 		expect(state.profiles).toHaveLength(SETTINGS_PROFILE_CAP);
 		expect(state.activeProfileId).toBe("id-0");
-		expect(Object.prototype.hasOwnProperty.call(state, "hacked")).toBe(false);
+		expect(Object.hasOwn(state, "hacked")).toBe(false);
 		expect(state.profiles[0]?.prefs.reminderInterval).toBe(1000);
 	});
 

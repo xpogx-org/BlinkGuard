@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-	PROFILE_TITLE_MAX_LEVEL,
 	costToAdvanceFrom,
 	levelFromTotalBlinks,
-	progressToNextLevel,
+	PROFILE_TITLE_MAX_LEVEL,
 	profileDescKey,
 	profileTierKey,
 	profileTitleKey,
+	progressToNextLevel,
 	thresholdForLevel,
 	tierForLevel,
 	titleLevel,

@@ -24,17 +24,15 @@ describe("support URLs", () => {
 		expect(isAllowedSupportUrl(GITHUB_NEW_ISSUE_BUG_URL)).toBe(true);
 		expect(isAllowedSupportUrl(GITHUB_NEW_ISSUE_FEATURE_URL)).toBe(true);
 		expect(
-			isAllowedSupportUrl(
-				"https://github.com/xpogx-org/BlinkGuard/issues/new",
-			),
+			isAllowedSupportUrl("https://github.com/xpogx-org/BlinkGuard/issues/new"),
 		).toBe(true);
 	});
 
 	it("rejects arbitrary https and other repos", () => {
 		expect(isAllowedSupportUrl("https://example.com/issues")).toBe(false);
-		expect(isAllowedSupportUrl("http://github.com/xpogx-org/BlinkGuard/issues")).toBe(
-			false,
-		);
+		expect(
+			isAllowedSupportUrl("http://github.com/xpogx-org/BlinkGuard/issues"),
+		).toBe(false);
 		expect(
 			isAllowedSupportUrl("https://github.com/other-org/BlinkGuard/issues"),
 		).toBe(false);

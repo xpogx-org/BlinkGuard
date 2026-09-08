@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	endPromptHush,
-	snoozeAllPrompts,
 	type PromptHushDeps,
+	snoozeAllPrompts,
 } from "../../../electron/application/snooze-all";
 
 function createState() {
@@ -17,9 +17,7 @@ function createState() {
 	};
 }
 
-function createDeps(
-	overrides: Partial<PromptHushDeps> = {},
-): PromptHushDeps {
+function createDeps(overrides: Partial<PromptHushDeps> = {}): PromptHushDeps {
 	const state = createState();
 	return {
 		reminders: { snooze: vi.fn() },

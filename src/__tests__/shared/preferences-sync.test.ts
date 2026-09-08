@@ -341,9 +341,7 @@ describe("pushPreferenceDiff", () => {
 
 		pushPreferenceDiff(previous, next);
 
-		expect(rendererIpc.updateBlinkPromptProfile).toHaveBeenCalledWith(
-			"gentle",
-		);
+		expect(rendererIpc.updateBlinkPromptProfile).toHaveBeenCalledWith("gentle");
 		expect(rendererIpc.updateMicroBreakInterval).not.toHaveBeenCalled();
 		expect(rendererIpc.updateLocale).not.toHaveBeenCalled();
 	});

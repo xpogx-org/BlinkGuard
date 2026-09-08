@@ -44,7 +44,9 @@ describe("sanitizeSnoozeAllOptions", () => {
 			useToken: false,
 			untilResume: false,
 		});
-		expect(sanitizeSnoozeAllOptions({ untilResume: true, durationMinutes: 60 })).toEqual({
+		expect(
+			sanitizeSnoozeAllOptions({ untilResume: true, durationMinutes: 60 }),
+		).toEqual({
 			useToken: false,
 			untilResume: false,
 			durationMinutes: 60,

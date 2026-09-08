@@ -26,7 +26,8 @@ describe("fetchGithubReleases", () => {
 					name: "BlinkGuard 2.1.0",
 					body: "Notes",
 					published_at: "2026-08-09T12:00:00Z",
-					html_url: "https://github.com/xpogx-org/BlinkGuard/releases/tag/v2.1.0",
+					html_url:
+						"https://github.com/xpogx-org/BlinkGuard/releases/tag/v2.1.0",
 					draft: false,
 					prerelease: false,
 				},
@@ -45,7 +46,8 @@ describe("fetchGithubReleases", () => {
 					name: "BlinkGuard 2.1.0",
 					body: "Notes",
 					publishedAt: "2026-08-09T12:00:00Z",
-					htmlUrl: "https://github.com/xpogx-org/BlinkGuard/releases/tag/v2.1.0",
+					htmlUrl:
+						"https://github.com/xpogx-org/BlinkGuard/releases/tag/v2.1.0",
 					prerelease: false,
 				},
 			],

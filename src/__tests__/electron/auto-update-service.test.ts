@@ -43,8 +43,8 @@ vi.mock("../../../electron/infrastructure/process/process-cleanup", () => ({
 
 import {
 	AutoUpdateService,
-	UPDATE_CHECK_MS,
 	isNewerVersion,
+	UPDATE_CHECK_MS,
 } from "../../../electron/infrastructure/updates/auto-update-service";
 
 async function flushMicrotasks(): Promise<void> {

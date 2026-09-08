@@ -33,8 +33,13 @@ function makeService(prefs: Partial<typeof DEFAULT_PREFERENCES> = {}) {
 		setSessionOverlay: vi.fn(),
 		recompute: vi.fn(),
 		pauseReason: vi.fn(
-			(): null | "quiet-hours" | "fullscreen" | "app-rule" | "session-idle" | "manual-hush" =>
-				null,
+			():
+				| null
+				| "quiet-hours"
+				| "fullscreen"
+				| "app-rule"
+				| "session-idle"
+				| "manual-hush" => null,
 		),
 	};
 	const service = new SessionPauseService(
@@ -218,7 +223,9 @@ describe("SessionPauseService", () => {
 			releaseCamera: true,
 			restoreStats: false,
 		});
-		expect(ctx.focusPause.recompute.mock.calls.length).toBeGreaterThanOrEqual(2);
+		expect(ctx.focusPause.recompute.mock.calls.length).toBeGreaterThanOrEqual(
+			2,
+		);
 	});
 
 	it("restores tracking stats on unlock when not in quiet hours", () => {

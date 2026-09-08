@@ -5,13 +5,17 @@ import {
 } from "../../../electron/infrastructure/tray/tray-menu-actions";
 import type { WindowManager } from "../../../electron/infrastructure/windows/window-manager";
 
-function deps(overrides: Partial<ReturnType<typeof createTrayMenuActionDeps>> = {}) {
+function deps(
+	overrides: Partial<ReturnType<typeof createTrayMenuActionDeps>> = {},
+) {
 	const windows = { showMain: vi.fn() } as unknown as WindowManager;
 	return createTrayMenuActionDeps({
 		windows,
 		onQuit: vi.fn(),
 		onCheckForUpdates: vi.fn(),
-		interactions: { append: vi.fn() } as unknown as import("../../../electron/infrastructure/logging/interaction-logger").InteractionLogger,
+		interactions: {
+			append: vi.fn(),
+		} as unknown as import("../../../electron/infrastructure/logging/interaction-logger").InteractionLogger,
 		onSnoozeBlink: vi.fn(),
 		onSnoozeExercise: vi.fn(),
 		onSnoozeLookAway: vi.fn(),

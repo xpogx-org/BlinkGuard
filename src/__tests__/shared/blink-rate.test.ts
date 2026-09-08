@@ -58,7 +58,12 @@ describe("blink-rate helpers", () => {
 		];
 		expect(computeFaceVisibleMsInWindow(segments, now)).toBe(30_000);
 		expect(
-			computeFaceVisibleMsInWindow(segments, now, BLINK_RATE_WINDOW_MS, now - 10_000),
+			computeFaceVisibleMsInWindow(
+				segments,
+				now,
+				BLINK_RATE_WINDOW_MS,
+				now - 10_000,
+			),
 		).toBe(40_000);
 	});
 

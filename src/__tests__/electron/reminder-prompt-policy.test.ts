@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-	BLINK_BACKOFF_IMAX_MS,
+	type BackoffRng,
 	BLINK_BACKOFF_IMAX_I0_FACTOR,
+	BLINK_BACKOFF_IMAX_MS,
 	BLINK_CAMERA_MESSAGE_POOL_KEYS,
 	BLINK_TIMER_MESSAGE_POOL_KEYS,
-	type BackoffRng,
-	type NextBlinkPromptStepInput,
 	createBackoffState,
 	effectiveBackoffImaxMs,
 	isLowBpmCoachingActive,
+	type NextBlinkPromptStepInput,
 	nextBackoffIntervalMs,
 	nextBlinkPromptStep,
 	pickBlinkOverlayMessage,
@@ -38,9 +38,7 @@ function baseStep(
 
 describe("isLowBpmCoachingActive", () => {
 	it("is active only when camera tracking coaching is on and BPM is ready below threshold", () => {
-		expect(isLowBpmCoachingActive(baseStep({ blinksPerMinute: 2 }))).toBe(
-			true,
-		);
+		expect(isLowBpmCoachingActive(baseStep({ blinksPerMinute: 2 }))).toBe(true);
 		expect(isLowBpmCoachingActive(baseStep({ blinksPerMinute: 4 }))).toBe(
 			false,
 		);
@@ -53,18 +51,16 @@ describe("isLowBpmCoachingActive", () => {
 		expect(isLowBpmCoachingActive(baseStep({ cameraEnabled: false }))).toBe(
 			false,
 		);
-		expect(isLowBpmCoachingActive(baseStep({ isTracking: false }))).toBe(
-			false,
-		);
+		expect(isLowBpmCoachingActive(baseStep({ isTracking: false }))).toBe(false);
 	});
 });
 
 describe("nextBlinkPromptStep", () => {
 	it("Standard: first miss is overlay; next interval escalates; then null", () => {
 		expect(nextBlinkPromptStep(baseStep())).toBe("overlay");
-		expect(
-			nextBlinkPromptStep(baseStep({ overlayShowing: true })),
-		).toBe("escalate");
+		expect(nextBlinkPromptStep(baseStep({ overlayShowing: true }))).toBe(
+			"escalate",
+		);
 		expect(
 			nextBlinkPromptStep(
 				baseStep({ overlayShowing: true, escalateChimePlayed: true }),
@@ -95,9 +91,7 @@ describe("nextBlinkPromptStep", () => {
 	});
 
 	it("Strong: first miss is full (glow + overlay + sound)", () => {
-		expect(nextBlinkPromptStep(baseStep({ profile: "strong" }))).toBe(
-			"full",
-		);
+		expect(nextBlinkPromptStep(baseStep({ profile: "strong" }))).toBe("full");
 		expect(
 			nextBlinkPromptStep(
 				baseStep({
@@ -142,9 +136,7 @@ describe("nextBlinkPromptStep", () => {
 			),
 		).toBe("overlay");
 		expect(
-			nextBlinkPromptStep(
-				baseStep({ mgdMode: true, overlayShowing: true }),
-			),
+			nextBlinkPromptStep(baseStep({ mgdMode: true, overlayShowing: true })),
 		).toBe("escalate");
 	});
 
@@ -304,19 +296,11 @@ describe("ICMU backoff", () => {
 		state = nextBackoffIntervalMs(state, healthy, rng);
 		expect(state.intervalMs).toBeGreaterThan(3_000);
 
-		state = nextBackoffIntervalMs(
-			state,
-			{ ...healthy, bpm: 2 },
-			rng,
-		);
+		state = nextBackoffIntervalMs(state, { ...healthy, bpm: 2 }, rng);
 		expect(state.intervalMs).toBe(3_000);
 
 		state = nextBackoffIntervalMs(state, healthy, rng);
-		state = nextBackoffIntervalMs(
-			state,
-			{ ...healthy, bpmReady: false },
-			rng,
-		);
+		state = nextBackoffIntervalMs(state, { ...healthy, bpmReady: false }, rng);
 		expect(state.intervalMs).toBe(3_000);
 	});
 
@@ -328,18 +312,12 @@ describe("ICMU backoff", () => {
 		};
 		const grown = { i0Ms: 3_000, intervalMs: 12_000 };
 		expect(
-			nextBackoffIntervalMs(
-				grown,
-				{ ...healthy, mgdMode: true },
-				rng,
-			).intervalMs,
+			nextBackoffIntervalMs(grown, { ...healthy, mgdMode: true }, rng)
+				.intervalMs,
 		).toBe(3_000);
 		expect(
-			nextBackoffIntervalMs(
-				grown,
-				{ ...healthy, cameraEnabled: false },
-				rng,
-			).intervalMs,
+			nextBackoffIntervalMs(grown, { ...healthy, cameraEnabled: false }, rng)
+				.intervalMs,
 		).toBe(3_000);
 	});
 
@@ -394,7 +372,9 @@ describe("pickBlinkOverlayMessage", () => {
 		).toBe(
 			t(
 				"en",
-				BLINK_CAMERA_MESSAGE_POOL_KEYS[7 % BLINK_CAMERA_MESSAGE_POOL_KEYS.length],
+				BLINK_CAMERA_MESSAGE_POOL_KEYS[
+					7 % BLINK_CAMERA_MESSAGE_POOL_KEYS.length
+				],
 			),
 		);
 	});

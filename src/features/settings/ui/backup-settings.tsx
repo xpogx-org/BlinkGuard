@@ -8,8 +8,8 @@ import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { rendererIpc } from "@/shared/ipc/renderer-ipc";
 import {
-	backupScopeIncludesPreferences,
 	type BackupScope,
+	backupScopeIncludesPreferences,
 } from "../../../../shared/backup";
 
 const BACKUP_SCOPES: BackupScope[] = ["both", "preferences", "statistics"];

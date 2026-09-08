@@ -665,8 +665,6 @@ describe("PreferencesService", () => {
 		expect(service.current.eyeCareIndependentOfTracking).toBe(false);
 		expect(service.current.autoStopNoFaceEnabled).toBe(false);
 		expect(service.current.autoStopNoFaceMinutes).toBe(5);
-		expect(Object.prototype.hasOwnProperty.call(service.current, "unknownKey")).toBe(
-			false,
-		);
+		expect(Object.hasOwn(service.current, "unknownKey")).toBe(false);
 	});
 });

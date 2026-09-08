@@ -74,9 +74,7 @@ describe("SettingsProfilesService", () => {
 			id: "id-1",
 			name: "Desk",
 		});
-		expect(Object.prototype.hasOwnProperty.call(first.profiles[0], "prefs")).toBe(
-			false,
-		);
+		expect(Object.hasOwn(first.profiles[0], "prefs")).toBe(false);
 		expect(first.activeProfileId).toBe("id-1");
 		expect(first.dirty).toBe(false);
 		expect(apply).not.toHaveBeenCalled();

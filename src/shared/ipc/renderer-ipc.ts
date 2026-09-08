@@ -26,7 +26,10 @@ import type {
 	DebugSoundKind,
 } from "../../../shared/debug-preview";
 import type { ExportDiagnosticsResult } from "../../../shared/diagnostics";
-import { IPC_CHANNELS, type SnoozeAllPayload } from "../../../shared/ipc-channels";
+import {
+	IPC_CHANNELS,
+	type SnoozeAllPayload,
+} from "../../../shared/ipc-channels";
 import type { NotificationStyle } from "../../../shared/notification-style";
 import {
 	type BlinkPromptProfile,
@@ -263,8 +266,7 @@ export const rendererIpc = {
 	resetBlinkStats: () => send(IPC_CHANNELS.resetBlinkStats),
 	spendBlinkReward: (rewardId: string) =>
 		send(IPC_CHANNELS.spendBlinkReward, rewardId),
-	equipCheerTheme: (theme: string) =>
-		send(IPC_CHANNELS.equipCheerTheme, theme),
+	equipCheerTheme: (theme: string) => send(IPC_CHANNELS.equipCheerTheme, theme),
 	equipPopupPreset: (presetId: string) =>
 		send(IPC_CHANNELS.equipPopupPreset, presetId),
 	updateGoalsConfig: (config: {

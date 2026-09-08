@@ -14,7 +14,9 @@ vi.mock("electron", () => ({
 }));
 
 import {
+	ambientDesktopBounds,
 	clampPopupSizeToWorkArea,
+	fromWorkAreaRelativePosition,
 	getActiveDisplay,
 	getCenteredPopupPosition,
 	getDisplayIdContainingPoint,
@@ -24,19 +26,18 @@ import {
 	isPointInAnyWorkArea,
 	isPointInWorkArea,
 	isSystemChromeVisible,
-	ambientDesktopBounds,
-	systemChromeRects,
 	layoutForDisplays,
 	migratePopupPositionsToWorkAreaRelative,
 	nextUnsavedDisplayId,
-	fromWorkAreaRelativePosition,
 	resolveOpenWindowPosition,
 	resolvePopupPosition,
 	resolvePopupPositionForDisplay,
 	resolvePopupSizeForDisplay,
 	resolveVisiblePopupPosition,
+	systemChromeRects,
 	toWorkAreaRelativePosition,
 } from "../../../electron/infrastructure/windows/window-position";
+import { POPUP_SHADOW_INSET } from "../../../shared/popup-window-chrome";
 
 const primaryWorkArea = {
 	x: 0,
@@ -294,7 +295,10 @@ describe("window-position", () => {
 
 		it("round-trips screen coordinates through workArea-relative storage", () => {
 			const screenPoint = { x: 2100, y: 180 };
-			const relative = toWorkAreaRelativePosition(screenPoint, secondaryWorkArea);
+			const relative = toWorkAreaRelativePosition(
+				screenPoint,
+				secondaryWorkArea,
+			);
 			expect(relative).toEqual({
 				x: screenPoint.x - secondaryWorkArea.x,
 				y: screenPoint.y - secondaryWorkArea.y,
@@ -316,10 +320,7 @@ describe("window-position", () => {
 				]),
 			).toEqual({
 				"1": { x: 100, y: 200 },
-				"2": toWorkAreaRelativePosition(
-					{ x: 2100, y: 180 },
-					secondaryWorkArea,
-				),
+				"2": toWorkAreaRelativePosition({ x: 2100, y: 180 }, secondaryWorkArea),
 			});
 		});
 
@@ -409,7 +410,10 @@ describe("window-position", () => {
 					{ width: 3000, height: 2000 },
 					primaryWorkArea,
 				),
-			).toEqual({ width: 1920, height: 1080 });
+			).toEqual({
+				width: primaryWorkArea.width - POPUP_SHADOW_INSET * 2,
+				height: primaryWorkArea.height - POPUP_SHADOW_INSET * 2,
+			});
 		});
 
 		it("copies size and relative offset onto every display", () => {
@@ -441,8 +445,14 @@ describe("window-position", () => {
 				primaryWorkArea,
 				[{ id: "tiny", workArea: tiny }],
 			);
-			expect(layouts.tiny?.size).toEqual({ width: 200, height: 90 });
-			expect(layouts.tiny?.position).toEqual({ x: 0, y: 0 });
+			expect(layouts.tiny?.size).toEqual({
+				width: tiny.width - POPUP_SHADOW_INSET * 2,
+				height: tiny.height - POPUP_SHADOW_INSET * 2,
+			});
+			expect(layouts.tiny?.position).toEqual({
+				x: Math.floor((100 / primaryWorkArea.width) * tiny.width),
+				y: Math.floor((40 / primaryWorkArea.height) * tiny.height),
+			});
 		});
 	});
 

@@ -380,6 +380,7 @@
 	.motion-unlock,
 	.motion-flash,
 	.animate-tracking-pulse {
+		/* biome-ignore lint/complexity/noImportantStyles: reduced-motion must override utility animations */
 		animation: none !important;
 		opacity: 1;
 		transform: none;

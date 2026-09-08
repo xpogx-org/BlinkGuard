@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-	canEquipCheerTheme,
 	CHEER_THEME_IDS,
+	canEquipCheerTheme,
 	normalizeEquippedCheerTheme,
 	normalizeUnlockedCheerThemeIds,
 	resolveCheerTheme,

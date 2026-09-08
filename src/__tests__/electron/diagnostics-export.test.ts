@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildAlgorithmPrefs, buildMeta } from "../../../electron/infrastructure/logging/diagnostics-export";
+import {
+	buildAlgorithmPrefs,
+	buildMeta,
+} from "../../../electron/infrastructure/logging/diagnostics-export";
 import { DEFAULT_PREFERENCES } from "../../../shared/preferences";
 
 vi.mock("electron", () => ({
@@ -10,12 +13,9 @@ vi.mock("electron", () => ({
 	},
 }));
 
-vi.mock(
-	"../../../electron/infrastructure/sidecar/blink-detector-path",
-	() => ({
-		isBlinkDetectorBinaryPresent: () => false,
-	}),
-);
+vi.mock("../../../electron/infrastructure/sidecar/blink-detector-path", () => ({
+	isBlinkDetectorBinaryPresent: () => false,
+}));
 
 describe("buildAlgorithmPrefs", () => {
 	it("includes sanitized quietHoursByWeekday beside legacy quiet-hours fields", () => {

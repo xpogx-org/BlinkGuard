@@ -1,6 +1,6 @@
-import { ToggleSwitch } from "@/components/toggle-switch";
 import { SettingPanel } from "@/components/setting-panel";
 import { SettingRow } from "@/components/setting-row";
+import { ToggleSwitch } from "@/components/toggle-switch";
 import { useT } from "@/i18n";
 import type { SettingsPreferences } from "../model/preferences";
 import type { SetPreferences } from "../model/use-preferences";

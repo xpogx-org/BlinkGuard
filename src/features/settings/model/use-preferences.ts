@@ -5,10 +5,7 @@ import {
 	DEFAULT_RENDERER_PREFERENCES,
 	type SettingsPreferences,
 } from "./preferences";
-import {
-	pushPreferenceDiff,
-	sameRendererPrefs,
-} from "./preferences-sync";
+import { pushPreferenceDiff, sameRendererPrefs } from "./preferences-sync";
 
 export type SetPreferences = React.Dispatch<
 	React.SetStateAction<SettingsPreferences>

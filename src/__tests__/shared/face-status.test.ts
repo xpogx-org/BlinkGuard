@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isFaceStatus, isReliableFaceStatus } from "../../../shared/face-status";
+import {
+	isFaceStatus,
+	isReliableFaceStatus,
+} from "../../../shared/face-status";
 
 describe("isReliableFaceStatus", () => {
 	it("is true only for faceDetected with ok status", () => {

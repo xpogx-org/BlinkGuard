@@ -43,10 +43,7 @@ export function CameraCalibrationSettings({
 			<SettingRow
 				title={
 					<>
-						<Crosshair
-							className="h-4 w-4 text-muted-foreground"
-							aria-hidden
-						/>
+						<Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />
 						{t("camera.calibration")}
 					</>
 				}
@@ -87,9 +84,7 @@ export function CameraCalibrationSettings({
 				</div>
 				{earBadge || lastCalibratedLabel ? (
 					<p className="mt-2 select-text text-xs">
-						{earBadge ? (
-							<span className="text-primary">{earBadge}</span>
-						) : null}
+						{earBadge ? <span className="text-primary">{earBadge}</span> : null}
 						{lastCalibratedLabel ? (
 							<span className="mt-0.5 block text-muted-foreground">
 								{lastCalibratedLabel}

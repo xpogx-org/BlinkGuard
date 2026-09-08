@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+	type CameraCaptureStatusPayload,
 	cameraCaptureChipMessageKey,
 	cameraCaptureStatusMessageKey,
 	composeTrayTooltip,
 	deriveCameraCaptureSurface,
 	sanitizeCameraCaptureStatusPayload,
-	type CameraCaptureStatusPayload,
 } from "../../../shared/camera-capture-status";
 import type { FocusPauseStatePayload } from "../../../shared/session-pause-status";
 import { trayTooltipLabel } from "../../../shared/session-pause-status";

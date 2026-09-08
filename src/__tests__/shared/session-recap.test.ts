@@ -4,9 +4,9 @@ import {
 	buildNativePayload,
 	buildOverlayPayload,
 	computeSessionDelta,
-	truncateNativeBody,
 	SESSION_RECAP_NATIVE_BODY_MAX,
 	type SessionRecapBaseline,
+	truncateNativeBody,
 } from "../../../shared/session-recap";
 
 const todayBase: TodayBlinkSummary = {
@@ -113,12 +113,7 @@ describe("session-recap shared builders", () => {
 		expect(overlay.sessionLines[0]).toContain("6m");
 		expect(overlay.todaySubtitle).not.toContain("blinks");
 
-		const quit = buildNativePayload(
-			"quit",
-			{ today: todayBase },
-			"en",
-			false,
-		);
+		const quit = buildNativePayload("quit", { today: todayBase }, "en", false);
 		expect(quit.body).not.toContain("blinks");
 
 		const lock = buildNativePayload(

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+	autoStopNoFaceDelayMs,
 	BLINK_CREDIT_DEBOUNCE_MS,
 	BLINK_SNOOZE_MS,
 	CAMERA_POLL_INTERVAL_MS,
 	FACE_RETURN_DEBOUNCE_MS,
 	NO_FACE_DEBOUNCE_MS,
-	REMINDER_POPUP_VISIBLE_MS,
-	autoStopNoFaceDelayMs,
 	nextTimerReminderDelay,
 	promptSnoozeMs,
+	REMINDER_POPUP_VISIBLE_MS,
 	shouldArmAutoStopOnNoFace,
 	shouldShowCameraReminder,
 } from "../../../electron/domain/reminder-policy";
