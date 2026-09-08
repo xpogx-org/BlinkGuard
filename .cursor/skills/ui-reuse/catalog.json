@@ -387,7 +387,7 @@
 				"tabbed-section",
 				"section-tabs",
 				"tracking-eye-button",
-				"dark-mode-toggle",
+				"appearance-select",
 				"eye-prompts-disabled-notice",
 				"eye-care-independence-settings",
 				"exercise-settings",
@@ -630,15 +630,17 @@
 			"composedOf": ["setting-panel", "setting-row", "button"]
 		},
 		{
-			"id": "dark-mode-toggle",
-			"name": "DarkModeToggle",
-			"role": "organism",
+			"id": "appearance-select",
+			"name": "AppearanceSelect",
+			"role": "molecule",
 			"surface": "react-settings",
-			"path": "src/features/settings/ui/dark-mode-toggle.tsx",
-			"export": "DarkModeToggle",
-			"import": "import { DarkModeToggle } from \"@/features/settings/ui/dark-mode-toggle\"",
-			"when": "Sidebar/header dark mode control (icon or row)",
-			"props": ["darkMode", "setPreferences", "variant"]
+			"path": "src/features/settings/ui/appearance-select.tsx",
+			"export": "AppearanceSelect",
+			"import": "import { AppearanceSelect } from \"@/features/settings/ui/appearance-select\"",
+			"when": "Sidebar and header Light / System / Night chrome icons (not overlay popupColors). Click expands an animated row in that order; opening from Light/Night recenters the trio on the button; labels are long-press hints only.",
+			"avoid": "Select dropdown for app chrome theme; binary dark-mode toggle; putting app chrome theme on the Appearance nav; visible text labels on the icons; pinning the open row to a trailing edge",
+			"composedOf": ["button"],
+			"props": ["appearance", "setPreferences", "variant"]
 		},
 		{
 			"id": "sound-settings",

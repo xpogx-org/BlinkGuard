@@ -11,6 +11,20 @@ Format for each row:
 - **Rejected:**
 - **Revisit when:**
 
+## 2026-09-09 - icon appearance row
+
+- **Choice:** Replace the chrome theme `Select` with a round icon that fans into Light / System / Night. Neighbors slide out of the current icon (right from Light, both ways from System, left from Night) and slide back in on collapse. Opening from Light or Night also translates the cluster so System sits on the collapsed button (row recenters). Labels are long-press (and hover-delay) hints, not button text.
+- **Why:** A dropdown hid the current theme behind a chevron; the row makes Light–System–Night spatial and keeps chrome compact; side opens must not leave an asymmetric fan stuck on the edge.
+- **Rejected:** A binary sun/moon toggle; keeping `Select`; visible text labels on the icons; pinning the open row to the header’s trailing edge.
+- **Revisit when:** A fourth appearance (high contrast) would not fit a 3-icon fan.
+
+## 2026-09-09 - follow Windows appearance
+
+- **Choice:** Persist `appearance: system | light | dark` (default System). Existing `darkMode` true/false maps to Dark/Light then the boolean is dropped. `nativeTheme.themeSource` matches the pref; Settings `html.dark` follows `prefers-color-scheme` after hydrate; splash pins `?dark=` from main (matchMedia only when the query is absent); tray uses resolved `shouldUseDarkColors`. No `sendPreferences` on OS theme change. Overlay popups stay on `popupColors`. Appearance stays out of Setups.
+- **Why:** A stored boolean left Settings/splash/tray stuck on the last toggle when Windows switched at dusk.
+- **Rejected:** Persisting a resolved `darkMode` snapshot; watching OS while Light/Dark is explicit; restyling overlay cards to the OS theme; putting appearance in named Setups.
+- **Revisit when:** High-contrast / inverted Windows schemes, or a second chrome surface that cannot use `themeSource`.
+
 ## 2026-09-08 - harness installed
 
 - **Choice:** Machine-verified loop with one wrapper, short AGENTS.md router, progress + decisions on disk, one active task.
@@ -59,6 +73,13 @@ Format for each row:
 - **Why:** After T-001 the queue was empty; agents could implement with no harness task. Mark-verified did not sync `progress.md` and did not fail on two `active`.
 - **Rejected:** Expanding the verify wrapper (no Python tests, no `check-docs.mjs` in the wrapper, no Layer 3) in this pass; `.ps1`/`.sh` twins for the new CLIs; wiring start/check into `npm run verify`.
 - **Revisit when:** Layer 3 exists, sidecar Python unittests join the wrapper, or CI should run `npm run verify`.
+
+## 2026-09-09 - no keyboard-idle tracking freeze
+
+- **Choice:** Leave the 25-minute idle Stop as-is. Do not freeze (or Stop) tracking from `powerMonitor.getSystemIdleTime`. T-002 is `blocked`.
+- **Why:** BlinkGuard's job is blink / eye-care help, not presence detection. OS input idle cannot tell a coffee break from watching a video or reading; the design tree (fullscreen vs windowed vs pause-pref-off) is an activity-checker product, not this app.
+- **Rejected:** Quiet-hours-style clock freeze + camera LED off on 5-minute keyboard idle; user-visible idle threshold; treating fullscreen/app-rule as the only "watching" escape hatches.
+- **Revisit when:** The product goal explicitly includes AFK / presence, or a sensor that is not keyboard idle (for example camera no-face, which already exists as auto-stop).
 
 ## 2026-09-08 - Layer 1 Biome + Layer 2 window-position tests
 

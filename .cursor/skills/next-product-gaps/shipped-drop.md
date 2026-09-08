@@ -20,6 +20,7 @@ Verify each line in `git log` / code before treating it as gospel. If the featur
 - Tray token extended hush (2× `snoozeMinutes`)
 - Tray meeting-length hush: 15/30/60 + until-resume (`shared/hush-durations.ts`, IPC `untilResume`)
 - Tray glance: live BPM + today/goal (`shared/tray-session-glance.ts`)
+- Tray look-away now (`LookAwayService.promptNow`, no new IPC)
 - Capture-status tray chip (`CameraCaptureStatusService`)
 - Session-idle pause reasons: lock / display-off / lid / suspend
 - Weekday quiet hours (`quietHoursByWeekday`)
@@ -44,7 +45,9 @@ Verify each line in `git log` / code before treating it as gospel. If the featur
 - Spend snooze tokens from tray / shortcut / toast
 - Eye-care completed/skipped/snoozed on statistics
 - Timer-first goals: `goalsConfigForCamera` in `shared/preferences.ts` (achievements must not import `blink-stats.ts`)
+- Timer-mode offline shop points (`creditOfflineFromTrackingMs`, 1 per 10s; spend offline-first)
 - Report a problem + GitHub issue templates + diagnostics `meta.json`
+- Settings / boot splash / tray follow Windows via pref `appearance` (`system` | `light` | `dark`); overlays stay on `popupColors`
 
 ## Do not re-open as DX
 

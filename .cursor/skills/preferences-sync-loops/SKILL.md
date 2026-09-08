@@ -69,7 +69,7 @@ Named setups (`settings-profiles`): switch/save/rename/delete/list are **invoke-
 ```ts
 // BAD — full sync on every preferences identity change
 useEffect(() => {
-  rendererIpc.updateDarkMode(preferences.darkMode);
+  rendererIpc.updateAppearance(preferences.appearance);
   rendererIpc.updateLocale(preferences.locale); // often sendPreferences!
   // …every other field…
 }, [preferences]);

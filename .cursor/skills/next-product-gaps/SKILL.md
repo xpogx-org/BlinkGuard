@@ -147,3 +147,4 @@ Avoid (unless the user asked):
 - Classifier CLI retrain, multi-user, water/posture
 - Two briefs for the **same daily pain**
 - Vague refactors, extra architecture layers, new frameworks
+- Keyboard-idle / AFK “activity checker” freeze (T-002 rejected 2026-09-09 — see `docs/harness/decisions.md`)

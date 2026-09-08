@@ -50,7 +50,7 @@ One-offs → `scripts/screenshot_tools/_scratch/` (gitignored).
 ## Capture workflow
 
 1. **Backup** `%APPDATA%/BlinkGuard/config.json` → `config.json.bak-screenshots`.
-2. Set for shots: `locale: "en"`, `darkMode: false`, `popupMessage: "Blink!"`,
+2. Set for shots: `locale: "en"`, `appearance: "light"`, `popupMessage: "Blink!"`,
    EN `exercisePrompts`, `hasCompletedOnboarding: true`.
 3. `npm run dev` — wait until the main window title is `BlinkGuard`
    (`list-electron-wins.ps1`). Cold start can take a few seconds after
