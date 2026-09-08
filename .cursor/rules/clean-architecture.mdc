@@ -1,0 +1,47 @@
+---
+description: Pragmatic Clean Architecture placement rules for Electron/React/Python BlinkGuard
+globs: electron/**/*.{ts,js},shared/**/*.{ts,js},src/features/**/*.{ts,tsx},src/components/**/*.{ts,tsx},src/shared/**/*.{ts,tsx},src/app.tsx,public/**/*,python/**/*.{py}
+alwaysApply: false
+---
+
+# Pragmatic Clean Architecture
+
+BlinkGuard uses pragmatic CA, with the Electron entry reduced to composition. Prefer extracting when a boundary is clear and testable; do not invent one-interface-per-button layers.
+
+## Where things go
+
+| Kind of change | Put it in |
+|---|---|
+| Pure policy / formula (no I/O) | `electron/domain/` or `python/.../domain/` |
+| Cross-cutting contracts (IPC, prefs, backup, camera, blink-stats, i18n, …) | `shared/` (TS only; no Electron imports) |
+| Reminder / exercise / look-away / stats / calibration-nudge / camera-capture-status / snooze-all / session-recap / focus / preferences orchestration | `electron/application/` (+ small set of `ports/`) |
+| Store, windows, IPC, sidecar, lifecycle, shortcuts, tray, sound, OS toasts | `electron/infrastructure/` |
+| Dependency wiring and app startup | `electron/main.ts` only (`composition-root`) |
+| Settings UI state / controls | `src/features/<feature>/{model,ui}/` |
+| Shared React controls | `src/components/` |
+| Preload bridge usage from React | `src/shared/ipc/` |
+| Popup DOM behavior / CSS | `public/js/`, `public/css/` |
+| Sidecar detection math / camera I/O / transport | `python/blink_detector_package/{domain,application,infrastructure}/` |
+
+## Dependency rule
+
+- Domain and `shared/` must not import Electron, React, Node `child_process`/`fs` process APIs, or OpenCV.
+- Application depends on domain/shared and **ports** only — not on `BrowserWindow`, `electron-store`, or spawn details.
+- Infrastructure implements ports and may import Electron/Node.
+- React features depend on `renderer-ipc`, not on main-process modules.
+
+## Anti-patterns
+
+- Importing `electron` / `BrowserWindow` / `ipcMain` from `electron/domain` or `electron/application`
+- Creating a port + adapter for a one-line getter with a single caller
+- Rebuilding popup UIs in React (dual UI stays split)
+- Putting preference defaults only in `main.ts` instead of `shared/preferences.ts`
+- Changing sidecar handshake status strings on one side only
+- Adding feature logic, BrowserWindow factories, IPC handlers, or timers back into `main.ts`
+
+## Current Electron map
+
+- `domain/`: `reminder-policy`, `reminder-prompt-policy`, `focus-policy`, `session-activity-policy`, `blink-rate-coaching` (helpers), `calibration-freshness`, `session-recap-policy`
+- `application/`: `AppRuntimeState`; preferences, reminder, exercise, look-away, tracking-session, blink-stats, settings-profiles, calibration-nudge, camera-capture-status, snooze-all, snooze-token-prompt, session-recap-service, focus-pause, session-pause, preference-actions, deferred-tracking-restore; ports for storage/runtime/stats/focus/notification/session-activity
+- `infrastructure/`: IPC registration, BrowserWindow controller, sidecar spawn/protocol, lifecycle/power, cleanup, shortcuts, tray (`tray/`), sound, OS toasts (`notifications/`), paths/store/logging
+- `main.ts`: creates those collaborators, connects callbacks (incl. deferred tracking restore on `shellReady`), and starts the app. Order: see `composition-root` (hush orchestrators / `trayRef` before controllers).

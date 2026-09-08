@@ -1,0 +1,24 @@
+{
+	"version": 1,
+	"hooks": {
+		"afterFileEdit": [
+			{
+				"command": "node .cursor/hooks/contract-nudge.js"
+			}
+		],
+		"beforeShellExecution": [
+			{
+				"command": "node .cursor/hooks/block-coverage-commit.js",
+				"matcher": "git\\s+(add|commit)"
+			},
+			{
+				"command": "node .cursor/hooks/warn-mutating-lint.js",
+				"matcher": "npm\\s+run\\s+lint"
+			},
+			{
+				"command": "node .cursor/hooks/warn-sidecar-setup.js",
+				"matcher": "setup\\.(bat|sh)"
+			}
+		]
+	}
+}

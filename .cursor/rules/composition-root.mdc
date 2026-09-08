@@ -1,0 +1,17 @@
+---
+description: electron/main.ts composition-root order — trayRef and hush orchestrators before controllers
+globs: electron/main.ts
+alwaysApply: false
+---
+
+# Composition root (`electron/main.ts`)
+
+Wiring-only. Do not add policies, timers, or BrowserWindow factories here.
+
+## Order traps
+
+- Never reference `const tray` before it is constructed. Prefer a `trayRef` holder (`{ current: TrayController | null }`) that callbacks close over.
+- Define hush / snooze orchestrators (`hushAllPrompts`, `hushAllWithSnoozeToken`, `endPromptHush`, …) **before** `setActivationHandlers`, `ShortcutController`, and `TrayController` register callbacks that close over them.
+- Cold-start tracking restore waits for renderer `shellReady` (after boot splash) — wire via `DeferredTrackingRestore`, not an eager `startTracking` in `main`.
+
+After tray-menu-model or main composition edits, run `npm run build:electron`.

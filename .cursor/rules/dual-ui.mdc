@@ -1,0 +1,57 @@
+---
+description: Dual UI — React feature settings vs split public popup windows
+globs: src/**/*.{ts,tsx,css},public/**/*.{html,js,css},electron/infrastructure/windows/**/*,electron/infrastructure/tray/**/*
+alwaysApply: false
+---
+
+# Dual UI surfaces
+
+## Settings (React)
+
+- Shell: `SettingsShell` in `src/features/settings/ui/settings-shell.tsx` (layout + feature composition). Vite entry: `BlinkGuardHomepage` in `src/app.tsx`.
+- Features under `src/features/{reminders,camera,exercises,look-away,popup-appearance,statistics,profile,achievements,rewards,settings,onboarding,about,shortcuts,debug}/` with local `model/` and/or `ui/` (About tabs: Overview / Notes / Thanks; Notes is GitHub Releases)
+- Renderer IPC adapter: `src/shared/ipc/renderer-ipc.ts` — components/hooks should not scatter raw channel strings
+- Tailwind 4 + CSS variables in `src/index.css` (dark via `class` / `@custom-variant`)
+- Lucide icons; path alias `@/` → `src/`
+- Prefer existing `Button` from `src/components/button.tsx` or raw `<button>`/`<input>` as neighboring controls do
+
+## Overlay windows (vanilla)
+
+Reminder, ambient glow, starting/stopped, exercise, look-away, calibration nudge, cheer toast, camera, popup editor, session recap, tray menu, and sound player load from `public/`:
+
+- HTML shells: `blink.html`, `ambient.html`, `starting.html`, `stopped.html`, `exercise.html`, `look-away.html`, `calibration-nudge.html`, `cheer.html`, `no-face.html`, `camera.html`, `popup-editor.html`, `recap.html`, `tray-menu.html`, `sound-player.html` (no `blink-rate-coach.html` — retired)
+- Scripts: `public/js/{reminder,ambient,exercise,look-away,camera,editor,sound,cheer,calibration-nudge,recap,tray-menu}.js` + `public/js/shared/{theme,i18n,popup-a11y}.js`
+- Styles: `public/css/{base,reminder,ambient,no-face,exercise,look-away,blink-rate-coach,camera,editor,cheer,recap,tray-menu}.css` (`blink-rate-coach.css` is shared by calibration-nudge only)
+- Bridge: `window.popupAPI` from `electron/preload.ts` (named methods only — do not catalog them here; see preload for the inventory)
+- Ambient: click-through glow (`focusable: false`, ignore mouse). Visible taskbar/dock → desktop window stays in `workArea` (so Windows does not hide the bar) plus a separate always-on-top strip over the chrome rect (Win: no `type: panel`, `thickFrame: false`). Hidden/auto-hide chrome → one window at display `bounds` (never `setFullScreen`). CSS inset/gradient via `--popup-accent` / `--popup-warning` — not a centered card, not `BrowserWindow.setOpacity`
+- Blink overlays stay until blink / snooze / no-face / gate / stop (camera) or timer replace-on-tick — **no** 2.5s auto-close for `kind === "blink"` (starting/stopped still 2.5s)
+- Cheer reward / profile level-up / achievement unlock / healthy streak cheer (`onCheer`): procedural Web Audio fanfare via sound-player `mode: "cheer"` + animated toast in `cheer.html` (level-up uses `popup.levelUp.*`; single unlock uses `achievements.{id}.title` + `popup.achievement.subtitle`; bulk catch-up uses `popup.achievementSummary.*`)
+- DEV Debug shop/profile: `debugPreviewCheer` + `debugPreviewLevelUp` + `debugPreviewAchievement` + `debugPreviewAchievementSummary` + `debugSetProfileLevel` + `debugSetShopReward` (grant/revoke flair & shield) + `debugSetShopDiscountLevel` (0…10 shop discount); overlay preview kind `ambient` (not `coach`; debug ambient auto-hides after 3s); Cheer / Level Up / achievement previews do not spend blinks; `debugCleanPreview` dismisses leftover overlays/cheer toast and stops sounds (Clean on each relevant Debug box)
+
+Treat `public/` as a thin presentation adapter — no separate Clean Architecture inside it.
+
+## Window lifecycle
+
+- BrowserWindow creation / show / close for overlays lives in `electron/infrastructure/windows/window-manager.ts`
+- Sound chimes use one persistent hidden 1×1 window owned by `electron/infrastructure/sound/notification-sound-player.ts` (not WindowManager). Do not spawn a window per play. `devicechange` recreates that window; `popupAPI.notifyAudioError` / `notifyAudioOutputInvalidated` are sound-player-only (not settings `ipcRenderer` send whitelist).
+- Settings boot splash: static markup/CSS in `index.html` with round `/boot-icon.png` (from `public/`); dismiss + `shellReady` from `src/app.tsx` / `src/boot-splash.ts`. Main passes `?dark=` + theme `backgroundColor` from persisted `darkMode`.
+- Shared geometry helpers live in `electron/infrastructure/windows/window-position.ts`. Blink/editor placement is per Electron `display.id` (`popupPositionsByDisplayId` + `popupSizesByDisplayId`); `popupPosition` / `popupSize` are last-save mirrors. Maps keep disconnected-display entries (sleep / Win+P / unplug) so the layout returns with the screen; cap at 16, preferring live ids. Stored positions are workArea-relative offsets (legacy absolute points migrate when they still sit on that display). Show/clamp uses that display’s `workArea` (position miss → center for this show only — do not persist the fallback; size miss → mirror then default `{300,120}` — never another display’s geometry). Editor **Save** writes the matched display only; **Save all** (shown when `getAllDisplays().length > 1`) copies this size + workArea-relative offset onto every live display, clamped. After Save, if another live display has no position-map entry, the same editor stays open and **Set up next display** moves it there (relative offset + clamp, no persist until Save). `display-removed` / `display-metrics-changed` debounce into `WindowManager.recoverOpenPopupPositions` (reminder/editor independently, visual only — does not rewrite maps; exercise left-bias / look-away right-bias on the active display — those overlays are not stored in either map).
+- Panel popups are `transparent: true` via `panel-window.ts`. User transparency is **CSS card alpha** (`public/js/shared/theme.js` → `--popup-bg-alpha` / `--popup-surface`); do **not** use `BrowserWindow.setOpacity` (soft glyphs on Windows GPUs). Frosted panels use `.popup-glass` underlay blur in `public/css/base.css`, not `backdrop-filter` on the text layer. Overlay enter motion is CSS on the card (`.popup-enter`), never window opacity.
+- **Popup drop-shadow gutter:** `BrowserWindow` uses `hasShadow: false`; shadows are CSS `box-shadow` only. Without a transparent gutter, `overflow: hidden` on the panel window clips rounded corners and blur (especially on Windows). Card popups use `html.popup-panel-root` + `body { padding: var(--popup-shadow-inset) }` in `public/css/base.css` (token from `theme.popup.shadowInset` / `--popup-shadow-inset`, default 32px). `WindowManager` expands each panel window by `2×` inset via `shared/popup-window-chrome.ts` and offsets position so persisted **card** size/position stay unchanged. Tray menu uses the same inset on `.tray-menu-frame`. **Excluded:** `ambient.html` (full-display inset glow, not a card shadow) and `sound-player.html` (hidden 1×1).
+- Blink / exercise / look-away: pref `blinkPopupClickThrough` (default on) → `focusable: false` + `setIgnoreMouseEvents(true)` + `showInactive()`, hide in-popup Skip/Snooze; snooze via tray. Interactive mode (pref off) restores actions, `show()` + `focus()`, and dialog keyboard a11y (`popup-a11y.js`). Cheer / ambient / calibration nudge stay click-through overlays. Snooze duration is `snoozeMinutes` (1…30, default 5) for blink / exercise / look-away and tray labels.
+- Optional native OS toasts (`notificationStyle` overlay / native / both) are main-process `OsNotificationPlayer` only — never HTML overlays and never `WindowManager`. Toast body click opens settings (`showMain`); Snooze uses existing per-kind `snooze()`. Cheer / starting / stopped / ambient / nudge / no-face stay overlay-only (ambient has no native toast).
+- Eye care: exercise and look-away never show together; when both due, look-away wins. Blink soft-suppresses while either is open.
+
+## Change guide
+
+| Change | Edit |
+|---|---|
+| Control panel / prefs UI | `src/features/*` (+ shell in `src/features/settings/ui/settings-shell.tsx`; entry `src/app.tsx`) |
+| Blink / ambient / exercise / look-away / camera popup look or behavior | Matching `public/*.html` + `public/js` + `public/css` |
+| Window creation / sizing | `electron/infrastructure/windows/window-manager.ts` (+ `window-position.ts`) |
+| Notification sounds (chimes / Cheer audio) | `electron/infrastructure/sound/notification-sound-player.ts` + `public/js/sound.js` — not WindowManager, not React |
+| Native OS toasts (blink / exercise / look-away) | `electron/infrastructure/notifications/os-notification-player.ts` + application services after `NotificationGate` — not WindowManager |
+| App quit / suspend / resume / lid / display-sleep | `electron/infrastructure/lifecycle/app-lifecycle.ts` + `session-pause-service` (sidecar stdin-quit **before** `destroyAll()`; `window-all-closed` must not `app.quit()` so Windows tray Quit does not kill PyInstaller mid-`_MEI*` cleanup). Lid/display probes: `electron/infrastructure/session-activity/` |
+| IPC from settings | `src/shared/ipc/renderer-ipc.ts` + shared channel constants |
+
+Do not reimplement popup UIs in React unless intentionally consolidating surfaces.

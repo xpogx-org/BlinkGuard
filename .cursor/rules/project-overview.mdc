@@ -1,0 +1,51 @@
+---
+description: BlinkGuard architecture, dual UI, and safe tooling defaults
+alwaysApply: true
+---
+
+# BlinkGuard overview
+
+Single Electron 44 + React 19 + Vite 8 desktop app. Local state via `electron-store`. Optional Python OpenCV 5 / dlib 20 blink-detector sidecar (YuNet face detect + dlib 68-pt landmarks; optional OCEC confirm). No backend, DB, or Docker.
+
+Pragmatic Clean Architecture with a thin `electron/main.ts` composition root — extend existing services/adapters; do not invent extra layers. File-scoped rules own detail: `clean-architecture`, `preferences-store`, `tray-runtime`, `composition-root`, `camera-detection`, `dual-ui`, `ipc-contract`, `electron-security`, `testing`.
+
+After a meaningful code change, skim relevant `.cursor/rules`, `.cursor/skills/*/SKILL.md`, **touched** `docs/harness/indexes/`, and the `AGENTS.md` router and fix drift (skill `keep-agent-docs-current`). Git-tracked `AGENTS.md` is the harness router (hard constraints + pointers), not the encyclopedia — the module map stays in this rule; Cloud/sidecar essays live in indexes and the owning skill/rule. **Language:** rules/skills/plans and `AGENTS.md` are English only; Ukrainian product strings live in `shared/i18n/uk.ts`. In chat, reply in English unless the user writes in Ukrainian. `.cursor/` rules, skills, agents, commands, and hooks are **git-tracked** so another machine gets the same agent setup. Session plans (`.cursor/plans/`) stay gitignored.
+
+## Module map (pointers)
+
+| Area | Role |
+|---|---|
+| `shared/` | Electron-free contracts (IPC, prefs, backup, camera, blink-stats/rewards, i18n, theme) — see `preferences-store` / `ipc-contract` |
+| `electron/main.ts` | Composition root only — see `composition-root` |
+| `electron/preload.ts` | `contextBridge`; whitelists from `shared/ipc-channels`; hardening in `electron-security` |
+| `electron/domain/` | Pure policies (reminder, focus, session-activity, blink-rate-coaching helpers, calibration-freshness, session-recap-policy) |
+| `electron/application/` | Orchestration: preferences, reminder, exercise, look-away, tracking-session, blink-stats, settings-profiles, calibration-nudge, camera-capture-status, snooze-all, snooze-token-prompt, session-recap, focus-pause, session-pause, preference-actions, deferred-tracking-restore, AppRuntimeState; ports |
+| `electron/infrastructure/` | IPC, windows, lifecycle, sidecar, shortcuts, **tray/**, sound, OS toasts, store, focus, session-activity, idle, auto-update, logging — tray/hush constraints in `tray-runtime` |
+| `src/app.tsx` + `src/features/*` | React settings (`SettingsShell`); features under `src/features/<name>/{model,ui}/` |
+| `src/components/` | Shared React UI (1 file = 1 component); catalog in `ui-reuse/catalog.json` |
+| `src/shared/ipc/` | Renderer adapter (`renderer-ipc.ts`) |
+| `public/` | Vanilla popups (`popupAPI`) — inventory in `dual-ui` |
+| `python/blink_detector_package/` | Sidecar domain / application / infrastructure |
+
+## Dual UI (do not mix)
+
+| Surface | Stack | Entry |
+|---|---|---|
+| Settings | React + Tailwind + features | `src/app.tsx` + `settings-shell.tsx` |
+| Popups / camera / editor / tray menu | Vanilla HTML + `popupAPI` | `public/*.html` + `public/js` / `public/css` |
+
+Before creating or changing UI, read skill `ui-reuse` + `catalog.json`. Tokens: skill `ui-theme` (`shared/theme.ts`).
+
+Settings nav order: reminders (schedule / pause) → camera (setup / tuning) → exercises → appearance → progress (statistics / profile / achievements / rewards) → settings (general / data) → about (overview / notes / thanks) → **debug** (DEV-only, last). Onboarding is an overlay when `!hasCompletedOnboarding`, not a nav item. Add new nav sections **before** Debug.
+
+## Tooling
+
+- Dev: `npm run dev`
+- Compile check: `npm run build:electron` (`tsc && vite build`)
+- Read-only lint: `npx @biomejs/biome check src` — `npm run lint` **writes**
+- Biome scopes **`src` only**; `electron/` / `shared/` are not Biome-gated
+- Tests: `npm test` / `npm run coverage` (Vitest + `happy-dom`)
+- Prefer tabs + double quotes (matches `biome.json`)
+- `coverage/` is gitignored — do not commit regenerated output
+- Packaging helpers in `scripts/` — prefer `build:electron` in Cloud; OS-host packaging only on matching hosts
+- Camera binary is optional; core app must work without `electron/resources/blink_detector`

@@ -1,0 +1,48 @@
+---
+description: Electron IPC channel contract for shared channels, preload whitelists, and popupAPI
+globs: electron/**/*.{ts,js},shared/**/*.{ts,js},src/**/*.{ts,tsx},public/**/*.{html,js}
+alwaysApply: false
+---
+
+# IPC channel contract
+
+Security model: `contextIsolation: true`, `nodeIntegration: false`. Most IPC uses fire-and-forget `send`/`on`. A few settings flows use `invoke`/`handle` (diagnostics export, backup export/import, named settings setups list/save/rename/delete/switch, GitHub release notes, profile image export, trace recording, camera device picker, pause-app **candidates** via `list-pause-app-candidates`). The tray **Pause for {app}** row is **not** an IPC id named `pause-app` — it calls `PreferenceActions.appendPauseAppFromLastExternal` in-process. The tray **Look away now** row likewise calls `LookAwayService.promptNow` in-process (no dedicated IPC). For `sandbox` / CSP / IPC **payload** validation / `openExternal` allowlisting, see `.cursor/rules/electron-security.mdc` (channel whitelist alone is not enough).
+
+## Ownership (as of this refactor)
+
+| Piece | Where |
+|---|---|
+| Channel string constants | `shared/ipc-channels.ts` → `IPC_CHANNELS` |
+| Main-window whitelists | `MAIN_RENDERER_RECEIVE_CHANNELS` / `MAIN_RENDERER_SEND_CHANNELS` / `MAIN_RENDERER_INVOKE_CHANNELS` in the same file (three arrays are SoT — do not paste every channel here) |
+| Preload bridge | `electron/preload.ts` (imports those arrays; exposes `ipcRenderer` + typed `popupAPI`) |
+| Main handlers | `electron/infrastructure/ipc/register-ipc-handlers.ts` |
+| Window emits | `electron/infrastructure/windows/window-manager.ts` and sidecar callbacks wired in `electron/main.ts` |
+| React callers | `src/shared/ipc/renderer-ipc.ts` → feature hooks/UI |
+| Popup callers | `window.popupAPI` from preload; vanilla `public/js/*` — popup-only channels are **not** on the three main-window arrays; inventory is `popupAPI` in `electron/preload.ts` |
+| GitHub release notes fetch | `electron/infrastructure/github/fetch-github-releases.ts` + `shared/release-notes.ts` |
+
+## When adding or renaming a channel
+
+1. Add the name to `IPC_CHANNELS` in `shared/ipc-channels.ts`.
+2. If the **settings** window uses it, add it to the matching `MAIN_RENDERER_RECEIVE_CHANNELS`, `MAIN_RENDERER_SEND_CHANNELS`, or `MAIN_RENDERER_INVOKE_CHANNELS` array (preload filters on those lists).
+3. Register handlers in `electron/infrastructure/ipc/register-ipc-handlers.ts`; keep only adapter callback wiring in `electron/main.ts`.
+4. For popups/camera/editor/sound, prefer a named `popupAPI` method in preload over widening the generic main-window send list.
+5. Call from React via `rendererIpc` / feature hooks, or from `public/js` via `popupAPI` — never assume Node in the renderer.
+
+Channels missing from the preload whitelist silently no-op (listeners never attach / sends are dropped).
+
+Look-away, blink-stats, blink-rate coaching toggle/threshold, micro-break interval, blink prompt profile, locale / `applyI18n`, and onboarding channels live in the same `shared/ipc-channels.ts` file and follow this checklist — do not invent parallel channel registries.
+
+## Examples
+
+```typescript
+// ❌ BAD — renderer listens, but channel not in MAIN_RENDERER_RECEIVE_CHANNELS
+window.ipcRenderer.on("shortcut-error", handler);
+
+// ✅ GOOD — add to shared IPC_CHANNELS + RECEIVE whitelist, then use rendererIpc / bridge
+import { IPC_CHANNELS } from "../shared/ipc-channels";
+// preload filters on MAIN_RENDERER_RECEIVE_CHANNELS
+rendererIpc.onShortcutError(handler);
+```
+
+Prefer extending `popupAPI` with a named method for popup windows instead of widening the generic `send` whitelist.

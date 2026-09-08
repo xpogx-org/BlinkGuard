@@ -1,0 +1,57 @@
+---
+description: Preference contracts, PreferenceStore port, and interval unit conversion (reminder + micro-break)
+globs: electron/**/*.{ts,js},shared/**/*.{ts,js},src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Preferences / electron-store
+
+Persist only from the main process. No custom store name/schema — default `electron-store` behind an adapter.
+
+**Source of truth for defaults, clamps, and sanitizers:** `shared/preferences.ts`. Do not duplicate per-key essays here.
+
+## Layers
+
+| Concern | Location |
+|---|---|
+| Types + defaults | `shared/preferences.ts` (`PersistedPreferences`, `DEFAULT_PREFERENCES`, `toRendererPreferences`) |
+| Camera quality presets | `shared/camera-quality.ts` → sidecar via `toSidecarCameraQualityMessage` |
+| EAR / classifier / blink-rate helpers | `shared/ear-calibration.ts`, `shared/classifier-calibration.ts`, `shared/blink-rate.ts` |
+| Locale / built-in prompt defaults | `shared/i18n/` |
+| Port / adapter / service | `electron/application/ports/preference-store.ts` → `electron/infrastructure/store/electron-preference-store.ts` → `PreferencesService` |
+| Multi-step flows | `electron/application/preference-actions.ts` |
+| IPC / React | `register-ipc-handlers.ts` → `renderer-ipc.ts` → feature UI |
+
+UI is **seconds-only** for `reminderInterval` and `microBreakInterval`. Store/timers use **milliseconds**. Convert only at the boundary (`toRendererPreferences` / `rendererIpc` ×1000).
+
+Detector backend is **dlib only** — no `useMediaPipe` preference.
+
+Store-only rotation indexes (not in renderer prefs / `sendPreferences`): `blinkPromptIndex`, `exercisePromptIndex`.
+
+Day history / rewards / streaks / timer-mode offline shop points (`totalOfflinePoints`, spend offline-first via `shopBalance`) live in the separate `blinkguard-stats` store (`shared/blink-stats.ts`), not preferences. Named setups live in `blinkguard-settings-profiles` (not `PERSISTED_KEYS`; optional in backup v1 prefs/both).
+
+## Keys (persisted)
+
+Compact inventory — details in `shared/preferences.ts`:
+
+`darkMode` `reminderInterval` `blinkPromptProfile` `microBreakInterval` `cameraEnabled` `cameraQuality` `cameraDevice` `autoStopNoFaceEnabled` `autoStopNoFaceMinutes` `blinkRateCoachingEnabled` `blinkRateThresholdPerMin` `earCalibration` `calibrationAt` `calibrationNudgeEnabled` `calibrationNudgeDismissedAt` `lastBaselineDriftAt` `classifierBias` `classifierThreshold` `eyeExercisesEnabled` `exerciseInterval` `exercisePrompts` `eyeCareIndependentOfTracking` `lookAwayEnabled` `lookAwayInterval` `lookAwayDuration` `lookAwayTitle` `lookAwayHint` `popupPosition` `popupPositionsByDisplayId` `popupSize` `popupSizesByDisplayId` `popupColors` `popupGlowPreset` `popupMessage` `blinkPopupClickThrough` `notificationStyle` `sessionRecapEnabled` `snoozeMinutes` `keyboardShortcuts` `mgdMode` `soundEnabled` `soundVolume` `launchAtLogin` `isTracking` `quietHoursEnabled` `quietHoursStart` `quietHoursEnd` `quietHoursByWeekday` `pauseOnFullscreen` `pauseAppRules` `hasCompletedOnboarding` `locale` `goalsEnabled` `dailyBlinkGoal` `dailyTrackingMinutesGoal` `weeklyBlinkGoal` `weeklyTrackingMinutesGoal`
+
+Notable shapes (see SoT for clamps): `blinkPromptProfile` is `"standard" | "gentle" | "strong"`; `keyboardShortcuts.snoozeAll` default `"Ctrl+Shift+S"` (`trackingToggle` default `"Ctrl+I"`, other actions `""`).
+
+## Adding a preference
+
+Update together: `shared/preferences` types/defaults → `PreferencesService` load/migrate → IPC channel + handler → preload whitelist → `rendererIpc` → `sameRendererPrefs` / `pushPreferenceDiff` → React feature. Camera-related values that reach the sidecar also need `BlinkDetectorSidecar.apply*` + Python stdin handlers. See skill `preferences-sync-loops`.
+
+## Unit trap
+
+```typescript
+// Store / main timers use ms
+preferences.reminderInterval = 3000; // camera miss-gap
+preferences.microBreakInterval = 30000; // timer cue
+
+// React UI works in seconds
+toRendererPreferences(preferences); // / 1000 for both intervals
+rendererIpc.updateInterval(3); // camera → 3000 ms
+rendererIpc.updateMicroBreakInterval(30); // timer → 30000 ms
+rendererIpc.updateBlinkPromptProfile("gentle"); // or "strong"
+```

@@ -1,0 +1,8 @@
+---
+description: Harness loop - machine-verified done, no self-verify.
+alwaysApply: true
+---
+
+<!-- harness-stock: true -->
+
+Before claiming done: read `docs/harness/LOOP.md`. Run the verify wrapper from `docs/harness/manifest.json`. Never set task status to verified by hand. Commit only if the user asked. Stop and ask before git push, publish, migrate, deleting data, or `/deploy`.

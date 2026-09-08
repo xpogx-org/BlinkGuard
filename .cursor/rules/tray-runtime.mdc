@@ -1,0 +1,24 @@
+---
+description: Tray menu, hush runtime flags, pause-app row, capture-status — constraints only
+globs: electron/infrastructure/tray/**/*,electron/application/snooze-all.ts,electron/application/snooze-token-prompt.ts,shared/tray-session-glance.ts,public/tray-menu.html,public/js/tray-menu.js,public/css/tray-menu.css
+alwaysApply: false
+---
+
+# Tray / hush runtime
+
+## Hush is runtime, not a pref
+
+- Timed hush: `AppRuntimeState.promptSuppressUntil` (epoch ms). Sticky: `promptHushUntilResume`.
+- Orchestration: `snoozeAllPrompts` / `endPromptHush` in `electron/application/snooze-all.ts`.
+- Token hush: `consumeSnoozeToken` → 2× `snoozeMinutes` via `snooze-token-prompt.ts`.
+- Clear hush in `AppRuntimeState.clearPromptHush()` (also from `clearReminderTimers` on Stop). When clearing outside the hush helper, call `focusPause.pushState()` so Settings/tray refresh.
+- Do **not** persist hush across quit; do not invent a `hushMinutes` preference.
+
+## Tray menu
+
+- Spec: `buildTrayMenuSpec` / `tray-menu-model.ts` → themed popup `public/tray-menu.*` (not native `Menu` for the right-click chrome).
+- Rebuild the menu while timed-hushed so remaining-minute copy stays fresh (~10s throttle with glance).
+- **Pause for {app}** is process-only append from `lastExternalForeground` via `PreferenceActions.appendPauseAppFromLastExternal` — **no** new IPC; settings picker invoke remains `list-pause-app-candidates`.
+- **Look away now** is an in-process `LookAwayService.promptNow()` callback (same tray pattern — **no** new IPC); omit when `lookAwayEnabled` is false; disable when the notification gate is closed.
+- Capture-status tray row consumes `CameraCaptureStatusService` (`isCameraReady` SoT) — not `cameraEnabled` alone.
+- Setups flyout: switch-only (`SettingsProfilesService.switch` + `confirmDirty: true`); omit when empty.

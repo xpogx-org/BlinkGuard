@@ -20,7 +20,6 @@ coverage/
 .vscode/*
 !.vscode/extensions.json
 .idea
-.cursor/
 specs/
 .DS_Store
 *.suo
@@ -104,4 +103,13 @@ docs/screenshots/_*.txt
 # Intro-video intermediates — committed outputs live in docs/intro/
 scripts/intro_video/_scratch/**
 !scripts/intro_video/_scratch/README.md
+
+# Harness (injected by harness-orchestrate)
+.harness-last-verify.json
+AGENTS.md.harness-bak
+*.harness-bak
+
+# Cursor session noise (rules/skills/agents/commands/hooks are tracked)
+.cursor/plans/
+.cursor/**/*.log
 

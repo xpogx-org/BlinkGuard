@@ -1,0 +1,52 @@
+---
+description: Vitest and Python unittest placement for BlinkGuard
+globs: src/__tests__/**/*,python/**/test_*.py,python/**/tests/**/*,vitest.config.ts
+alwaysApply: false
+---
+
+# Testing
+
+## TypeScript (Vitest + happy-dom)
+
+Four suites under `src/__tests__/`:
+
+| Suite | Path | Put here |
+|---|---|---|
+| Shared contracts | `src/__tests__/shared/` | Prefs, backup, settings-profiles, blink-rate/stats/rewards, achievements, session-recap builders, preferences-sync, theme markers, i18n parity, notification-style, camera-capture-status, tray glance helpers |
+| Domain / application | `src/__tests__/electron/` | Domain policies, application services (reminder, look-away, exercise, blink-stats, snooze-all, session-recap, settings-profiles, capture-status, preference-actions, tracking-session, tray-menu-model), infrastructure with Electron mocked (sidecar NDJSON, OS toast, auto-update, window-position) |
+| Settings smoke | `src/__tests__/pages/` | Shell render + IPC send (`app.test.tsx`); update dialog/toast |
+| Features | `src/__tests__/features/` | Feature-local helpers (e.g. profile-share-card, apply-locale) |
+
+Commands: `npm test` (watch), `npm run coverage` (one-shot). Setup: `src/__tests__/setup.ts`.
+
+Prefer pure unit tests for domain/application. Do not boot Electron or the Python sidecar in Vitest. Mock `rendererIpc` / preload in React tests.
+
+`coverage/` and `.vitest/` are gitignored — do not commit regenerated output.
+
+Do **not** maintain an exhaustive basename inventory in this rule — placement + “what to add when” is enough; the docs checker does not require every `*.test.ts` name.
+
+## Python (unittest)
+
+Domain/unit tests live under `python/blink_detector_package/tests/` (e.g. `test_blink_detection.py`, `test_trace_replay.py`, `test_face_resolve.py`). Run without camera/dlib when possible — keep EAR/pose/blink state tests free of OpenCV.
+
+```bash
+cd python
+python -m unittest blink_detector_package.tests.test_blink_detection
+python -m unittest blink_detector_package.tests.test_trace_replay
+```
+
+Labeled EAR-trace corpus (Stage 0): `python/fixtures/sessions/` + `log_tools/metrics.py`. Protocol/status string changes need tests or paired Electron fixture updates on both sides.
+
+## What to add when changing code
+
+- New preference key / validator → `src/__tests__/shared` + `preferences-service` tests
+- Backup export/import envelope → `backup` shared tests (incl. optional `settingsProfiles`) + `preference-actions` applyBackup
+- Reminder / camera gate / quiet-hours / focus / session idle → domain + matching service tests
+- Look-away / exercise timers → matching application service tests
+- Blink-rate ladder / calibration freshness / blink-stats / achievements → coaching / reminder-prompt-policy / calibration-nudge / blink-stats / achievements tests
+- Multi-step pref flows → `preference-actions` (incl. `applySettingsProfile`)
+- Named settings setups → settings-profiles shared + service + prefs applyProfileSnapshot
+- Blink/EAR/pose math → Python unittest next to domain
+- Settings control wiring → extend the app smoke suite only if the shell contract changes
+- New `SHORTCUT_ACTIONS` entry → grep fixtures for `keyboardShortcuts` / `snoozeAll` and add the new key (default `""`) to every partial map
+- Assertions on `classifyBlinkRate` / tray BPM copy → thresholds from `shared/blink-rate.ts` (`BLINK_RATE_LOW_MAX` = 4, `BLINK_RATE_OK_MAX` = 14)

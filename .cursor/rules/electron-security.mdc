@@ -1,0 +1,52 @@
+---
+description: BlinkGuard Electron window/preload/IPC security bar and hardening gaps
+globs: electron/infrastructure/windows/**/*.{ts,js},electron/infrastructure/sound/**/*.{ts,js},electron/infrastructure/ipc/**/*.{ts,js},electron/preload.ts,shared/ipc-channels.ts,shared/release-notes.ts,public/**/*.html,index.html
+alwaysApply: false
+---
+
+# Electron security (BlinkGuard)
+
+Thin checklist for BrowserWindow / preload / IPC. Channel ownership and add/rename steps live in `.cursor/rules/ipc-contract.mdc`. Architecture / dual UI: `project-overview.mdc`. Do **not** import Forge, electron-vite, or marketplace Electron scaffolds.
+
+## Current bar (required — already the pattern)
+
+| Control | Where |
+|---|---|
+| `contextIsolation: true`, `nodeIntegration: false` | Every `BrowserWindow` (`panel-window.ts`, main + camera in `window-manager.ts`, sound player) |
+| `webSecurity: true` | Explicit on **main** settings window; others rely on Electron default (`true`) — keep it on |
+| No `@electron/remote` / `enableRemoteModule` | Do not reintroduce |
+| Channel allowlists | `shared/ipc-channels.ts` → preload filters; see `ipc-contract.mdc` |
+| Preload bridge | `electron/preload.ts`: whitelisted `ipcRenderer` + named `popupAPI` |
+| External URLs | `shell.openExternal` only via `isAllowedExternalUrl` in `shared/release-notes.ts` (https protocol gate) or fixed GitHub page constants in IPC handlers |
+
+Window factory shapes (`createPanelWindow`, WindowManager, hidden sound player) stay as they are — harden prefs, do not invent a parallel window layer.
+
+## Agent checklist (when touching windows / preload / IPC)
+
+1. **webPreferences** — Match peers: `preload`, `nodeIntegration: false`, `contextIsolation: true`. Do not set `nodeIntegration: true` or disable isolation.
+2. **`sandbox: true` (gap / backlog)** — **None** of the current windows set `sandbox`. Prefer enabling where safe in a dedicated PR; do **not** drive-by flip all windows.
+   - Candidates: main, camera, panels (`panel-window.ts`), sound player — all already use preload + contextIsolation (sandbox-compatible shape).
+   - Verify after enable: Vite/dev main load, transparent panels, sound playback (`media-src` / `file:`), camera HTML.
+   - Cloud/dev note: process may still run under Electron `--no-sandbox` in some containers; that is separate from per-window `webPreferences.sandbox`.
+3. **CSP**
+   - **Popups / vanilla shells** (`public/*.html`): already ship a meta `Content-Security-Policy` (typically `default-src 'self'; style-src 'self'; script-src 'self'`; camera adds `img-src 'self' data:`; sound-player adds `media-src 'self' file:`). New HTML shells should copy a peer’s CSP, then widen only for a proven need.
+   - **Settings shell** (`index.html` + Vite): **no CSP today**. Adding one is intentional backlog — must not break Vite HMR/dev (`unsafe-eval` / ws often needed in dev), production asset loads, or Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com` in current `index.html`). Prefer verifying a candidate policy against both `npm run dev` and packaged load before committing; do not invent a one-size CSP string in docs or drive-by PRs.
+4. **IPC payload validation** — Channel whitelist ≠ trust. Handlers in `register-ipc-handlers.ts` must treat args as `unknown` and sanitize before use. Reuse shared sanitizers (`sanitizePersistedPreferences` / field helpers in `shared/preferences.ts`, `sanitizeCameraDevice` in `shared/camera-devices.ts`, classifier/calibration helpers, `sanitizeNotificationStyle`, etc.). New `on`/`handle` channels: validate or reject before mutating state or touching disk/network.
+5. **Preload surface** — Do not expose raw unfiltered `ipcRenderer`. Prefer named `popupAPI` methods over widening `MAIN_RENDERER_SEND_CHANNELS` (details: `ipc-contract.mdc`).
+6. **`openExternal`** — Never pass renderer-supplied URLs straight to `shell.openExternal`. Gate with `isAllowedExternalUrl` (https protocol only) or use main-owned constant URLs.
+
+## Ownership pointers
+
+| Concern | File(s) |
+|---|---|
+| Panel / overlay windows | `electron/infrastructure/windows/panel-window.ts` |
+| Main + camera + popup orchestration | `electron/infrastructure/windows/window-manager.ts` |
+| Hidden sound window | `electron/infrastructure/sound/notification-sound-player.ts` |
+| Preload / bridges | `electron/preload.ts` |
+| Channels + whitelists | `shared/ipc-channels.ts` |
+| Handlers | `electron/infrastructure/ipc/register-ipc-handlers.ts` |
+| External URL policy | `shared/release-notes.ts` → `isAllowedExternalUrl` |
+
+## Out of scope here
+
+Sidecar protocol, tray menus, auto-update feed trust, and Python CV hardening — other rules/skills. This rule is renderer-boundary security only.

@@ -1,0 +1,46 @@
+---
+description: Camera quality presets, EAR calibration, and dlib detector across shared/Electron/Python
+globs: shared/camera-quality.ts,shared/camera-devices.ts,shared/camera-capture-status.ts,shared/face-status.ts,shared/ear-calibration.ts,shared/preferences.ts,electron/infrastructure/sidecar/**/*,electron/infrastructure/ipc/**/*,electron/infrastructure/tray/**/*,electron/application/camera-capture-status-service.ts,src/features/camera/**/*,python/blink_detector_package/**/*
+alwaysApply: false
+---
+
+# Camera detection tuning
+
+Quality and EAR baseline are shared contracts — change Electron and Python together. Full NDJSON protocol: skill `blink-detector-sidecar`. Algorithm stages / OCEC / classifier: `blink-detector-sidecar/references/stages.md`. Face **locate** is YuNet; the 68-pt crop is HOG-refine (MediaPipe path removed).
+
+## Ownership
+
+| Concern | Source of truth |
+|---|---|
+| Preset → FPS / resolution / face interval / pose | `shared/camera-quality.ts` |
+| Preferred capture device | `shared/camera-devices.ts` (`cameraDevice`; `null` = Automatic) |
+| Capture-active SoT → Settings chip + tray | Sidecar `isCameraReady` → `CameraCaptureStatusService` → IPC `camera-capture-status` (`idle` / `preview` / `monitoring`) — not `cameraEnabled` / preview-open alone |
+| Face reliability for reminders / BPM | `shared/face-status.ts` (`isReliableFaceStatus`: `faceDetected && faceStatus === "ok"`) |
+| EAR range / median / window | `shared/ear-calibration.ts` |
+| Stale / drift nudge policy | `shared/calibration-freshness.ts` |
+| Persisted prefs | `cameraQuality`, `cameraDevice`, `earCalibration`, `calibrationAt`, `calibrationNudgeEnabled`, … in `shared/preferences.ts` |
+| Push to sidecar | `BlinkDetectorSidecar.applyCameraQuality` / `applyCameraDevice` / `applyEarCalibration` / `applySessionConfig` |
+| Settings UI | `src/features/camera/ui/*` + `use-camera-calibration.ts` |
+| Detection math | `python/.../domain/blink_detection.py` (+ pose / landmark_trust) |
+
+## Rules (keep short)
+
+- Do not hardcode FPS/resolution — use `CAMERA_QUALITY_PRESETS`. Call `applySessionConfig()` before every `start_camera`. Detector resize **aspect-fits** inside the preset (no 16:9→4:3 stretch).
+- EAR calibration samples only when `faceStatus === "ok"`. Landmark trust fail debounce: **5** consecutive untrusted frames (`landmark_trust.py`); 1 trusted recovers.
+- Outbound `blinkDebug.detector_backend` is always `"dlib"`. Optional Stage 7 OCEC confirm is **not** a backend. No `applyDetectorBackend` / `useMediaPipe`.
+- Preview `videoStream` is not face-gated. Opening preview must **not** start the tracking timer. Closing preview: `stopCameraIfIdle`.
+- Tracking / gate bugs: `%APPDATA%/BlinkGuard/logs/blink-detector.jsonl` + skill JSONL analysis. Domain `.py` edits need sidecar rebuild + `check_exe_mtime.py` — never `setup.bat`/`setup.sh` on routine rebuild.
+- Do **not** nudge gate constants without a Phase 0 JSONL / corpus measure (see `references/stages.md`).
+- Sidecar **stderr** is log-only — do not forward MSMF warnings to the settings `camera-error` banner.
+
+## LOCKED Windows open path
+
+Field-validated on a **built-in laptop webcam** (diagnostics `BlinkGuard-diagnostics-20260809-185347`, post-2.4.0 black frames). Do **not** revert to DSHOW-first, force MJPG/YUY2, snap open size to classic 4:3, or request CAP_PROP size/FPS/FOURCC. MSMF→DSHOW, native stream, software resize. Source: `python/.../infrastructure/camera.py`. Details: sidecar `references/windows-open-lock.md`.
+
+**Logitech C170** daylight `face_none` is a different failure (healthy capture, locate miss) — fix in `vision.py` / aspect-fit; do **not** conflate with the open-path lock.
+
+Change `_apply_capture_props` / backend order only with new Export diagnostics.
+
+## IPC (settings window)
+
+`update-camera-quality`, `update-camera-device`, `list-camera-devices`, `camera-devices`, `camera-device-notice`, `update-ear-calibration`, `start-ear-calibration`, `cancel-ear-calibration`, `ear-calibration-progress`, `ear-calibration-complete`, `calibration-nudge`, `dismiss-calibration-nudge`, `update-calibration-nudge-enabled`, `camera-error`, `camera-ready`, `camera-capture-status`, `request-camera-capture-status` — stay in `shared/ipc-channels` + preload whitelists. Late Settings subscribers must `request-camera-capture-status` after listening.
